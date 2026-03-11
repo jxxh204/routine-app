@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, SafeAreaView, StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-const WEB_APP_URL = 'https://example.com';
+const WEB_APP_URL = 'http://localhost:3000/today';
 
 export default function App() {
   return (

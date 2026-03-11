@@ -5,12 +5,18 @@
 ## 구조
 
 - `apps/mobile`: Expo 기반 모바일 앱 (WebView 셸)
-- `apps/web`: 웹앱 자리 (기획 후 생성 예정)
+- `apps/web`: Next.js 웹앱 (today 화면 뼈대 + Supabase 연결 준비)
 
 ## 빠른 시작
 
 ```bash
-cd apps/mobile
+# web
+cd apps/web
+npm install
+npm run dev
+
+# mobile
+cd ../mobile
 npm install
 npm run ios     # 또는 npm run android
 ```
@@ -20,13 +26,17 @@ npm run ios     # 또는 npm run android
 - [x] Expo(TypeScript) 앱 생성
 - [x] `react-native-webview` 설치
 - [x] WebView 기본 화면 구성 (`App.tsx`)
-- [ ] 웹앱 URL 확정 (`WEB_APP_URL` 교체)
+- [x] Next.js 웹앱 생성 (`apps/web`)
+- [x] `/today` 화면 뼈대 생성
+- [x] 모바일 WebView 로컬 URL 연결 (`http://localhost:3000/today`)
 - [ ] 로그인/루틴 API 연결
 
 ## 설정 포인트
 
-`apps/mobile/App.tsx`의 아래 값을 실제 웹앱 주소로 바꿔주세요.
+개발 중에는 `apps/mobile/App.tsx`가 로컬 웹으로 연결되어 있습니다.
 
 ```ts
-const WEB_APP_URL = 'https://example.com';
+const WEB_APP_URL = 'http://localhost:3000/today';
 ```
+
+배포 전에는 운영 URL로 교체하세요.
