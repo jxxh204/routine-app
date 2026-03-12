@@ -280,6 +280,7 @@ export function TodayView() {
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -431,6 +432,7 @@ export function TodayView() {
 
     setRoutines((prev) => [...prev, newRoutine]);
     setNewTitle('');
+    setIsAddFormOpen(false);
   };
 
   const removeRoutine = (id: string) => {
@@ -491,18 +493,29 @@ export function TodayView() {
       </section>
 
       <section style={styles.progressCard}>
-        <p style={styles.meta}>루틴 추가</p>
-        <div style={styles.addRow}>
-          <input
-            style={styles.input}
-            placeholder="예: 독서 인증"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-          />
-          <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
-          <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
-          <button style={styles.addButton} onClick={addCustomRoutine}>추가</button>
+        <div style={styles.addHeaderRow}>
+          <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
+          <button
+            style={styles.addToggleButton}
+            onClick={() => setIsAddFormOpen((prev) => !prev)}
+          >
+            {isAddFormOpen ? '닫기' : '+ 추가'}
+          </button>
         </div>
+
+        {isAddFormOpen ? (
+          <div style={styles.addRow}>
+            <input
+              style={styles.input}
+              placeholder="예: 독서 인증"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+            <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+            <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+            <button style={styles.addButton} onClick={addCustomRoutine}>추가</button>
+          </div>
+        ) : null}
       </section>
 
       <section style={styles.list}>
@@ -597,14 +610,6 @@ const styles: Record<string, CSSProperties> = {
     color: '#9aa4af',
     fontSize: 14,
   },
-  badge: {
-    background: '#1f2f27',
-    color: '#7cffb2',
-    border: '1px solid #2f4d3d',
-    borderRadius: 999,
-    padding: '6px 10px',
-    fontSize: 12,
-  },
   progressCard: {
     background: '#1b1f23',
     border: '1px solid #2b3138',
@@ -632,6 +637,21 @@ const styles: Record<string, CSSProperties> = {
     margin: '8px 0 0',
     fontSize: 12,
     color: '#7f8b98',
+  },
+  addHeaderRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  addToggleButton: {
+    background: '#1f3a2d',
+    color: '#7cffb2',
+    border: '1px solid #2e664d',
+    borderRadius: 999,
+    padding: '6px 12px',
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 600,
   },
   addRow: {
     display: 'flex',
