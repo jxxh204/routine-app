@@ -231,12 +231,13 @@ export function TodayView() {
     let cleanupRealtime: (() => void) | null = null;
 
     const setupRealtime = async () => {
-      if (!supabase) return;
+      const client = supabase;
+      if (!client) return;
 
       const auth = await getAuthHeaders();
       if (!auth) return;
 
-      const channel = supabase
+      const channel = client
         .channel(`challenge-logs-${auth.userId}-${getTodayDateKey()}`)
         .on(
           'postgres_changes',
@@ -257,7 +258,7 @@ export function TodayView() {
         });
 
       cleanupRealtime = () => {
-        void supabase.removeChannel(channel);
+        void client.removeChannel(channel);
       };
     };
 
