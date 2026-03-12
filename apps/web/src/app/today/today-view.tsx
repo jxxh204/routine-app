@@ -442,7 +442,6 @@ export function TodayView() {
           <h1 style={styles.title}>루틴 챌린지</h1>
           <p style={styles.date}>{today}</p>
         </div>
-        <span style={styles.badge}>기본 3개 + 커스텀</span>
       </div>
 
       <section style={styles.progressCard}>
