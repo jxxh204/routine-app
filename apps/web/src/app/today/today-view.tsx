@@ -2,6 +2,8 @@
 
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 
+const STORAGE_PREFIX = 'routine-challenge-v1';
+
 type Routine = {
   id: string;
   title: string;
@@ -65,9 +67,46 @@ function formatKoreanTime(date: Date) {
   });
 }
 
+function getTodayStorageKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${STORAGE_PREFIX}:${y}-${m}-${d}`;
+}
+
+function getInitialRoutines() {
+  if (typeof window === 'undefined') {
+    return initialRoutines;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getTodayStorageKey());
+    if (!raw) return initialRoutines;
+
+    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt'>>;
+    return initialRoutines.map((routine) => {
+      const match = saved.find((item) => item.id === routine.id);
+      if (!match) return routine;
+      return {
+        ...routine,
+        doneByMe: Boolean(match.doneByMe),
+        doneAt: match.doneAt,
+      };
+    });
+  } catch {
+    return initialRoutines;
+  }
+}
+
 export function TodayView() {
-  const [routines, setRoutines] = useState(initialRoutines);
+  const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
+
+  useEffect(() => {
+    const snapshot = routines.map(({ id, doneByMe, doneAt }) => ({ id, doneByMe, doneAt }));
+    window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
+  }, [routines]);
 
   useEffect(() => {
     const interval = setInterval(() => {
