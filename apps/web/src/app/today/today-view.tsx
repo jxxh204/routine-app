@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
 const CUSTOM_ROUTINES_KEY = `${STORAGE_PREFIX}:custom-routines`;
+const DEFAULT_ROUTINES_KEY = `${STORAGE_PREFIX}:default-routines`;
 
 type Routine = {
   id: string;
@@ -115,6 +116,32 @@ function getTodayStorageKey() {
   return `${STORAGE_PREFIX}:${getTodayDateKey()}`;
 }
 
+function readDefaultRoutines(): Routine[] {
+  if (typeof window === 'undefined') return defaultRoutines;
+
+  try {
+    const raw = window.localStorage.getItem(DEFAULT_ROUTINES_KEY);
+    if (!raw) return defaultRoutines;
+
+    const defs = JSON.parse(raw) as StoredRoutineDefinition[];
+
+    return defaultRoutines.map((routine) => {
+      const found = defs.find((item) => item.id === routine.id);
+      if (!found) return routine;
+
+      return {
+        ...routine,
+        title: found.title,
+        startMinute: found.startMinute,
+        endMinute: found.endMinute,
+        timeRangeLabel: formatTimeRangeLabel(found.startMinute, found.endMinute),
+      };
+    });
+  } catch {
+    return defaultRoutines;
+  }
+}
+
 function readCustomRoutines(): Routine[] {
   if (typeof window === 'undefined') return [];
 
@@ -151,6 +178,19 @@ function saveCustomRoutines(routines: Routine[]) {
     }));
 
   window.localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(customs));
+}
+
+function saveDefaultRoutines(routines: Routine[]) {
+  const defaults = routines
+    .filter((routine) => routine.isDefault)
+    .map((routine) => ({
+      id: routine.id,
+      title: routine.title,
+      startMinute: routine.startMinute,
+      endMinute: routine.endMinute,
+    }));
+
+  window.localStorage.setItem(DEFAULT_ROUTINES_KEY, JSON.stringify(defaults));
 }
 
 async function getAuthHeaders() {
@@ -248,7 +288,7 @@ async function saveCertificationToSupabase(routineKey: string, doneAtIso: string
 }
 
 function getInitialRoutines() {
-  const base = [...defaultRoutines, ...readCustomRoutines()];
+  const base = [...readDefaultRoutines(), ...readCustomRoutines()];
 
   if (typeof window === 'undefined') {
     return base;
@@ -281,12 +321,14 @@ export function TodayView() {
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
 
   useEffect(() => {
     const snapshot = routines.map(({ id, doneByMe, doneAt }) => ({ id, doneByMe, doneAt }));
     window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
     saveCustomRoutines(routines);
+    saveDefaultRoutines(routines);
   }, [routines]);
 
   const refreshFromSupabase = useCallback(async () => {
@@ -409,30 +451,64 @@ export function TodayView() {
     }
   };
 
-  const addCustomRoutine = () => {
+  const submitRoutineForm = () => {
     const title = newTitle.trim();
     if (!title) return;
 
     const [startH, startM] = newStart.split(':').map(Number);
     const [endH, endM] = newEnd.split(':').map(Number);
 
+    if ([startH, startM, endH, endM].some((value) => Number.isNaN(value))) return;
+
     const startMinute = startH * 60 + startM;
     const endMinute = endH * 60 + endM;
 
-    const newRoutine: Routine = {
-      id: `custom-${Date.now()}`,
-      title,
-      startMinute,
-      endMinute,
-      timeRangeLabel: formatTimeRangeLabel(startMinute, endMinute),
-      doneByMe: false,
-      doneByBuddy: false,
-      isDefault: false,
-    };
+    if (editingRoutineId) {
+      setRoutines((prev) =>
+        prev.map((routine) =>
+          routine.id === editingRoutineId
+            ? {
+                ...routine,
+                title,
+                startMinute,
+                endMinute,
+                timeRangeLabel: formatTimeRangeLabel(startMinute, endMinute),
+              }
+            : routine,
+        ),
+      );
+      setEditingRoutineId(null);
+      setSwipedRoutineId(null);
+    } else {
+      const newRoutine: Routine = {
+        id: `custom-${Date.now()}`,
+        title,
+        startMinute,
+        endMinute,
+        timeRangeLabel: formatTimeRangeLabel(startMinute, endMinute),
+        doneByMe: false,
+        doneByBuddy: false,
+        isDefault: false,
+      };
 
-    setRoutines((prev) => [...prev, newRoutine]);
+      setRoutines((prev) => [...prev, newRoutine]);
+    }
+
     setNewTitle('');
+    setNewStart('09:00');
+    setNewEnd('10:00');
     setIsAddFormOpen(false);
+  };
+
+  const startEditRoutine = (id: string) => {
+    const target = routines.find((routine) => routine.id === id);
+    if (!target) return;
+
+    setEditingRoutineId(id);
+    setNewTitle(target.title);
+    setNewStart(minuteToHHMM(target.startMinute));
+    setNewEnd(minuteToHHMM(target.endMinute));
+    setIsAddFormOpen(true);
   };
 
   const removeRoutine = (id: string) => {
@@ -497,7 +573,15 @@ export function TodayView() {
           <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
           <button
             style={styles.addToggleButton}
-            onClick={() => setIsAddFormOpen((prev) => !prev)}
+            onClick={() => {
+              if (isAddFormOpen) {
+                setEditingRoutineId(null);
+                setNewTitle('');
+                setNewStart('09:00');
+                setNewEnd('10:00');
+              }
+              setIsAddFormOpen((prev) => !prev);
+            }}
           >
             {isAddFormOpen ? '닫기' : '+ 추가'}
           </button>
@@ -513,7 +597,23 @@ export function TodayView() {
             />
             <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
             <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
-            <button style={styles.addButton} onClick={addCustomRoutine}>추가</button>
+            <button style={styles.addButton} onClick={submitRoutineForm}>
+              {editingRoutineId ? '수정 저장' : '추가'}
+            </button>
+            {editingRoutineId ? (
+              <button
+                style={styles.cancelButton}
+                onClick={() => {
+                  setEditingRoutineId(null);
+                  setNewTitle('');
+                  setNewStart('09:00');
+                  setNewEnd('10:00');
+                  setIsAddFormOpen(false);
+                }}
+              >
+                취소
+              </button>
+            ) : null}
           </div>
         ) : null}
       </section>
@@ -528,7 +628,7 @@ export function TodayView() {
               style={{
                 ...styles.item,
                 ...(inWindow ? styles.itemActive : styles.itemInactive),
-                ...(!routine.isDefault && swipedRoutineId === routine.id ? styles.itemSwiped : {}),
+                ...(swipedRoutineId === routine.id ? styles.itemSwiped : {}),
               }}
             >
               <button
@@ -561,10 +661,6 @@ export function TodayView() {
             </article>
           );
 
-          if (routine.isDefault) {
-            return <div key={routine.id}>{card}</div>;
-          }
-
           return (
             <div
               key={routine.id}
@@ -572,8 +668,11 @@ export function TodayView() {
               onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
               onTouchEnd={handleRoutineTouchEnd}
             >
-              <div style={styles.deleteActionWrap}>
-                <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
+              <div style={styles.actionWrap}>
+                <button style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</button>
+                {!routine.isDefault ? (
+                  <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
+                ) : null}
               </div>
               {card}
             </div>
@@ -683,6 +782,14 @@ const styles: Record<string, CSSProperties> = {
     padding: '8px 12px',
     cursor: 'pointer',
   },
+  cancelButton: {
+    background: '#2a3038',
+    color: '#d0d8e0',
+    border: '1px solid #3b4552',
+    borderRadius: 8,
+    padding: '8px 12px',
+    cursor: 'pointer',
+  },
   list: {
     display: 'flex',
     flexDirection: 'column',
@@ -693,17 +800,18 @@ const styles: Record<string, CSSProperties> = {
     overflow: 'hidden',
     borderRadius: 14,
   },
-  deleteActionWrap: {
+  actionWrap: {
     position: 'absolute',
     right: 0,
     top: 0,
     bottom: 0,
-    width: 88,
+    width: 152,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#2b1d21',
-    border: '1px solid #4a2f35',
+    gap: 8,
+    background: '#21262d',
+    border: '1px solid #303844',
     borderRadius: 14,
   },
   item: {
@@ -719,7 +827,7 @@ const styles: Record<string, CSSProperties> = {
     transition: 'all 0.2s ease',
   },
   itemSwiped: {
-    transform: 'translateX(-88px)',
+    transform: 'translateX(-152px)',
   },
   itemActive: {
     border: '1px solid #2e664d',
@@ -750,6 +858,14 @@ const styles: Record<string, CSSProperties> = {
   checkButtonDisabled: {
     opacity: 0.55,
     cursor: 'not-allowed',
+  },
+  editButton: {
+    border: '1px solid #334050',
+    background: '#1f2a36',
+    color: '#9ed0ff',
+    borderRadius: 8,
+    padding: '6px 10px',
+    cursor: 'pointer',
   },
   deleteButton: {
     border: '1px solid #4a2f35',
