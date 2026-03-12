@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
 
@@ -206,28 +206,32 @@ export function TodayView() {
     window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
   }, [routines]);
 
+  const refreshFromSupabase = useCallback(async () => {
+    const synced = await syncTodayFromSupabase();
+
+    if (!synced) {
+      setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
+      return;
+    }
+
+    setRoutines(synced);
+    setSyncMessage('Supabase 동기화됨');
+  }, []);
+
   useEffect(() => {
-    let mounted = true;
+    const kickoff = setTimeout(() => {
+      void refreshFromSupabase();
+    }, 0);
 
-    const run = async () => {
-      const synced = await syncTodayFromSupabase();
-      if (!mounted) return;
-
-      if (!synced) {
-        setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
-        return;
-      }
-
-      setRoutines(synced);
-      setSyncMessage('Supabase 동기화됨');
-    };
-
-    run();
+    const interval = setInterval(() => {
+      void refreshFromSupabase();
+    }, 20_000);
 
     return () => {
-      mounted = false;
+      clearTimeout(kickoff);
+      clearInterval(interval);
     };
-  }, []);
+  }, [refreshFromSupabase]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -278,6 +282,10 @@ export function TodayView() {
 
     const ok = await saveCertificationToSupabase(id, now.toISOString());
     setSyncMessage(ok ? 'Supabase 저장 완료' : '로컬 저장 완료 (Supabase 미연동)');
+
+    if (ok) {
+      void refreshFromSupabase();
+    }
   };
 
   const today = new Date().toLocaleDateString('ko-KR', {
