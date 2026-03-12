@@ -223,13 +223,40 @@ export function TodayView() {
       void refreshFromSupabase();
     }, 0);
 
-    const interval = setInterval(() => {
-      void refreshFromSupabase();
-    }, 20_000);
+    let cleanupRealtime: (() => void) | null = null;
+
+    const setupRealtime = async () => {
+      if (!supabase) return;
+
+      const auth = await getAuthHeaders();
+      if (!auth) return;
+
+      const channel = supabase
+        .channel(`challenge-logs-${auth.userId}-${getTodayDateKey()}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'challenge_logs',
+            filter: `challenge_date=eq.${getTodayDateKey()}`,
+          },
+          () => {
+            void refreshFromSupabase();
+          },
+        )
+        .subscribe();
+
+      cleanupRealtime = () => {
+        void supabase.removeChannel(channel);
+      };
+    };
+
+    void setupRealtime();
 
     return () => {
       clearTimeout(kickoff);
-      clearInterval(interval);
+      cleanupRealtime?.();
     };
   }, [refreshFromSupabase]);
 
