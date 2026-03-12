@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Routine Challenge",
+    "slug": "routine-challenge",
     "version": "1.0.0",
     "newArchEnabled": false,
     "orientation": "portrait",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.jxxh204.routinechallenge"
     },
     "android": {
       "adaptiveIcon": {
