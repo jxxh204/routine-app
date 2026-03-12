@@ -476,7 +476,13 @@ export function TodayView() {
           const canCertify = inWindow && !routine.doneByMe;
 
           return (
-            <article key={routine.id} style={styles.item}>
+            <article
+              key={routine.id}
+              style={{
+                ...styles.item,
+                ...(inWindow ? styles.itemActive : styles.itemInactive),
+              }}
+            >
               <button
                 onClick={() => certify(routine.id)}
                 disabled={!canCertify}
@@ -621,6 +627,17 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #2b3138',
     borderRadius: 14,
     padding: 12,
+    transition: 'all 0.2s ease',
+  },
+  itemActive: {
+    border: '1px solid #2e664d',
+    boxShadow: '0 0 0 1px rgba(124,255,178,0.15) inset',
+    opacity: 1,
+  },
+  itemInactive: {
+    border: '1px solid #252a31',
+    opacity: 0.62,
+    filter: 'grayscale(0.2)',
   },
   checkButton: {
     width: 72,
