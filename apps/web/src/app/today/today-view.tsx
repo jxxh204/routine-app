@@ -2,6 +2,8 @@
 
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 
+import { supabase } from '@/lib/supabase';
+
 const STORAGE_PREFIX = 'routine-challenge-v1';
 
 type Routine = {
@@ -67,12 +69,91 @@ function formatKoreanTime(date: Date) {
   });
 }
 
-function getTodayStorageKey() {
+function getTodayDateKey() {
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
-  return `${STORAGE_PREFIX}:${y}-${m}-${d}`;
+  return `${y}-${m}-${d}`;
+}
+
+function getTodayStorageKey() {
+  return `${STORAGE_PREFIX}:${getTodayDateKey()}`;
+}
+
+async function getAuthHeaders() {
+  if (!supabase) return null;
+
+  const [{ data: userRes }, { data: sessionRes }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+
+  const userId = userRes.user?.id;
+  const accessToken = sessionRes.session?.access_token;
+  if (!userId || !accessToken) return null;
+
+  return {
+    userId,
+    headers: {
+      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  };
+}
+
+async function syncTodayFromSupabase() {
+  const auth = await getAuthHeaders();
+  if (!auth) return null;
+
+  const today = getTodayDateKey();
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?user_id=eq.${auth.userId}&challenge_date=eq.${today}`,
+    { headers: auth.headers },
+  );
+
+  if (!response.ok) return null;
+
+  const rows = (await response.json()) as Array<{
+    routine_key: string;
+    done_at: string | null;
+  }>;
+
+  return initialRoutines.map((routine) => {
+    const row = rows.find((item) => item.routine_key === routine.id);
+    if (!row) return routine;
+    return {
+      ...routine,
+      doneByMe: true,
+      doneAt: row.done_at ? formatKoreanTime(new Date(row.done_at)) : undefined,
+    };
+  });
+}
+
+async function saveCertificationToSupabase(routineKey: string, doneAtIso: string) {
+  const auth = await getAuthHeaders();
+  if (!auth) return false;
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs`,
+    {
+      method: 'POST',
+      headers: {
+        ...auth.headers,
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify({
+        user_id: auth.userId,
+        challenge_date: getTodayDateKey(),
+        routine_key: routineKey,
+        done_at: doneAtIso,
+      }),
+    },
+  );
+
+  return response.ok;
 }
 
 function getInitialRoutines() {
@@ -102,11 +183,35 @@ function getInitialRoutines() {
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
+  const [syncMessage, setSyncMessage] = useState('로컬 저장 모드');
 
   useEffect(() => {
     const snapshot = routines.map(({ id, doneByMe, doneAt }) => ({ id, doneByMe, doneAt }));
     window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
   }, [routines]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const run = async () => {
+      const synced = await syncTodayFromSupabase();
+      if (!mounted) return;
+
+      if (!synced) {
+        setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
+        return;
+      }
+
+      setRoutines(synced);
+      setSyncMessage('Supabase 동기화됨');
+    };
+
+    run();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -123,7 +228,12 @@ export function TodayView() {
 
   const progress = Math.round((doneCount / routines.length) * 100);
 
-  const certify = (id: string) => {
+  const certify = async (id: string) => {
+    const now = new Date();
+    const doneAtText = formatKoreanTime(now);
+
+    let updated = false;
+
     setRoutines((prev) =>
       prev.map((routine) => {
         if (routine.id !== id) return routine;
@@ -138,13 +248,20 @@ export function TodayView() {
           return routine;
         }
 
+        updated = true;
+
         return {
           ...routine,
           doneByMe: true,
-          doneAt: formatKoreanTime(new Date()),
+          doneAt: doneAtText,
         };
       }),
     );
+
+    if (!updated) return;
+
+    const ok = await saveCertificationToSupabase(id, now.toISOString());
+    setSyncMessage(ok ? 'Supabase 저장 완료' : '로컬 저장 완료 (Supabase 미연동)');
   };
 
   const today = new Date().toLocaleDateString('ko-KR', {
@@ -171,6 +288,7 @@ export function TodayView() {
         <div style={styles.progressTrack}>
           <div style={{ ...styles.progressFill, width: `${progress}%` }} />
         </div>
+        <p style={styles.syncText}>{syncMessage}</p>
       </section>
 
       <section style={styles.list}>
@@ -275,6 +393,11 @@ const styles: Record<string, CSSProperties> = {
   progressFill: {
     height: '100%',
     background: '#7cffb2',
+  },
+  syncText: {
+    margin: '8px 0 0',
+    fontSize: 12,
+    color: '#7f8b98',
   },
   list: {
     display: 'flex',
