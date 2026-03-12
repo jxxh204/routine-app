@@ -1,6 +1,13 @@
 "use client";
 
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  type CSSProperties,
+  type TouchEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { supabase } from '@/lib/supabase';
 
@@ -273,6 +280,7 @@ export function TodayView() {
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
+  const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
 
   useEffect(() => {
     const snapshot = routines.map(({ id, doneByMe, doneAt }) => ({ id, doneByMe, doneAt }));
@@ -427,6 +435,33 @@ export function TodayView() {
 
   const removeRoutine = (id: string) => {
     setRoutines((prev) => prev.filter((routine) => routine.id !== id || routine.isDefault));
+    setSwipedRoutineId((prev) => (prev === id ? null : prev));
+  };
+
+  const handleRoutineTouchStart = (
+    id: string,
+    event: TouchEvent<HTMLDivElement>,
+  ) => {
+    event.currentTarget.dataset.startX = String(event.touches[0]?.clientX ?? 0);
+    event.currentTarget.dataset.routineId = id;
+  };
+
+  const handleRoutineTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const startX = Number(event.currentTarget.dataset.startX ?? 0);
+    const endX = event.changedTouches[0]?.clientX ?? startX;
+    const deltaX = startX - endX;
+    const id = event.currentTarget.dataset.routineId;
+
+    if (!id) return;
+
+    if (deltaX > 40) {
+      setSwipedRoutineId(id);
+      return;
+    }
+
+    if (deltaX < -40) {
+      setSwipedRoutineId(null);
+    }
   };
 
   const today = new Date().toLocaleDateString('ko-KR', {
@@ -475,12 +510,12 @@ export function TodayView() {
           const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
           const canCertify = inWindow && !routine.doneByMe;
 
-          return (
+          const card = (
             <article
-              key={routine.id}
               style={{
                 ...styles.item,
                 ...(inWindow ? styles.itemActive : styles.itemInactive),
+                ...(!routine.isDefault && swipedRoutineId === routine.id ? styles.itemSwiped : {}),
               }}
             >
               <button
@@ -510,11 +545,25 @@ export function TodayView() {
                   친구 상태: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴은 미연동'}
                 </p>
               </div>
-
-              {!routine.isDefault ? (
-                <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
-              ) : null}
             </article>
+          );
+
+          if (routine.isDefault) {
+            return <div key={routine.id}>{card}</div>;
+          }
+
+          return (
+            <div
+              key={routine.id}
+              style={styles.swipeWrap}
+              onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
+              onTouchEnd={handleRoutineTouchEnd}
+            >
+              <div style={styles.deleteActionWrap}>
+                <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
+              </div>
+              {card}
+            </div>
           );
         })}
       </section>
@@ -619,7 +668,27 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: 'column',
     gap: 10,
   },
+  swipeWrap: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: 14,
+  },
+  deleteActionWrap: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 88,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#2b1d21',
+    border: '1px solid #4a2f35',
+    borderRadius: 14,
+  },
   item: {
+    position: 'relative',
+    zIndex: 1,
     display: 'flex',
     gap: 12,
     alignItems: 'center',
@@ -628,6 +697,9 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 14,
     padding: 12,
     transition: 'all 0.2s ease',
+  },
+  itemSwiped: {
+    transform: 'translateX(-88px)',
   },
   itemActive: {
     border: '1px solid #2e664d',
