@@ -223,6 +223,11 @@ export function TodayView() {
       void refreshFromSupabase();
     }, 0);
 
+    // 실시간 연결 실패 시에도 최소 동기화 보장
+    const fallbackPolling = setInterval(() => {
+      void refreshFromSupabase();
+    }, 60_000);
+
     let cleanupRealtime: (() => void) | null = null;
 
     const setupRealtime = async () => {
@@ -245,7 +250,11 @@ export function TodayView() {
             void refreshFromSupabase();
           },
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setSyncMessage('Supabase 실시간 동기화됨');
+          }
+        });
 
       cleanupRealtime = () => {
         void supabase.removeChannel(channel);
@@ -256,6 +265,7 @@ export function TodayView() {
 
     return () => {
       clearTimeout(kickoff);
+      clearInterval(fallbackPolling);
       cleanupRealtime?.();
     };
   }, [refreshFromSupabase]);
