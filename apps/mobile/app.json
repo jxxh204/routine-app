@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jxxh204.routinechallenge"
+      "bundleIdentifier": "com.jxxh204.routinechallenge",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +30,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "722b32c8-761b-4b00-b02f-9db4723cc0ce"
+      }
+    },
+    "owner": "ahancom"
   }
 }
