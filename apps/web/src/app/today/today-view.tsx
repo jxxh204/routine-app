@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -25,6 +26,7 @@ type Routine = {
   doneByMe: boolean;
   doneByBuddy: boolean;
   doneAt?: string;
+  proofImage?: string;
   isDefault: boolean;
 };
 
@@ -298,7 +300,7 @@ function getInitialRoutines() {
     const raw = window.localStorage.getItem(getTodayStorageKey());
     if (!raw) return base;
 
-    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt'>>;
+    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt' | 'proofImage'>>;
     return base.map((routine) => {
       const match = saved.find((item) => item.id === routine.id);
       if (!match) return routine;
@@ -306,6 +308,7 @@ function getInitialRoutines() {
         ...routine,
         doneByMe: Boolean(match.doneByMe),
         doneAt: match.doneAt,
+        proofImage: match.proofImage,
       };
     });
   } catch {
@@ -323,9 +326,13 @@ export function TodayView() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
+  const [cameraRoutineId, setCameraRoutineId] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState('');
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    const snapshot = routines.map(({ id, doneByMe, doneAt }) => ({ id, doneByMe, doneAt }));
+    const snapshot = routines.map(({ id, doneByMe, doneAt, proofImage }) => ({ id, doneByMe, doneAt, proofImage }));
     window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
     saveCustomRoutines(routines);
     saveDefaultRoutines(routines);
@@ -401,6 +408,13 @@ export function TodayView() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    };
+  }, []);
+
   const doneCount = useMemo(
     () => routines.filter((routine) => routine.doneByMe).length,
     [routines],
@@ -408,43 +422,85 @@ export function TodayView() {
 
   const progress = Math.round((doneCount / routines.length) * 100);
 
-  const certify = async (id: string) => {
+  const closeCamera = useCallback(() => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    setCameraRoutineId(null);
+    setCameraError('');
+  }, []);
+
+  const openCameraForRoutine = async (id: string) => {
+    const target = routines.find((routine) => routine.id === id);
+    if (!target) return;
+
+    const inWindow = isInTimeWindow(nowMinute, target.startMinute, target.endMinute);
+    if (!inWindow || target.doneByMe) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      mediaStreamRef.current = stream;
+      setCameraRoutineId(id);
+      setCameraError('');
+
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          void videoRef.current.play();
+        }
+      }, 0);
+    } catch {
+      setCameraError('카메라 권한이 필요합니다. 브라우저 설정에서 카메라를 허용해 주세요.');
+    }
+  };
+
+  const captureRoutinePhoto = async () => {
+    if (!cameraRoutineId || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    if (!width || !height) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    context.drawImage(video, 0, 0, width, height);
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
     const now = new Date();
     const doneAtText = formatKoreanTime(now);
-
-    let updated = false;
-    let isDefaultRoutine = false;
+    const target = routines.find((routine) => routine.id === cameraRoutineId);
 
     setRoutines((prev) =>
-      prev.map((routine) => {
-        if (routine.id !== id) return routine;
-
-        const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
-
-        if (!inWindow || routine.doneByMe) {
-          return routine;
-        }
-
-        updated = true;
-        isDefaultRoutine = routine.isDefault;
-
-        return {
-          ...routine,
-          doneByMe: true,
-          doneAt: doneAtText,
-        };
-      }),
+      prev.map((routine) =>
+        routine.id === cameraRoutineId
+          ? {
+              ...routine,
+              doneByMe: true,
+              doneAt: doneAtText,
+              proofImage: imageDataUrl,
+            }
+          : routine,
+      ),
     );
 
-    if (!updated) return;
+    closeCamera();
 
-    if (!isDefaultRoutine) {
+    if (!target) {
       setSyncMessage('로컬 저장 완료');
       return;
     }
 
-    const ok = await saveCertificationToSupabase(id, now.toISOString());
-    setSyncMessage(ok ? 'Supabase 저장 완료' : '로컬 저장 완료 (Supabase 미연동)');
+    if (!target.isDefault) {
+      setSyncMessage('사진 인증 저장 완료');
+      return;
+    }
+
+    const ok = await saveCertificationToSupabase(target.id, now.toISOString());
+    setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
 
     if (ok) {
       void refreshFromSupabase();
@@ -632,7 +688,7 @@ export function TodayView() {
               }}
             >
               <button
-                onClick={() => certify(routine.id)}
+                onClick={() => void openCameraForRoutine(routine.id)}
                 disabled={!canCertify}
                 style={{
                   ...styles.checkButton,
@@ -657,6 +713,11 @@ export function TodayView() {
                 <p style={styles.meta}>
                   친구 상태: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴은 미연동'}
                 </p>
+                {routine.proofImage ? (
+                  <div style={styles.thumbWrap}>
+                    <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
+                  </div>
+                ) : null}
               </div>
             </article>
           );
@@ -679,6 +740,21 @@ export function TodayView() {
           );
         })}
       </section>
+
+      {cameraRoutineId ? (
+        <section style={styles.cameraOverlay}>
+          <div style={styles.cameraPage}>
+            <p style={styles.cameraTitle}>카메라 인증</p>
+            <p style={styles.meta}>사진을 촬영하면 해당 루틴에 인증 썸네일이 저장됩니다.</p>
+            {cameraError ? <p style={styles.cameraError}>{cameraError}</p> : null}
+            <video ref={videoRef} autoPlay playsInline muted style={styles.cameraPreview} />
+            <div style={styles.cameraActionRow}>
+              <button style={styles.addButton} onClick={() => void captureRoutinePhoto()}>촬영 후 저장</button>
+              <button style={styles.cancelButton} onClick={closeCamera}>닫기</button>
+            </div>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }
@@ -887,5 +963,60 @@ const styles: Record<string, CSSProperties> = {
     margin: '6px 0 0',
     fontSize: 13,
     color: '#9aa4af',
+  },
+  thumbWrap: {
+    marginTop: 10,
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    overflow: 'hidden',
+    border: '1px solid #2f3a46',
+  },
+  thumbImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  cameraOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(7, 9, 11, 0.78)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    zIndex: 10,
+  },
+  cameraPage: {
+    width: '100%',
+    maxWidth: 520,
+    background: '#14191f',
+    border: '1px solid #2b3138',
+    borderRadius: 14,
+    padding: 14,
+  },
+  cameraTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 700,
+  },
+  cameraError: {
+    marginTop: 8,
+    color: '#ff9ba8',
+    fontSize: 12,
+  },
+  cameraPreview: {
+    width: '100%',
+    borderRadius: 10,
+    marginTop: 10,
+    border: '1px solid #2f3a46',
+    background: '#0f1318',
+    aspectRatio: '3 / 4',
+    objectFit: 'cover',
+  },
+  cameraActionRow: {
+    display: 'flex',
+    gap: 8,
+    marginTop: 12,
   },
 };
