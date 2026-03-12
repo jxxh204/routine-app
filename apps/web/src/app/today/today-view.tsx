@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
+const CUSTOM_ROUTINES_KEY = `${STORAGE_PREFIX}:custom-routines`;
 
 type Routine = {
   id: string;
@@ -16,9 +17,10 @@ type Routine = {
   doneByMe: boolean;
   doneByBuddy: boolean;
   doneAt?: string;
+  isDefault: boolean;
 };
 
-const initialRoutines: Routine[] = [
+const defaultRoutines: Routine[] = [
   {
     id: 'wake',
     title: '기상 인증',
@@ -27,6 +29,7 @@ const initialRoutines: Routine[] = [
     endMinute: 11 * 60,
     doneByMe: false,
     doneByBuddy: false,
+    isDefault: true,
   },
   {
     id: 'lunch',
@@ -36,6 +39,7 @@ const initialRoutines: Routine[] = [
     endMinute: 13 * 60 + 30,
     doneByMe: false,
     doneByBuddy: false,
+    isDefault: true,
   },
   {
     id: 'sleep',
@@ -45,15 +49,22 @@ const initialRoutines: Routine[] = [
     endMinute: 2 * 60,
     doneByMe: false,
     doneByBuddy: false,
+    isDefault: true,
   },
 ];
+
+type StoredRoutineDefinition = {
+  id: string;
+  title: string;
+  startMinute: number;
+  endMinute: number;
+};
 
 function isInTimeWindow(nowMinute: number, startMinute: number, endMinute: number) {
   if (startMinute < endMinute) {
     return nowMinute >= startMinute && nowMinute < endMinute;
   }
 
-  // 자정 넘어가는 구간 (예: 23:00 ~ 02:00)
   return nowMinute >= startMinute || nowMinute < endMinute;
 }
 
@@ -70,6 +81,21 @@ function formatKoreanTime(date: Date) {
   });
 }
 
+function minuteToHHMM(minute: number) {
+  const h = String(Math.floor(minute / 60)).padStart(2, '0');
+  const m = String(minute % 60).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+function formatTimeRangeLabel(startMinute: number, endMinute: number) {
+  const start = minuteToHHMM(startMinute);
+  const end = minuteToHHMM(endMinute);
+  if (startMinute < endMinute) {
+    return `${start} - ${end}`;
+  }
+  return `${start} - 다음날 ${end}`;
+}
+
 function getTodayDateKey() {
   const now = new Date();
   const y = now.getFullYear();
@@ -80,6 +106,44 @@ function getTodayDateKey() {
 
 function getTodayStorageKey() {
   return `${STORAGE_PREFIX}:${getTodayDateKey()}`;
+}
+
+function readCustomRoutines(): Routine[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_ROUTINES_KEY);
+    if (!raw) return [];
+
+    const defs = JSON.parse(raw) as StoredRoutineDefinition[];
+    return defs
+      .filter((item) => item.id !== 'wake' && item.id !== 'lunch' && item.id !== 'sleep')
+      .map((item) => ({
+        id: item.id,
+        title: item.title,
+        startMinute: item.startMinute,
+        endMinute: item.endMinute,
+        timeRangeLabel: formatTimeRangeLabel(item.startMinute, item.endMinute),
+        doneByMe: false,
+        doneByBuddy: false,
+        isDefault: false,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomRoutines(routines: Routine[]) {
+  const customs = routines
+    .filter((routine) => !routine.isDefault)
+    .map((routine) => ({
+      id: routine.id,
+      title: routine.title,
+      startMinute: routine.startMinute,
+      endMinute: routine.endMinute,
+    }));
+
+  window.localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(customs));
 }
 
 async function getAuthHeaders() {
@@ -104,7 +168,7 @@ async function getAuthHeaders() {
   };
 }
 
-async function syncTodayFromSupabase() {
+async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const auth = await getAuthHeaders();
   if (!auth) return null;
 
@@ -135,7 +199,11 @@ async function syncTodayFromSupabase() {
     }
   }
 
-  return initialRoutines.map((routine) => {
+  return baseRoutines.map((routine) => {
+    if (!routine.isDefault) {
+      return { ...routine, doneByBuddy: false };
+    }
+
     const myRow = myRows.find((item) => item.routine_key === routine.id);
     const buddyDone = buddyRows.some((item) => item.routine_key === routine.id);
 
@@ -143,7 +211,7 @@ async function syncTodayFromSupabase() {
       ...routine,
       doneByMe: Boolean(myRow),
       doneByBuddy: buddyDone,
-      doneAt: myRow?.done_at ? formatKoreanTime(new Date(myRow.done_at)) : undefined,
+      doneAt: myRow?.done_at ? formatKoreanTime(new Date(myRow.done_at)) : routine.doneAt,
     };
   });
 }
@@ -173,16 +241,18 @@ async function saveCertificationToSupabase(routineKey: string, doneAtIso: string
 }
 
 function getInitialRoutines() {
+  const base = [...defaultRoutines, ...readCustomRoutines()];
+
   if (typeof window === 'undefined') {
-    return initialRoutines;
+    return base;
   }
 
   try {
     const raw = window.localStorage.getItem(getTodayStorageKey());
-    if (!raw) return initialRoutines;
+    if (!raw) return base;
 
     const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt'>>;
-    return initialRoutines.map((routine) => {
+    return base.map((routine) => {
       const match = saved.find((item) => item.id === routine.id);
       if (!match) return routine;
       return {
@@ -192,7 +262,7 @@ function getInitialRoutines() {
       };
     });
   } catch {
-    return initialRoutines;
+    return base;
   }
 }
 
@@ -200,14 +270,20 @@ export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
   const [syncMessage, setSyncMessage] = useState('로컬 저장 모드');
+  const [newTitle, setNewTitle] = useState('');
+  const [newStart, setNewStart] = useState('09:00');
+  const [newEnd, setNewEnd] = useState('10:00');
 
   useEffect(() => {
     const snapshot = routines.map(({ id, doneByMe, doneAt }) => ({ id, doneByMe, doneAt }));
     window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
+    saveCustomRoutines(routines);
   }, [routines]);
 
   const refreshFromSupabase = useCallback(async () => {
-    const synced = await syncTodayFromSupabase();
+    setRoutines((prev) => prev);
+
+    const synced = await syncTodayFromSupabase(routines);
 
     if (!synced) {
       setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
@@ -216,14 +292,13 @@ export function TodayView() {
 
     setRoutines(synced);
     setSyncMessage('Supabase 동기화됨');
-  }, []);
+  }, [routines]);
 
   useEffect(() => {
     const kickoff = setTimeout(() => {
       void refreshFromSupabase();
     }, 0);
 
-    // 실시간 연결 실패 시에도 최소 동기화 보장
     const fallbackPolling = setInterval(() => {
       void refreshFromSupabase();
     }, 60_000);
@@ -251,11 +326,7 @@ export function TodayView() {
             void refreshFromSupabase();
           },
         )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            setSyncMessage('Supabase 실시간 동기화됨');
-          }
-        });
+        .subscribe();
 
       cleanupRealtime = () => {
         void client.removeChannel(channel);
@@ -291,22 +362,20 @@ export function TodayView() {
     const doneAtText = formatKoreanTime(now);
 
     let updated = false;
+    let isDefaultRoutine = false;
 
     setRoutines((prev) =>
       prev.map((routine) => {
         if (routine.id !== id) return routine;
 
-        const inWindow = isInTimeWindow(
-          nowMinute,
-          routine.startMinute,
-          routine.endMinute,
-        );
+        const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
 
         if (!inWindow || routine.doneByMe) {
           return routine;
         }
 
         updated = true;
+        isDefaultRoutine = routine.isDefault;
 
         return {
           ...routine,
@@ -318,12 +387,46 @@ export function TodayView() {
 
     if (!updated) return;
 
+    if (!isDefaultRoutine) {
+      setSyncMessage('로컬 저장 완료');
+      return;
+    }
+
     const ok = await saveCertificationToSupabase(id, now.toISOString());
     setSyncMessage(ok ? 'Supabase 저장 완료' : '로컬 저장 완료 (Supabase 미연동)');
 
     if (ok) {
       void refreshFromSupabase();
     }
+  };
+
+  const addCustomRoutine = () => {
+    const title = newTitle.trim();
+    if (!title) return;
+
+    const [startH, startM] = newStart.split(':').map(Number);
+    const [endH, endM] = newEnd.split(':').map(Number);
+
+    const startMinute = startH * 60 + startM;
+    const endMinute = endH * 60 + endM;
+
+    const newRoutine: Routine = {
+      id: `custom-${Date.now()}`,
+      title,
+      startMinute,
+      endMinute,
+      timeRangeLabel: formatTimeRangeLabel(startMinute, endMinute),
+      doneByMe: false,
+      doneByBuddy: false,
+      isDefault: false,
+    };
+
+    setRoutines((prev) => [...prev, newRoutine]);
+    setNewTitle('');
+  };
+
+  const removeRoutine = (id: string) => {
+    setRoutines((prev) => prev.filter((routine) => routine.id !== id || routine.isDefault));
   };
 
   const today = new Date().toLocaleDateString('ko-KR', {
@@ -339,7 +442,7 @@ export function TodayView() {
           <h1 style={styles.title}>루틴 챌린지</h1>
           <p style={styles.date}>{today}</p>
         </div>
-        <span style={styles.badge}>하루 3회 인증</span>
+        <span style={styles.badge}>기본 3개 + 커스텀</span>
       </div>
 
       <section style={styles.progressCard}>
@@ -353,13 +456,24 @@ export function TodayView() {
         <p style={styles.syncText}>{syncMessage}</p>
       </section>
 
+      <section style={styles.progressCard}>
+        <p style={styles.meta}>루틴 추가</p>
+        <div style={styles.addRow}>
+          <input
+            style={styles.input}
+            placeholder="예: 독서 인증"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+          />
+          <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+          <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+          <button style={styles.addButton} onClick={addCustomRoutine}>추가</button>
+        </div>
+      </section>
+
       <section style={styles.list}>
         {routines.map((routine) => {
-          const inWindow = isInTimeWindow(
-            nowMinute,
-            routine.startMinute,
-            routine.endMinute,
-          );
+          const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
           const canCertify = inWindow && !routine.doneByMe;
 
           return (
@@ -388,9 +502,13 @@ export function TodayView() {
                       : '아직 인증 시간 아님 ⏳'}
                 </p>
                 <p style={styles.meta}>
-                  친구 상태: {routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳'}
+                  친구 상태: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴은 미연동'}
                 </p>
               </div>
+
+              {!routine.isDefault ? (
+                <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
+              ) : null}
             </article>
           );
         })}
@@ -401,7 +519,7 @@ export function TodayView() {
 
 const styles: Record<string, CSSProperties> = {
   page: {
-    maxWidth: 560,
+    maxWidth: 680,
     margin: '0 auto',
     padding: '32px 20px 56px',
     background: '#111315',
@@ -461,6 +579,36 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     color: '#7f8b98',
   },
+  addRow: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  input: {
+    flex: 1,
+    minWidth: 180,
+    background: '#111315',
+    color: '#f5f7fa',
+    border: '1px solid #2b3138',
+    borderRadius: 8,
+    padding: '8px 10px',
+  },
+  inputTime: {
+    background: '#111315',
+    color: '#f5f7fa',
+    border: '1px solid #2b3138',
+    borderRadius: 8,
+    padding: '8px 10px',
+  },
+  addButton: {
+    background: '#1f3a2d',
+    color: '#7cffb2',
+    border: '1px solid #2e664d',
+    borderRadius: 8,
+    padding: '8px 12px',
+    cursor: 'pointer',
+  },
   list: {
     display: 'flex',
     flexDirection: 'column',
@@ -494,6 +642,14 @@ const styles: Record<string, CSSProperties> = {
   checkButtonDisabled: {
     opacity: 0.55,
     cursor: 'not-allowed',
+  },
+  deleteButton: {
+    border: '1px solid #4a2f35',
+    background: '#2b1d21',
+    color: '#ff9ba8',
+    borderRadius: 8,
+    padding: '6px 10px',
+    cursor: 'pointer',
   },
   itemBody: {
     flex: 1,
