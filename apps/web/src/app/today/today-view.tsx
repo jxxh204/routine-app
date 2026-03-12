@@ -5,6 +5,7 @@ import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
+const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
 
 type Routine = {
   id: string;
@@ -109,25 +110,40 @@ async function syncTodayFromSupabase() {
 
   const today = getTodayDateKey();
 
-  const response = await fetch(
+  const myResponse = await fetch(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?user_id=eq.${auth.userId}&challenge_date=eq.${today}`,
     { headers: auth.headers },
   );
 
-  if (!response.ok) return null;
+  if (!myResponse.ok) return null;
 
-  const rows = (await response.json()) as Array<{
+  const myRows = (await myResponse.json()) as Array<{
     routine_key: string;
     done_at: string | null;
   }>;
 
+  let buddyRows: Array<{ routine_key: string }> = [];
+
+  if (buddyUserId) {
+    const buddyResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?select=routine_key&user_id=eq.${buddyUserId}&challenge_date=eq.${today}`,
+      { headers: auth.headers },
+    );
+
+    if (buddyResponse.ok) {
+      buddyRows = (await buddyResponse.json()) as Array<{ routine_key: string }>;
+    }
+  }
+
   return initialRoutines.map((routine) => {
-    const row = rows.find((item) => item.routine_key === routine.id);
-    if (!row) return routine;
+    const myRow = myRows.find((item) => item.routine_key === routine.id);
+    const buddyDone = buddyRows.some((item) => item.routine_key === routine.id);
+
     return {
       ...routine,
-      doneByMe: true,
-      doneAt: row.done_at ? formatKoreanTime(new Date(row.done_at)) : undefined,
+      doneByMe: Boolean(myRow),
+      doneByBuddy: buddyDone,
+      doneAt: myRow?.done_at ? formatKoreanTime(new Date(myRow.done_at)) : undefined,
     };
   });
 }
