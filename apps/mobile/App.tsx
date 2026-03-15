@@ -2,18 +2,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Linking, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import {
-  ActivityIndicator,
-  Linking,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
+  Button,
+  Card,
+  MD3DarkTheme,
+  Provider as PaperProvider,
+  Snackbar,
   Switch,
   Text,
   TextInput,
-  View,
-} from 'react-native';
+  type MD3Theme,
+} from 'react-native-paper';
 import { WebView } from 'react-native-webview';
 
 const WEB_APP_URL = process.env.EXPO_PUBLIC_WEB_APP_URL?.trim();
@@ -41,6 +41,24 @@ type NotificationSettings = {
   wake: number;
   lunch: number;
   sleep: number;
+};
+
+const appTheme: MD3Theme = {
+  ...MD3DarkTheme,
+  roundness: 10,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: '#7cffb2',
+    onPrimary: '#0f1115',
+    secondary: '#c4cfda',
+    background: '#0f1115',
+    surface: '#161b21',
+    surfaceVariant: '#1f2730',
+    outline: '#334050',
+    onSurface: '#f5f7fa',
+    onSurfaceVariant: '#9aa4af',
+    error: '#ff9ba8',
+  },
 };
 
 const defaultRoutines: Routine[] = [
@@ -233,26 +251,28 @@ function Onboarding({ onDone }: { onDone: () => void }) {
         <Text style={styles.onboardingTitle}>루틴 챌린지 시작하기</Text>
         <Text style={styles.onboardingDesc}>{message}</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.bullet}>• 기본 알림 3개 자동 등록 (09:00 / 12:30 / 23:00)</Text>
-          <Text style={styles.bullet}>• 잠금화면/백그라운드에서도 알림 수신</Text>
-          <Text style={styles.bullet}>• 커스텀 루틴 추가해도 기본 3개는 항상 유지</Text>
-        </View>
+        <Card mode="outlined" style={styles.card}>
+          <Card.Content>
+            <Text style={styles.bullet}>• 기본 알림 3개 자동 등록 (09:00 / 12:30 / 23:00)</Text>
+            <Text style={styles.bullet}>• 잠금화면/백그라운드에서도 알림 수신</Text>
+            <Text style={styles.bullet}>• 커스텀 루틴 추가해도 기본 3개는 항상 유지</Text>
+          </Card.Content>
+        </Card>
 
-        <Pressable style={styles.primaryBtn} onPress={requestPermission} disabled={busy}>
-          <Text style={styles.primaryBtnText}>{busy ? '처리 중...' : '알림 권한 허용하고 시작'}</Text>
-        </Pressable>
+        <Button mode="contained" buttonColor="#1f3a2d" textColor="#7cffb2" onPress={requestPermission} loading={busy} disabled={busy}>
+          {busy ? '처리 중...' : '알림 권한 허용하고 시작'}
+        </Button>
 
-        <Pressable style={styles.secondaryBtn} onPress={() => void Linking.openSettings()}>
-          <Text style={styles.secondaryBtnText}>설정 열기</Text>
-        </Pressable>
+        <Button mode="outlined" textColor="#c4cfda" onPress={() => void Linking.openSettings()}>
+          설정 열기
+        </Button>
       </ScrollView>
       <StatusBar style="light" />
     </SafeAreaView>
   );
 }
 
-export default function App() {
+function AppContent() {
   const [booting, setBooting] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('today');
@@ -445,89 +465,89 @@ export default function App() {
 
   const renderRoutines = () => (
     <ScrollView contentContainerStyle={styles.bodyScroll}>
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>루틴 추가/수정</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="루틴 제목"
-          placeholderTextColor="#6f7b89"
-          value={newTitle}
-          onChangeText={setNewTitle}
-        />
-        <View style={styles.row}>
+      <Card mode="outlined" style={styles.card}>
+        <Card.Content>
+          <Text style={styles.sectionTitle}>루틴 추가/수정</Text>
           <TextInput
-            style={styles.inputTime}
-            placeholder="09:00"
-            placeholderTextColor="#6f7b89"
-            value={newStart}
-            onChangeText={setNewStart}
+            mode="outlined"
+            style={styles.paperInput}
+            placeholder="루틴 제목"
+            value={newTitle}
+            onChangeText={setNewTitle}
           />
-          <Text style={styles.separator}>~</Text>
-          <TextInput
-            style={styles.inputTime}
-            placeholder="10:00"
-            placeholderTextColor="#6f7b89"
-            value={newEnd}
-            onChangeText={setNewEnd}
-          />
-        </View>
+          <View style={styles.row}>
+            <TextInput
+              mode="outlined"
+              style={styles.paperInputTime}
+              placeholder="09:00"
+              value={newStart}
+              onChangeText={setNewStart}
+            />
+            <Text style={styles.separator}>~</Text>
+            <TextInput
+              mode="outlined"
+              style={styles.paperInputTime}
+              placeholder="10:00"
+              value={newEnd}
+              onChangeText={setNewEnd}
+            />
+          </View>
 
-        {editingId ? (
-          <Pressable style={styles.primaryBtn} onPress={applyEditRoutine}>
-            <Text style={styles.primaryBtnText}>수정 저장</Text>
-          </Pressable>
-        ) : (
-          <Pressable style={styles.primaryBtn} onPress={addRoutine}>
-            <Text style={styles.primaryBtnText}>커스텀 루틴 추가</Text>
-          </Pressable>
-        )}
-      </View>
+          {editingId ? (
+            <Button mode="contained" onPress={applyEditRoutine}>수정 저장</Button>
+          ) : (
+            <Button mode="contained" onPress={addRoutine}>커스텀 루틴 추가</Button>
+          )}
+        </Card.Content>
+      </Card>
 
       {routines.map((routine) => (
-        <View key={routine.id} style={styles.routineCard}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.routineTitle}>{routine.title}</Text>
-            <Text style={styles.routineMeta}>{formatRange(routine.startMinute, routine.endMinute)}</Text>
-            <Text style={styles.routineMeta}>{routine.isDefault ? '기본 루틴' : '커스텀 루틴'}</Text>
-          </View>
-          {!routine.isDefault ? (
-            <View style={styles.actionCol}>
-              <Pressable style={styles.secondaryBtnSmall} onPress={() => startEditRoutine(routine.id)}>
-                <Text style={styles.secondaryBtnText}>수정</Text>
-              </Pressable>
-              <Pressable style={styles.dangerBtnSmall} onPress={() => removeRoutine(routine.id)}>
-                <Text style={styles.dangerBtnText}>삭제</Text>
-              </Pressable>
+        <Card key={routine.id} mode="outlined" style={styles.routineCard}>
+          <Card.Content style={styles.routineCardContent}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.routineTitle}>{routine.title}</Text>
+              <Text style={styles.routineMeta}>{formatRange(routine.startMinute, routine.endMinute)}</Text>
+              <Text style={styles.routineMeta}>{routine.isDefault ? '기본 루틴' : '커스텀 루틴'}</Text>
             </View>
-          ) : null}
-        </View>
+            {!routine.isDefault ? (
+              <View style={styles.actionCol}>
+                <Button mode="outlined" compact onPress={() => startEditRoutine(routine.id)}>수정</Button>
+                <Button mode="outlined" compact textColor="#ff9ba8" onPress={() => removeRoutine(routine.id)}>
+                  삭제
+                </Button>
+              </View>
+            ) : null}
+          </Card.Content>
+        </Card>
       ))}
     </ScrollView>
   );
 
   const renderSettings = () => (
     <ScrollView contentContainerStyle={styles.bodyScroll}>
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <Text style={styles.sectionTitle}>알림 사용</Text>
-          <Switch value={settings.enabled} onValueChange={(value) => void toggleNotifications(value)} />
-        </View>
-        <Text style={styles.routineMeta}>잠금화면/백그라운드에서 루틴 시간 알림을 받습니다.</Text>
-      </View>
+      <Card mode="outlined" style={styles.card}>
+        <Card.Content>
+          <View style={styles.switchRow}>
+            <Text style={styles.sectionTitle}>알림 사용</Text>
+            <Switch value={settings.enabled} onValueChange={(value) => void toggleNotifications(value)} />
+          </View>
+          <Text style={styles.routineMeta}>잠금화면/백그라운드에서 루틴 시간 알림을 받습니다.</Text>
+        </Card.Content>
+      </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>기본 알림 시간</Text>
-        <TextInput style={styles.input} value={wakeInput} onChangeText={setWakeInput} placeholder="09:00" placeholderTextColor="#6f7b89" />
-        <TextInput style={styles.input} value={lunchInput} onChangeText={setLunchInput} placeholder="12:30" placeholderTextColor="#6f7b89" />
-        <TextInput style={styles.input} value={sleepInput} onChangeText={setSleepInput} placeholder="23:00" placeholderTextColor="#6f7b89" />
-        <Pressable style={styles.primaryBtn} onPress={() => void saveNotificationConfig()}>
-          <Text style={styles.primaryBtnText}>알림 설정 저장</Text>
-        </Pressable>
-      </View>
+      <Card mode="outlined" style={styles.card}>
+        <Card.Content>
+          <Text style={styles.sectionTitle}>기본 알림 시간</Text>
+          <TextInput mode="outlined" style={styles.paperInput} value={wakeInput} onChangeText={setWakeInput} placeholder="09:00" />
+          <TextInput mode="outlined" style={styles.paperInput} value={lunchInput} onChangeText={setLunchInput} placeholder="12:30" />
+          <TextInput mode="outlined" style={styles.paperInput} value={sleepInput} onChangeText={setSleepInput} placeholder="23:00" />
+          <Button mode="contained" onPress={() => void saveNotificationConfig()}>알림 설정 저장</Button>
+        </Card.Content>
+      </Card>
 
-      <Pressable style={styles.secondaryBtn} onPress={() => void Linking.openSettings()}>
-        <Text style={styles.secondaryBtnText}>시스템 설정 열기</Text>
-      </Pressable>
+      <Button mode="outlined" textColor="#c4cfda" style={styles.settingsButton} onPress={() => void Linking.openSettings()}>
+        시스템 설정 열기
+      </Button>
     </ScrollView>
   );
 
@@ -547,25 +567,30 @@ export default function App() {
       </View>
 
       <View style={styles.tabBar}>
-        <Pressable style={styles.tabBtn} onPress={() => setActiveTab('today')}>
-          <Text style={[styles.tabText, activeTab === 'today' ? styles.tabTextActive : null]}>오늘</Text>
-        </Pressable>
-        <Pressable style={styles.tabBtn} onPress={() => setActiveTab('routines')}>
-          <Text style={[styles.tabText, activeTab === 'routines' ? styles.tabTextActive : null]}>루틴</Text>
-        </Pressable>
-        <Pressable style={styles.tabBtn} onPress={() => setActiveTab('settings')}>
-          <Text style={[styles.tabText, activeTab === 'settings' ? styles.tabTextActive : null]}>설정</Text>
-        </Pressable>
+        <Button mode={activeTab === 'today' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('today')} style={styles.tabBtn} compact>오늘</Button>
+        <Button mode={activeTab === 'routines' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('routines')} style={styles.tabBtn} compact>루틴</Button>
+        <Button mode={activeTab === 'settings' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('settings')} style={styles.tabBtn} compact>설정</Button>
       </View>
 
-      {statusMsg ? (
-        <View style={styles.toast}>
-          <Text style={styles.toastText}>{statusMsg}</Text>
-        </View>
-      ) : null}
+      <Snackbar
+        visible={Boolean(statusMsg)}
+        onDismiss={() => setStatusMsg('')}
+        duration={2500}
+        style={styles.toast}
+      >
+        {statusMsg}
+      </Snackbar>
 
       <StatusBar style="light" />
     </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <PaperProvider theme={appTheme}>
+      <AppContent />
+    </PaperProvider>
   );
 }
 
@@ -612,99 +637,29 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#161b21',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#28303a',
-    padding: 14,
-    gap: 10,
   },
   sectionTitle: {
     color: '#f5f7fa',
     fontSize: 16,
     fontWeight: '700',
-  },
-  input: {
-    backgroundColor: '#11151a',
-    borderWidth: 1,
-    borderColor: '#2a333f',
-    borderRadius: 10,
-    color: '#f5f7fa',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    marginBottom: 10,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  inputTime: {
-    flex: 1,
-    backgroundColor: '#11151a',
-    borderWidth: 1,
-    borderColor: '#2a333f',
-    borderRadius: 10,
-    color: '#f5f7fa',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    marginBottom: 12,
   },
   separator: {
     color: '#93a0af',
     fontSize: 16,
   },
-  primaryBtn: {
-    backgroundColor: '#1f3a2d',
-    borderWidth: 1,
-    borderColor: '#2e664d',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    color: '#7cffb2',
-    fontWeight: '700',
-  },
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: '#334050',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginHorizontal: 16,
-  },
-  secondaryBtnSmall: {
-    borderWidth: 1,
-    borderColor: '#334050',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  secondaryBtnText: {
-    color: '#c4cfda',
-    fontWeight: '600',
-  },
-  dangerBtnSmall: {
-    borderWidth: 1,
-    borderColor: '#5b3139',
-    backgroundColor: '#2b1a1f',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-  },
-  dangerBtnText: {
-    color: '#ff9ba8',
-    fontWeight: '600',
-  },
   routineCard: {
+    backgroundColor: '#161b21',
+  },
+  routineCardContent: {
     flexDirection: 'row',
     gap: 10,
-    backgroundColor: '#161b21',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#28303a',
-    padding: 12,
   },
   routineTitle: {
     color: '#f5f7fa',
@@ -717,8 +672,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actionCol: {
-    width: 72,
+    width: 88,
     justifyContent: 'center',
+    gap: 6,
   },
   switchRow: {
     flexDirection: 'row',
@@ -731,35 +687,16 @@ const styles = StyleSheet.create({
     borderTopColor: '#20242a',
     backgroundColor: '#13171c',
     flexDirection: 'row',
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 4,
   },
   tabBtn: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabText: {
-    color: '#7f8b98',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: '#7cffb2',
   },
   toast: {
-    position: 'absolute',
-    bottom: 74,
-    left: 16,
-    right: 16,
+    marginBottom: 70,
     backgroundColor: '#1f2730',
-    borderWidth: 1,
-    borderColor: '#334050',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  toastText: {
-    color: '#d9e2ec',
-    fontSize: 12,
   },
   errorTitle: {
     fontSize: 20,
@@ -793,5 +730,17 @@ const styles = StyleSheet.create({
     color: '#d3dbe4',
     fontSize: 13,
     lineHeight: 18,
+    marginBottom: 6,
+  },
+  paperInput: {
+    marginBottom: 10,
+    backgroundColor: '#11151a',
+  },
+  paperInputTime: {
+    flex: 1,
+    backgroundColor: '#11151a',
+  },
+  settingsButton: {
+    marginHorizontal: 8,
   },
 });
