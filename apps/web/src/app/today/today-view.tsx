@@ -306,8 +306,43 @@ export function TodayView() {
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const snapshot = routines.map(({ id, doneByMe, doneAt, proofImage }) => ({ id, doneByMe, doneAt, proofImage }));
-    window.localStorage.setItem(getTodayStorageKey(), JSON.stringify(snapshot));
+    const todayKey = getTodayStorageKey();
+
+    const snapshot = routines.map(({ id, title, doneByMe, doneAt, proofImage }) => ({
+      id,
+      title,
+      doneByMe,
+      doneAt,
+      proofImage,
+    }));
+
+    let preservedDeletedDone: Array<{
+      id: string;
+      title?: string;
+      doneByMe: boolean;
+      doneAt?: string;
+      proofImage?: string;
+    }> = [];
+
+    try {
+      const raw = window.localStorage.getItem(todayKey);
+      if (raw) {
+        const prev = JSON.parse(raw) as Array<{
+          id: string;
+          title?: string;
+          doneByMe: boolean;
+          doneAt?: string;
+          proofImage?: string;
+        }>;
+
+        const liveIds = new Set(snapshot.map((item) => item.id));
+        preservedDeletedDone = prev.filter((item) => item.doneByMe && !liveIds.has(item.id));
+      }
+    } catch {
+      preservedDeletedDone = [];
+    }
+
+    window.localStorage.setItem(todayKey, JSON.stringify([...snapshot, ...preservedDeletedDone]));
     saveCustomRoutines(routines);
     saveDefaultRoutines(routines);
   }, [routines]);
