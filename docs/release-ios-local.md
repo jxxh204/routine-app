@@ -36,3 +36,9 @@ npx expo prebuild --platform ios
 - 서명 오류: Bundle Identifier / Team / Provisioning 재확인
 - 빌드 오류: `npx expo prebuild --clean --platform ios` 후 재시도
 - 업로드 오류: Xcode/Transporter 재로그인 후 재업로드
+
+## 6) 리허설 체크(2026-03-17)
+- `npx expo --version` 확인: 55.0.15
+- `npx expo prebuild --help` 확인: prebuild 명령 사용 가능
+- `xcodebuild -version` 확인: Xcode 26.3 (17C529)
+- 참고: 실제 Archive/TestFlight 업로드는 Xcode GUI 단계라 수동 실행 필요
