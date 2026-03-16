@@ -692,8 +692,11 @@ export function TodayView() {
                 disabled={!canCertify}
                 style={{
                   ...styles.checkButton,
-                  ...(routine.doneByMe ? styles.checkButtonDone : {}),
-                  ...(!canCertify && !routine.doneByMe ? styles.checkButtonDisabled : {}),
+                  ...(canCertify
+                    ? styles.checkButtonReady
+                    : routine.doneByMe
+                      ? styles.checkButtonDone
+                      : styles.checkButtonWaiting),
                 }}
               >
                 {routine.doneByMe ? '인증완료' : canCertify ? '인증하기' : '대기중'}
@@ -926,13 +929,26 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     fontWeight: 600,
   },
-  checkButtonDone: {
+  checkButtonReady: {
     background: '#1f3a2d',
     color: '#7cffb2',
     border: '1px solid #2e664d',
+    boxShadow: '0 0 0 1px rgba(124,255,178,0.2) inset',
+    transform: 'scale(1.02)',
   },
-  checkButtonDisabled: {
-    opacity: 0.55,
+  checkButtonWaiting: {
+    background: '#212834',
+    color: '#b3c0d0',
+    border: '1px solid #314156',
+    opacity: 0.88,
+    cursor: 'not-allowed',
+  },
+  checkButtonDone: {
+    background: '#1a1f26',
+    color: '#6f7b89',
+    border: '1px solid #2c3440',
+    opacity: 0.62,
+    filter: 'grayscale(0.25)',
     cursor: 'not-allowed',
   },
   editButton: {
