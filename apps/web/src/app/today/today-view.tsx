@@ -861,6 +861,7 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+    marginTop: 8,
     alignItems: 'stretch',
   },
   input: {
