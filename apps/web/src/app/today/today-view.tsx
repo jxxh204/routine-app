@@ -449,6 +449,19 @@ export function TodayView() {
         }
       }, 0);
     } catch {
+      const doneAtText = formatKoreanTime(new Date());
+      setRoutines((prev) =>
+        prev.map((routine) =>
+          routine.id === id
+            ? {
+                ...routine,
+                doneByMe: true,
+                doneAt: doneAtText,
+              }
+            : routine,
+        ),
+      );
+      setSyncMessage('카메라 접근 실패로 텍스트 인증으로 처리됨');
       setCameraError('카메라 권한이 필요합니다. 브라우저 설정에서 카메라를 허용해 주세요.');
     }
   };
