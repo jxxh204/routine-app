@@ -152,7 +152,11 @@ function saveCustomRoutines(routines: Routine[]) {
       endMinute: routine.endMinute,
     }));
 
-  window.localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(customs));
+  try {
+    window.localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(customs));
+  } catch {
+    // ignore localStorage quota overflow
+  }
 }
 
 function saveDefaultRoutines(routines: Routine[]) {
@@ -165,7 +169,11 @@ function saveDefaultRoutines(routines: Routine[]) {
       endMinute: routine.endMinute,
     }));
 
-  window.localStorage.setItem(DEFAULT_ROUTINES_KEY, JSON.stringify(defaults));
+  try {
+    window.localStorage.setItem(DEFAULT_ROUTINES_KEY, JSON.stringify(defaults));
+  } catch {
+    // ignore localStorage quota overflow
+  }
 }
 
 async function getAuthHeaders() {
