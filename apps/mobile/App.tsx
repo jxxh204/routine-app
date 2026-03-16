@@ -758,11 +758,10 @@ const styles = StyleSheet.create({
   },
   calendarWeekRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 6,
   },
   calendarWeekLabel: {
-    flex: 1,
+    width: '14.2857%',
     textAlign: 'center',
     color: '#8e99a7',
     fontSize: 12,
@@ -770,10 +769,9 @@ const styles = StyleSheet.create({
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
   },
   calendarCell: {
-    width: '13.5%',
+    width: '14.2857%',
     minHeight: 52,
     borderRadius: 10,
     borderWidth: 1,
