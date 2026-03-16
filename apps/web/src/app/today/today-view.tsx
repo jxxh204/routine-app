@@ -292,7 +292,7 @@ function getInitialRoutines() {
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
-  const [syncMessage, setSyncMessage] = useState('로컬 저장 모드');
+  const [, setSyncMessage] = useState('로컬 저장 모드');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -600,7 +600,6 @@ export function TodayView() {
         <div style={styles.progressTrack}>
           <div style={{ ...styles.progressFill, width: `${progress}%` }} />
         </div>
-        <p style={styles.syncText}>{syncMessage}</p>
       </section>
 
       <section style={styles.progressCard}>
