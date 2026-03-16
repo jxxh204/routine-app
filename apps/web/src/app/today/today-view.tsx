@@ -707,14 +707,6 @@ export function TodayView() {
                 <p style={styles.itemTitle}>{routine.title}</p>
                 <p style={styles.meta}>인증 가능 시간: {routine.timeRangeLabel}</p>
                 <p style={styles.meta}>
-                  내 상태:{' '}
-                  {routine.doneByMe
-                    ? `완료 ✅${routine.doneAt ? ` (${routine.doneAt})` : ''}`
-                    : inWindow
-                      ? '지금 인증 가능 🔓'
-                      : '아직 인증 시간 아님 ⏳'}
-                </p>
-                <p style={styles.meta}>
                   친구 상태: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴은 미연동'}
                 </p>
                 {routine.proofImage ? (
