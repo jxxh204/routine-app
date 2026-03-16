@@ -342,7 +342,19 @@ export function TodayView() {
       preservedDeletedDone = [];
     }
 
-    window.localStorage.setItem(todayKey, JSON.stringify([...snapshot, ...preservedDeletedDone]));
+    const merged = [...snapshot, ...preservedDeletedDone];
+
+    try {
+      window.localStorage.setItem(todayKey, JSON.stringify(merged));
+    } catch {
+      const lightweight = merged.map(({ id, title, doneByMe, doneAt }) => ({ id, title, doneByMe, doneAt }));
+      try {
+        window.localStorage.setItem(todayKey, JSON.stringify(lightweight));
+      } catch {
+        // ignore localStorage quota overflow
+      }
+    }
+
     saveCustomRoutines(routines);
     saveDefaultRoutines(routines);
   }, [routines]);
