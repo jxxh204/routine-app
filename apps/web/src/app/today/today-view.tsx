@@ -2,6 +2,7 @@
 
 import {
   type CSSProperties,
+  type ChangeEvent,
   type TouchEvent,
   useCallback,
   useEffect,
@@ -330,6 +331,7 @@ export function TodayView() {
   const [cameraError, setCameraError] = useState('');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const snapshot = routines.map(({ id, doneByMe, doneAt, proofImage }) => ({ id, doneByMe, doneAt, proofImage }));
@@ -429,67 +431,14 @@ export function TodayView() {
     setCameraError('');
   }, []);
 
-  const openCameraForRoutine = async (id: string) => {
-    const target = routines.find((routine) => routine.id === id);
-    if (!target) return;
-
-    const inWindow = isInTimeWindow(nowMinute, target.startMinute, target.endMinute);
-    if (!inWindow || target.doneByMe) return;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      mediaStreamRef.current = stream;
-      setCameraRoutineId(id);
-      setCameraError('');
-
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play();
-        }
-      }, 0);
-    } catch {
-      const doneAtText = formatKoreanTime(new Date());
-      setRoutines((prev) =>
-        prev.map((routine) =>
-          routine.id === id
-            ? {
-                ...routine,
-                doneByMe: true,
-                doneAt: doneAtText,
-              }
-            : routine,
-        ),
-      );
-      setSyncMessage('카메라 접근 실패로 텍스트 인증으로 처리됨');
-      setCameraError('카메라 권한이 필요합니다. 브라우저 설정에서 카메라를 허용해 주세요.');
-    }
-  };
-
-  const captureRoutinePhoto = async () => {
-    if (!cameraRoutineId || !videoRef.current) return;
-
-    const video = videoRef.current;
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    if (!width || !height) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
-    context.drawImage(video, 0, 0, width, height);
-    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-
+  const finalizePhotoCertification = async (routineId: string, imageDataUrl: string) => {
     const now = new Date();
     const doneAtText = formatKoreanTime(now);
-    const target = routines.find((routine) => routine.id === cameraRoutineId);
+    const target = routines.find((routine) => routine.id === routineId);
 
     setRoutines((prev) =>
       prev.map((routine) =>
-        routine.id === cameraRoutineId
+        routine.id === routineId
           ? {
               ...routine,
               doneByMe: true,
@@ -518,6 +467,70 @@ export function TodayView() {
     if (ok) {
       void refreshFromSupabase();
     }
+  };
+
+  const openCameraForRoutine = async (id: string) => {
+    const target = routines.find((routine) => routine.id === id);
+    if (!target) return;
+
+    const inWindow = isInTimeWindow(nowMinute, target.startMinute, target.endMinute);
+    if (!inWindow || target.doneByMe) return;
+
+    setCameraRoutineId(id);
+    setCameraError('');
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      mediaStreamRef.current = stream;
+
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          void videoRef.current.play();
+        }
+      }, 0);
+    } catch {
+      setCameraError('카메라 권한이 없거나 기기에서 지원되지 않습니다. 아래 버튼으로 사진을 선택해 인증할 수 있어요.');
+    }
+  };
+
+  const captureRoutinePhoto = async () => {
+    if (!cameraRoutineId || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    if (!width || !height) {
+      setCameraError('카메라 화면을 불러오지 못했습니다. 사진 선택으로 인증해 주세요.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    context.drawImage(video, 0, 0, width, height);
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+    await finalizePhotoCertification(cameraRoutineId, imageDataUrl);
+  };
+
+  const onPickPhotoFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!cameraRoutineId) return;
+
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result) return;
+      await finalizePhotoCertification(cameraRoutineId, result);
+    };
+    reader.readAsDataURL(file);
+
+    event.target.value = '';
   };
 
   const submitRoutineForm = () => {
@@ -774,8 +787,17 @@ export function TodayView() {
             <p style={styles.meta}>사진을 촬영하면 해당 루틴에 인증 썸네일이 저장됩니다.</p>
             {cameraError ? <p style={styles.cameraError}>{cameraError}</p> : null}
             <video ref={videoRef} autoPlay playsInline muted style={styles.cameraPreview} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={(event) => void onPickPhotoFile(event)}
+            />
             <div style={styles.cameraActionRow}>
               <button style={styles.addButton} onClick={() => void captureRoutinePhoto()}>촬영 후 저장</button>
+              <button style={styles.editButton} onClick={() => fileInputRef.current?.click()}>사진 선택</button>
               <button style={styles.cancelButton} onClick={closeCamera}>닫기</button>
             </div>
           </div>
