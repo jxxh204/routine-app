@@ -665,9 +665,9 @@ function AppContent() {
         visible={Boolean(statusMsg)}
         onDismiss={() => setStatusMsg('')}
         duration={2500}
-        style={[styles.toast, { marginBottom: 16 + 48 + 16 + Math.max(insets.bottom, 0) }]}
+        style={[styles.toast, { marginBottom: 12 + 48 + 16 + Math.max(insets.bottom, 0) }]}
       >
-        {statusMsg}
+        <Text style={styles.toastText}>{statusMsg}</Text>
       </Snackbar>
 
       <StatusBar style="light" />
@@ -888,6 +888,9 @@ const styles = StyleSheet.create({
   toast: {
     backgroundColor: '#1f2730',
     borderRadius: CARD_RADIUS,
+  },
+  toastText: {
+    color: '#ffffff',
   },
   errorTitle: {
     fontSize: 20,
