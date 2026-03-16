@@ -44,9 +44,11 @@ type NotificationSettings = {
   sleep: number;
 };
 
+const CARD_RADIUS = 14;
+
 const appTheme: MD3Theme = {
   ...MD3DarkTheme,
-  roundness: 10,
+  roundness: CARD_RADIUS,
   colors: {
     ...MD3DarkTheme.colors,
     primary: '#7cffb2',
@@ -639,6 +641,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#161b21',
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
   },
   sectionTitle: {
     color: '#f5f7fa',
@@ -658,6 +662,8 @@ const styles = StyleSheet.create({
   },
   routineCard: {
     backgroundColor: '#161b21',
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
   },
   routineCardContent: {
     flexDirection: 'row',
@@ -688,6 +694,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#20242a',
     backgroundColor: '#13171c',
+    borderTopLeftRadius: CARD_RADIUS,
+    borderTopRightRadius: CARD_RADIUS,
     flexDirection: 'row',
     paddingHorizontal: 8,
     alignItems: 'center',
@@ -698,6 +706,7 @@ const styles = StyleSheet.create({
   },
   toast: {
     backgroundColor: '#1f2730',
+    borderRadius: CARD_RADIUS,
   },
   errorTitle: {
     fontSize: 20,
