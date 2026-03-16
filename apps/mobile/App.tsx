@@ -163,6 +163,14 @@ async function saveNotiSettings(settings: NotificationSettings) {
   await AsyncStorage.setItem(NOTI_SETTINGS_KEY, JSON.stringify(settings));
 }
 
+function buildReminderMinutes(startMinute: number, durationMinute: number, intervalMinute = 30) {
+  const results: number[] = [];
+  for (let offset = intervalMinute; offset < durationMinute; offset += intervalMinute) {
+    results.push((startMinute + offset) % (24 * 60));
+  }
+  return results;
+}
+
 async function scheduleDefaultNotifications(settings: NotificationSettings) {
   const existing = await Notifications.getAllScheduledNotificationsAsync();
   for (const item of existing) {
@@ -179,35 +187,53 @@ async function scheduleDefaultNotifications(settings: NotificationSettings) {
       title: '⏰ 기상 인증 시간',
       body: '09:00~11:00 사이에 기상 인증을 해주세요.',
       minute: settings.wake,
+      durationMinute: 120,
     },
     {
       key: 'lunch',
       title: '🍽️ 식사 인증 시간',
       body: '12:30~13:30 사이에 식사 인증을 해주세요.',
       minute: settings.lunch,
+      durationMinute: 60,
     },
     {
       key: 'sleep',
       title: '🌙 취침 인증 시간',
       body: '23:00~02:00 사이에 취침 인증을 해주세요.',
       minute: settings.sleep,
+      durationMinute: 180,
     },
-  ];
+  ] as const;
 
   for (const item of list) {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: item.title,
-        body: item.body,
-        data: { source: 'default-routine', routine: item.key },
-        sound: 'default',
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: Math.floor(item.minute / 60),
-        minute: item.minute % 60,
-      },
-    });
+    const reminderMinutes = buildReminderMinutes(item.minute, item.durationMinute);
+
+    const scheduleAt = async (minute: number, isReminder: boolean) => {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: isReminder ? `${item.title} (리마인드)` : item.title,
+          body: isReminder
+            ? '아직 인증완료가 아니라면 지금 인증해 주세요. 30분 후 다시 알려드릴게요.'
+            : item.body,
+          data: {
+            source: 'default-routine',
+            routine: item.key,
+            kind: isReminder ? 'reminder' : 'first',
+          },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: Math.floor(minute / 60),
+          minute: minute % 60,
+        },
+      });
+    };
+
+    await scheduleAt(item.minute, false);
+    for (const reminderMinute of reminderMinutes) {
+      await scheduleAt(reminderMinute, true);
+    }
   }
 }
 
@@ -256,7 +282,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 
         <Card mode="outlined" style={styles.card}>
           <Card.Content>
-            <Text style={styles.bullet}>• 기본 알림 3개 자동 등록 (09:00 / 12:30 / 23:00)</Text>
+            <Text style={styles.bullet}>• 기본 알림 + 미인증 시 30분 간격 리마인드 자동 등록</Text>
             <Text style={styles.bullet}>• 잠금화면/백그라운드에서도 알림 수신</Text>
             <Text style={styles.bullet}>• 커스텀 루틴 추가해도 기본 3개는 항상 유지</Text>
           </Card.Content>
