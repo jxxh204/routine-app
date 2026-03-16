@@ -664,31 +664,35 @@ export function TodayView() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
             />
-            <div style={styles.timeFieldWrap}>
-              <span style={styles.timeFieldLabel}>시작시간</span>
-              <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+            <div style={styles.timeRow}>
+              <div style={styles.timeFieldWrap}>
+                <span style={styles.timeFieldLabel}>시작시간</span>
+                <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+              </div>
+              <div style={styles.timeFieldWrap}>
+                <span style={styles.timeFieldLabel}>종료시간</span>
+                <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+              </div>
             </div>
-            <div style={styles.timeFieldWrap}>
-              <span style={styles.timeFieldLabel}>종료시간</span>
-              <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
-            </div>
-            <button style={styles.addButton} onClick={submitRoutineForm}>
-              {editingRoutineId ? '수정 저장' : '추가'}
-            </button>
-            {editingRoutineId ? (
-              <button
-                style={styles.cancelButton}
-                onClick={() => {
-                  setEditingRoutineId(null);
-                  setNewTitle('');
-                  setNewStart('09:00');
-                  setNewEnd('10:00');
-                  setIsAddFormOpen(false);
-                }}
-              >
-                취소
+            <div style={styles.addActionRow}>
+              <button style={styles.addButtonFull} onClick={submitRoutineForm}>
+                {editingRoutineId ? '수정 저장' : '추가'}
               </button>
-            ) : null}
+              {editingRoutineId ? (
+                <button
+                  style={styles.cancelButton}
+                  onClick={() => {
+                    setEditingRoutineId(null);
+                    setNewTitle('');
+                    setNewStart('09:00');
+                    setNewEnd('10:00');
+                    setIsAddFormOpen(false);
+                  }}
+                >
+                  취소
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </section>
@@ -852,42 +856,58 @@ const styles: Record<string, CSSProperties> = {
   },
   addRow: {
     display: 'flex',
+    flexDirection: 'column',
     gap: 8,
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    alignItems: 'stretch',
   },
   input: {
-    flex: 1,
-    minWidth: 180,
+    width: '100%',
     background: '#111315',
     color: '#f5f7fa',
     border: '1px solid #2b3138',
     borderRadius: 8,
     padding: '8px 10px',
+    boxSizing: 'border-box',
+  },
+  timeRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+    alignItems: 'center',
   },
   timeFieldWrap: {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
+    minWidth: 0,
   },
   timeFieldLabel: {
     color: '#9aa4af',
     fontSize: 12,
     minWidth: 48,
+    whiteSpace: 'nowrap',
   },
   inputTime: {
+    width: '100%',
     background: '#111315',
     color: '#f5f7fa',
     border: '1px solid #2b3138',
     borderRadius: 8,
     padding: '8px 10px',
+    boxSizing: 'border-box',
   },
-  addButton: {
+  addActionRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  addButtonFull: {
+    width: '100%',
     background: '#1f3a2d',
     color: '#7cffb2',
     border: '1px solid #2e664d',
     borderRadius: 8,
-    padding: '8px 12px',
+    padding: '10px 12px',
     cursor: 'pointer',
   },
   cancelButton: {
