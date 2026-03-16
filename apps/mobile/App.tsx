@@ -7,6 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Button,
   Card,
+  IconButton,
   MD3DarkTheme,
   Provider as PaperProvider,
   Modal,
@@ -542,9 +543,17 @@ function AppContent() {
         <Card mode="outlined" style={styles.card}>
           <Card.Content>
             <View style={styles.calendarHeaderRow}>
-              <Button mode="text" onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}>이전</Button>
+              <IconButton
+                icon="chevron-left"
+                size={22}
+                onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+              />
               <Text style={styles.sectionTitle}>{monthTitle}</Text>
-              <Button mode="text" onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}>다음</Button>
+              <IconButton
+                icon="chevron-right"
+                size={22}
+                onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+              />
             </View>
 
             <View style={styles.calendarWeekRow}>
