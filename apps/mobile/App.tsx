@@ -615,13 +615,6 @@ function AppContent() {
         </Card.Content>
       </Card>
 
-      <Card mode="outlined" style={styles.card}>
-        <Card.Content>
-          <Text style={styles.sectionTitle}>알림 발송 기준</Text>
-          <Text style={styles.routineMeta}>푸시 알림은 항상 기본 루틴 시작시간(기상 09:00 / 식사 12:30 / 취침 23:00) 기준으로 발송됩니다.</Text>
-        </Card.Content>
-      </Card>
-
       <Button mode="outlined" textColor="#c4cfda" style={styles.settingsButton} onPress={() => void Linking.openSettings()}>
         시스템 설정 열기
       </Button>
