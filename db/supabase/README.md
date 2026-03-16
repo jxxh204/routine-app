@@ -1,9 +1,11 @@
-# Supabase DB v1
+# Supabase DB Schemas
 
 ## 적용 순서
 1. Supabase 프로젝트 생성
 2. SQL Editor 열기
-3. `schema_v1.sql` 전체 실행
+3. `schema_v1.sql` 실행
+4. `schema_v2_challenge_logs.sql` 실행
+5. `schema_v3_room_auth.sql` 실행
 
 ## MVP 쿼리 체크
 - 그룹 생성: `groups` insert + `group_members(owner)` insert
