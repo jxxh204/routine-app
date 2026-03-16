@@ -680,7 +680,23 @@ export function TodayView() {
             <div style={styles.timeRow}>
               <div style={styles.timeFieldWrap}>
                 <span style={styles.timeFieldLabel}>시작시간</span>
-                <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+                <input
+                  style={styles.inputTime}
+                  type="time"
+                  value={newStart}
+                  onChange={(e) => {
+                    const nextStart = e.target.value;
+                    setNewStart(nextStart);
+
+                    const [h, m] = nextStart.split(':').map(Number);
+                    if (Number.isNaN(h) || Number.isNaN(m)) return;
+
+                    const endMinute = (h * 60 + m + 60) % (24 * 60);
+                    const endH = String(Math.floor(endMinute / 60)).padStart(2, '0');
+                    const endM = String(endMinute % 60).padStart(2, '0');
+                    setNewEnd(`${endH}:${endM}`);
+                  }}
+                />
               </div>
               <div style={styles.timeFieldWrap}>
                 <span style={styles.timeFieldLabel}>종료시간</span>
