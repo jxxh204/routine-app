@@ -766,10 +766,13 @@ export function TodayView() {
       {cameraRoutineId ? (
         <section style={styles.cameraOverlay}>
           <div style={styles.cameraPage}>
-            <p style={styles.cameraTitle}>카메라 인증</p>
-            <p style={styles.meta}>사진을 촬영하면 해당 루틴에 인증 썸네일이 저장됩니다.</p>
-            {cameraError ? <p style={styles.cameraError}>{cameraError}</p> : null}
+            <div style={styles.cameraTopRow}>
+              <button style={styles.cameraTopBtn} type="button">⚡</button>
+              <button style={styles.cameraTopBtn} type="button">1×</button>
+            </div>
+
             <video ref={videoRef} autoPlay playsInline muted style={styles.cameraPreview} />
+
             <input
               ref={fileInputRef}
               type="file"
@@ -778,11 +781,17 @@ export function TodayView() {
               style={{ display: 'none' }}
               onChange={(event) => void onPickPhotoFile(event)}
             />
-            <div style={styles.cameraActionRow}>
-              <button style={styles.addButton} onClick={() => void captureRoutinePhoto()}>촬영 후 저장</button>
-              <button style={styles.editButton} onClick={() => fileInputRef.current?.click()}>사진 선택</button>
-              <button style={styles.cancelButton} onClick={closeCamera}>닫기</button>
+
+            <div style={styles.cameraBottomRow}>
+              <button style={styles.cameraSideIcon} type="button" onClick={() => fileInputRef.current?.click()}>🖼️</button>
+              <button style={styles.cameraShutter} type="button" onClick={() => void captureRoutinePhoto()} aria-label="촬영 후 저장">
+                <span style={styles.cameraShutterInner} />
+              </button>
+              <button style={styles.cameraSideIcon} type="button" onClick={closeCamera}>↻</button>
             </div>
+
+            {cameraError ? <p style={styles.cameraError}>{cameraError}</p> : null}
+            <p style={styles.cameraHint}>촬영 또는 사진 선택 후 자동 저장됩니다.</p>
           </div>
         </section>
       ) : null}
@@ -1063,33 +1072,79 @@ const styles: Record<string, CSSProperties> = {
   cameraPage: {
     width: '100%',
     maxWidth: 520,
-    background: '#14191f',
-    border: '1px solid #2b3138',
-    borderRadius: 14,
+    background: '#0b0e13',
+    border: '1px solid #212833',
+    borderRadius: 18,
     padding: 14,
   },
-  cameraTitle: {
-    margin: 0,
+  cameraTopRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  cameraTopBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    border: '1px solid #3a4048',
+    background: 'rgba(160,160,160,0.35)',
+    color: '#ffffff',
     fontSize: 18,
-    fontWeight: 700,
+    cursor: 'pointer',
   },
   cameraError: {
-    marginTop: 8,
+    marginTop: 10,
     color: '#ff9ba8',
     fontSize: 12,
+    textAlign: 'center',
   },
   cameraPreview: {
     width: '100%',
-    borderRadius: 10,
-    marginTop: 10,
+    borderRadius: 28,
     border: '1px solid #2f3a46',
     background: '#0f1318',
     aspectRatio: '3 / 4',
     objectFit: 'cover',
   },
-  cameraActionRow: {
+  cameraBottomRow: {
     display: 'flex',
-    gap: 8,
-    marginTop: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    padding: '0 10px',
+  },
+  cameraSideIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    border: '1px solid #3b4048',
+    background: 'transparent',
+    color: '#f2f4f7',
+    fontSize: 24,
+    cursor: 'pointer',
+  },
+  cameraShutter: {
+    width: 88,
+    height: 88,
+    borderRadius: 999,
+    border: '4px solid #f1b74d',
+    background: '#11161d',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  },
+  cameraShutterInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 999,
+    background: '#f2f4f7',
+    display: 'block',
+  },
+  cameraHint: {
+    margin: '12px 0 0',
+    fontSize: 12,
+    color: '#8c97a5',
+    textAlign: 'center',
   },
 };
