@@ -708,6 +708,44 @@ function AppContent() {
     </ScrollView>
   );
 
+  const renderWebRoute = (path: '/today' | '/calendar' | '/settings') => {
+    const pageUrl = `${parsedUrl?.origin ?? ''}${path}`;
+
+    return (
+      <WebView
+        style={styles.webview}
+        source={{ uri: pageUrl }}
+        startInLoadingState
+        originWhitelist={['https://*']}
+        onShouldStartLoadWithRequest={(request) => {
+          if (isAllowedUrl(request.url)) return true;
+          void Linking.openURL(request.url);
+          return false;
+        }}
+        renderLoading={() => (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#7cffb2" />
+          </View>
+        )}
+        injectedJavaScript={getWebviewCompletionSyncScript()}
+        onMessage={(event) => {
+          try {
+            const payload = JSON.parse(event.nativeEvent.data ?? '{}') as {
+              source?: string;
+              type?: string;
+              history?: CompletionHistory;
+            };
+
+            if (payload.source !== 'routine-webview' || payload.type !== 'completion-history' || !payload.history) return;
+            setCompletionHistory(payload.history);
+          } catch {
+            // no-op
+          }
+        }}
+      />
+    );
+  };
+
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <View style={styles.header}>
@@ -718,9 +756,7 @@ function AppContent() {
       </View>
 
       <View style={styles.body}>
-        {activeTab === 'today' ? renderToday() : null}
-        {activeTab === 'calendar' ? renderCalendar() : null}
-        {activeTab === 'settings' ? renderSettings() : null}
+        {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
       </View>
 
       <View style={[styles.tabBar, { bottom: 16 + Math.max(insets.bottom, 0) }]}>
