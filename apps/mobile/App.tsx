@@ -527,6 +527,25 @@ function AppContent() {
   };
 
   const renderCalendar = () => {
+    const today = new Date();
+    const todayMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const doneDates = Object.entries(completionHistory)
+      .filter(([, list]) => list.length > 0)
+      .map(([dateKey]) => new Date(`${dateKey}T00:00:00`))
+      .filter((date) => !Number.isNaN(date.getTime()));
+
+    const firstDone = doneDates.length > 0
+      ? doneDates.reduce((min, cur) => (cur.getTime() < min.getTime() ? cur : min), doneDates[0])
+      : today;
+
+    const minMonthStart = new Date(firstDone.getFullYear(), firstDone.getMonth(), 1);
+    const maxMonthStart = todayMonthStart;
+
+    const currentMonthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const canGoPrev = currentMonthStart.getTime() > minMonthStart.getTime();
+    const canGoNext = currentMonthStart.getTime() < maxMonthStart.getTime();
+
     const days = getMonthMatrix(calendarMonth);
     const monthTitle = `${calendarMonth.getFullYear()}년 ${calendarMonth.getMonth() + 1}월`;
 
@@ -546,13 +565,21 @@ function AppContent() {
               <IconButton
                 icon="chevron-left"
                 size={22}
-                onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                disabled={!canGoPrev}
+                onPress={() => {
+                  if (!canGoPrev) return;
+                  setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1));
+                }}
               />
               <Text style={styles.sectionTitle}>{monthTitle}</Text>
               <IconButton
                 icon="chevron-right"
                 size={22}
-                onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                disabled={!canGoNext}
+                onPress={() => {
+                  if (!canGoNext) return;
+                  setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
+                }}
               />
             </View>
 
@@ -567,6 +594,7 @@ function AppContent() {
                 const key = toDateKey(date);
                 const inMonth = date.getMonth() === calendarMonth.getMonth();
                 const doneCount = completionHistory[key]?.length ?? 0;
+                const isToday = key === toDateKey(today);
 
                 return (
                   <TouchableOpacity
@@ -575,6 +603,7 @@ function AppContent() {
                       styles.calendarCell,
                       !inMonth ? styles.calendarCellDim : undefined,
                       doneCount > 0 ? styles.calendarCellDone : undefined,
+                      isToday ? styles.calendarCellToday : undefined,
                     ]}
                     onPress={() => onPressDay(date)}
                   >
@@ -812,6 +841,10 @@ const styles = StyleSheet.create({
   calendarCellDone: {
     borderColor: '#2e664d',
     backgroundColor: '#1b2a22',
+  },
+  calendarCellToday: {
+    borderColor: '#7cffb2',
+    borderWidth: 2,
   },
   calendarDateText: {
     color: '#e7edf4',
