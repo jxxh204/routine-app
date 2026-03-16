@@ -11,6 +11,14 @@ import {
   useState,
 } from 'react';
 
+import {
+  addOneHourHHMM,
+  formatKoreanTime,
+  formatTimeRangeLabel,
+  getNowMinute,
+  isInTimeWindow,
+  minuteToHHMM,
+} from '@/lib/routine-time';
 import { supabase } from '@/lib/supabase';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
@@ -70,42 +78,6 @@ type StoredRoutineDefinition = {
   startMinute: number;
   endMinute: number;
 };
-
-function isInTimeWindow(nowMinute: number, startMinute: number, endMinute: number) {
-  if (startMinute < endMinute) {
-    return nowMinute >= startMinute && nowMinute < endMinute;
-  }
-
-  return nowMinute >= startMinute || nowMinute < endMinute;
-}
-
-function getNowMinute() {
-  const now = new Date();
-  return now.getHours() * 60 + now.getMinutes();
-}
-
-function formatKoreanTime(date: Date) {
-  return date.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
-
-function minuteToHHMM(minute: number) {
-  const h = String(Math.floor(minute / 60)).padStart(2, '0');
-  const m = String(minute % 60).padStart(2, '0');
-  return `${h}:${m}`;
-}
-
-function formatTimeRangeLabel(startMinute: number, endMinute: number) {
-  const start = minuteToHHMM(startMinute);
-  const end = minuteToHHMM(endMinute);
-  if (startMinute < endMinute) {
-    return `${start} - ${end}`;
-  }
-  return `${start} - 다음날 ${end}`;
-}
 
 function getTodayDateKey() {
   const now = new Date();
@@ -688,13 +660,7 @@ export function TodayView() {
                     const nextStart = e.target.value;
                     setNewStart(nextStart);
 
-                    const [h, m] = nextStart.split(':').map(Number);
-                    if (Number.isNaN(h) || Number.isNaN(m)) return;
-
-                    const endMinute = (h * 60 + m + 60) % (24 * 60);
-                    const endH = String(Math.floor(endMinute / 60)).padStart(2, '0');
-                    const endM = String(endMinute % 60).padStart(2, '0');
-                    setNewEnd(`${endH}:${endM}`);
+                    setNewEnd(addOneHourHHMM(nextStart));
                   }}
                 />
               </div>

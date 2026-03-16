@@ -19,6 +19,8 @@ import {
 } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
 
+import { getMonthMatrix, hhmmToMinute, minuteToHHMM, toDateKey } from './src/lib/date-time';
+
 const WEB_APP_URL = process.env.EXPO_PUBLIC_WEB_APP_URL?.trim();
 const ALLOWED_HOSTS = (process.env.EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS ?? '')
   .split(',')
@@ -103,19 +105,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function minuteToHHMM(minute: number) {
-  const h = String(Math.floor(minute / 60)).padStart(2, '0');
-  const m = String(minute % 60).padStart(2, '0');
-  return `${h}:${m}`;
-}
-
-function hhmmToMinute(value: string) {
-  const [h, m] = value.split(':').map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
-  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-  return h * 60 + m;
-}
-
 function formatRange(startMinute: number, endMinute: number) {
   const start = minuteToHHMM(startMinute);
   const end = minuteToHHMM(endMinute);
@@ -182,26 +171,6 @@ async function loadCompletionHistory() {
   } catch {
     return {} as CompletionHistory;
   }
-}
-
-function getMonthMatrix(baseDate: Date) {
-  const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
-  const startDay = first.getDay();
-  const start = new Date(first);
-  start.setDate(first.getDate() - startDay);
-
-  return Array.from({ length: 42 }).map((_, idx) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + idx);
-    return d;
-  });
-}
-
-function toDateKey(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 function buildReminderMinutes(startMinute: number, durationMinute: number, intervalMinute = 30) {
