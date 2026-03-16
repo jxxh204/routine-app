@@ -761,7 +761,7 @@ export function TodayView() {
               setIsAddFormOpen((prev) => !prev);
             }}
           >
-            {isAddFormOpen ? '닫기' : '+ 버튼 추가'}
+            {isAddFormOpen ? '닫기' : '+ 루틴 추가'}
           </button>
         </div>
 
@@ -882,7 +882,7 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: 16,
   },
   addSection: {
-    marginTop: 12,
+    marginTop: 20,
   },
   progressTop: {
     display: 'flex',
