@@ -888,6 +888,7 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #2b3138',
     borderRadius: 8,
     padding: '0 10px',
+    fontSize: 16,
     boxSizing: 'border-box',
   },
   timeRow: {
@@ -915,6 +916,7 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #2b3138',
     borderRadius: 8,
     padding: '8px 10px',
+    fontSize: 16,
     boxSizing: 'border-box',
   },
   addActionRow: {
