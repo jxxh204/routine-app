@@ -766,7 +766,14 @@ export function TodayView() {
         style={{ display: 'none' }}
         onChange={(event) => void onPickPhotoFile(event)}
       />
-      <style>{`.routine-title-input::placeholder { color: #2b3138; }`}</style>
+      <style>{`
+        .routine-title-input::placeholder { color: #2b3138; }
+        button, [role='button'] {
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+        }
+      `}</style>
     </main>
   );
 }
