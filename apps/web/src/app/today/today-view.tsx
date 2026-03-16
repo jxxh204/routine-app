@@ -740,15 +740,15 @@ export function TodayView() {
           const card = (
             <article
               className="routine-card-surface"
+              onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
               style={{
                 ...styles.item,
                 ...(inWindow ? styles.itemActive : styles.itemInactive),
+                ...(canCertify ? styles.itemClickable : {}),
                 ...(swipedRoutineId === routine.id ? styles.itemSwiped : {}),
               }}
             >
               <span
-                role={canCertify ? 'button' : undefined}
-                onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
                 style={{
                   ...styles.checkTag,
                   ...(canCertify
@@ -1040,6 +1040,9 @@ const styles: Record<string, CSSProperties> = {
     opacity: 1,
     filter: 'grayscale(0.12)',
   },
+  itemClickable: {
+    cursor: 'pointer',
+  },
   checkTag: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -1059,7 +1062,6 @@ const styles: Record<string, CSSProperties> = {
     color: '#7cffb2',
     border: '1px solid #2e664d',
     boxShadow: '0 0 0 1px rgba(124,255,178,0.2) inset',
-    cursor: 'pointer',
   },
   checkTagWaiting: {
     background: '#212834',
