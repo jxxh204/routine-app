@@ -238,6 +238,69 @@ async function scheduleDefaultNotifications(settings: NotificationSettings, rout
   }
 }
 
+
+function getWebviewCompletionSyncScript() {
+  return `
+    (function() {
+      var PREFIX = 'routine-challenge-v1:';
+      var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+      function toHistory() {
+        var result = {};
+        for (var i = 0; i < localStorage.length; i += 1) {
+          var key = localStorage.key(i);
+          if (!key || key.indexOf(PREFIX) !== 0) continue;
+
+          var dateKey = key.slice(PREFIX.length);
+          if (!DATE_RE.test(dateKey)) continue;
+
+          try {
+            var raw = localStorage.getItem(key);
+            if (!raw) continue;
+            var list = JSON.parse(raw);
+            if (!Array.isArray(list)) continue;
+
+            var done = list
+              .filter(function(item) { return item && item.doneByMe; })
+              .map(function(item) {
+                return {
+                  id: String(item.id || ''),
+                  title: String(item.title || '루틴'),
+                  doneAt: item.doneAt ? String(item.doneAt) : undefined,
+                };
+              });
+
+            if (done.length > 0) {
+              result[dateKey] = done;
+            }
+          } catch (e) {
+            // ignore parse errors per key
+          }
+        }
+        return result;
+      }
+
+      function send() {
+        try {
+          var payload = {
+            source: 'routine-webview',
+            type: 'completion-history',
+            history: toHistory(),
+          };
+          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        } catch (e) {
+          // ignore runtime errors
+        }
+      }
+
+      send();
+      window.addEventListener('storage', send);
+      setInterval(send, 15000);
+    })();
+    true;
+  `;
+}
+
 function AppError({ title, detail }: { title: string; detail: string }) {
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
@@ -348,6 +411,12 @@ function AppContent() {
       void saveRoutines(routines);
     }
   }, [routines, booting]);
+
+  useEffect(() => {
+    if (!booting) {
+      void AsyncStorage.setItem(COMPLETION_HISTORY_KEY, JSON.stringify(completionHistory));
+    }
+  }, [completionHistory, booting]);
 
   useEffect(() => {
     if (booting || !onboardingDone || didRestoreNotificationsRef.current) return;
@@ -483,6 +552,21 @@ function AppContent() {
             <ActivityIndicator size="large" color="#7cffb2" />
           </View>
         )}
+        injectedJavaScript={getWebviewCompletionSyncScript()}
+        onMessage={(event) => {
+          try {
+            const payload = JSON.parse(event.nativeEvent.data ?? '{}') as {
+              source?: string;
+              type?: string;
+              history?: CompletionHistory;
+            };
+
+            if (payload.source !== 'routine-webview' || payload.type !== 'completion-history' || !payload.history) return;
+            setCompletionHistory(payload.history);
+          } catch {
+            // no-op
+          }
+        }}
       />
     );
   };
