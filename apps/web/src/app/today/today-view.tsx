@@ -680,6 +680,7 @@ export function TodayView() {
 
           const card = (
             <article
+              className="routine-card-surface"
               style={{
                 ...styles.item,
                 ...(inWindow ? styles.itemActive : styles.itemInactive),
@@ -742,11 +743,12 @@ export function TodayView() {
           return (
             <div
               key={routine.id}
+              className="routine-card-surface"
               style={styles.swipeWrap}
               onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
               onTouchEnd={handleRoutineTouchEnd}
             >
-              <div style={styles.actionWrap}>
+              <div className="routine-card-surface" style={styles.actionWrap}>
                 <button style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</button>
                 {!routine.isDefault ? (
                   <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
@@ -768,7 +770,8 @@ export function TodayView() {
       />
       <style>{`
         .routine-title-input::placeholder { color: #2b3138; }
-        button, [role='button'] {
+        .routine-card-surface,
+        .routine-card-surface * {
           -webkit-user-select: none;
           user-select: none;
           -webkit-touch-callout: none;
