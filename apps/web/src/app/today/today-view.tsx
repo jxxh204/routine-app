@@ -301,6 +301,7 @@ export function TodayView() {
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
   const [cameraRoutineId, setCameraRoutineId] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState('');
+  const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -467,25 +468,36 @@ export function TodayView() {
   };
 
   const captureRoutinePhoto = async () => {
-    if (!cameraRoutineId || !videoRef.current) return;
+    if (!cameraRoutineId || !videoRef.current || isCapturing) return;
 
     const video = videoRef.current;
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    if (!width || !height) {
-      setCameraError('카메라 화면을 불러오지 못했습니다. 사진 선택으로 인증해 주세요.');
-      return;
+    setIsCapturing(true);
+
+    try {
+      // iOS/WebView에서 videoWidth/videoHeight가 늦게 잡히는 경우를 대비해 짧게 대기
+      for (let i = 0; i < 10 && (!video.videoWidth || !video.videoHeight); i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      if (!width || !height) {
+        setCameraError('카메라 프레임을 아직 불러오지 못했습니다. 잠시 후 다시 눌러주세요.');
+        return;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) return;
+
+      context.drawImage(video, 0, 0, width, height);
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      await finalizePhotoCertification(cameraRoutineId, imageDataUrl);
+    } finally {
+      setIsCapturing(false);
     }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
-    context.drawImage(video, 0, 0, width, height);
-    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-    await finalizePhotoCertification(cameraRoutineId, imageDataUrl);
   };
 
   const onPickPhotoFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -784,7 +796,16 @@ export function TodayView() {
 
             <div style={styles.cameraBottomRow}>
               <button style={styles.cameraSideIcon} type="button" onClick={() => fileInputRef.current?.click()}>🖼️</button>
-              <button style={styles.cameraShutter} type="button" onClick={() => void captureRoutinePhoto()} aria-label="촬영 후 저장">
+              <button
+                style={{
+                  ...styles.cameraShutter,
+                  ...(isCapturing ? styles.cameraShutterBusy : {}),
+                }}
+                type="button"
+                onClick={() => void captureRoutinePhoto()}
+                disabled={isCapturing}
+                aria-label="촬영 후 저장"
+              >
                 <span style={styles.cameraShutterInner} />
               </button>
               <button style={styles.cameraSideIcon} type="button" onClick={closeCamera}>↻</button>
@@ -1140,6 +1161,11 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
+  },
+  cameraShutterBusy: {
+    opacity: 0.7,
+    transform: 'scale(0.98)',
+    cursor: 'not-allowed',
   },
   cameraShutterInner: {
     width: 64,
