@@ -907,8 +907,6 @@ const styles: Record<string, CSSProperties> = {
   },
   itemSwiped: {
     transform: 'translateX(-152px)',
-    opacity: 0,
-    pointerEvents: 'none',
   },
   itemActive: {
     border: '1px solid #2e664d',
