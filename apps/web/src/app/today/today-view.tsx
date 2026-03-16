@@ -747,7 +747,7 @@ export function TodayView() {
       </section>
 
 
-      <section style={styles.progressCard}>
+      <section style={{ ...styles.progressCard, ...styles.addSection }}>
         <div style={styles.addHeaderRow}>
           <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
           <button
@@ -881,6 +881,9 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
+  },
+  addSection: {
+    marginTop: 8,
   },
   progressTop: {
     display: 'flex',
