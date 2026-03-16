@@ -301,6 +301,7 @@ export function TodayView() {
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
   const [pendingCaptureRoutineId, setPendingCaptureRoutineId] = useState<string | null>(null);
   const [thumbMenuRoutineId, setThumbMenuRoutineId] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
@@ -726,6 +727,10 @@ export function TodayView() {
                     onMouseDown={() => startThumbLongPress(routine.id)}
                     onMouseUp={cancelThumbLongPress}
                     onMouseLeave={cancelThumbLongPress}
+                    onClick={() => {
+                      if (thumbMenuRoutineId === routine.id) return;
+                      setPreviewImage(routine.proofImage ?? null);
+                    }}
                   >
                     <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
                     {thumbMenuRoutineId === routine.id ? (
@@ -768,6 +773,16 @@ export function TodayView() {
         style={{ display: 'none' }}
         onChange={(event) => void onPickPhotoFile(event)}
       />
+
+      {previewImage ? (
+        <section style={styles.previewOverlay} onClick={() => setPreviewImage(null)}>
+          <div style={styles.previewCard} onClick={(event) => event.stopPropagation()}>
+            <img src={previewImage} alt="인증 사진 확대" style={styles.previewImage} />
+            <button style={styles.previewCloseButton} onClick={() => setPreviewImage(null)}>닫기</button>
+          </div>
+        </section>
+      ) : null}
+
       <style>{`
         .routine-title-input::placeholder { color: #2b3138; }
         .routine-card-surface,
@@ -1073,6 +1088,41 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 6,
     padding: '4px 6px',
     fontSize: 11,
+    cursor: 'pointer',
+  },
+  previewOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(8, 10, 14, 0.78)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    zIndex: 30,
+  },
+  previewCard: {
+    width: '100%',
+    maxWidth: 560,
+    borderRadius: 14,
+    border: '1px solid #2f3a46',
+    background: '#11151a',
+    padding: 10,
+  },
+  previewImage: {
+    width: '100%',
+    maxHeight: '70vh',
+    borderRadius: 10,
+    objectFit: 'contain',
+    background: '#000',
+  },
+  previewCloseButton: {
+    marginTop: 10,
+    width: '100%',
+    border: '1px solid #3b4552',
+    background: '#2a3038',
+    color: '#d0d8e0',
+    borderRadius: 8,
+    padding: '8px 12px',
     cursor: 'pointer',
   },
 };
