@@ -197,21 +197,21 @@ async function scheduleDefaultNotifications(settings: NotificationSettings) {
       key: 'wake',
       title: '⏰ 기상 인증 시간',
       body: '09:00~11:00 사이에 기상 인증을 해주세요.',
-      minute: settings.wake,
+      minute: 9 * 60,
       durationMinute: 120,
     },
     {
       key: 'lunch',
       title: '🍽️ 식사 인증 시간',
       body: '12:30~13:30 사이에 식사 인증을 해주세요.',
-      minute: settings.lunch,
+      minute: 12 * 60 + 30,
       durationMinute: 60,
     },
     {
       key: 'sleep',
       title: '🌙 취침 인증 시간',
       body: '23:00~02:00 사이에 취침 인증을 해주세요.',
-      minute: settings.sleep,
+      minute: 23 * 60,
       durationMinute: 180,
     },
   ] as const;
@@ -329,9 +329,6 @@ function AppContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<NotificationSettings>(defaultNotiSettings);
-  const [wakeInput, setWakeInput] = useState('09:00');
-  const [lunchInput, setLunchInput] = useState('12:30');
-  const [sleepInput, setSleepInput] = useState('23:00');
   const [statusMsg, setStatusMsg] = useState('');
   const didRestoreNotificationsRef = useRef(false);
 
@@ -350,9 +347,6 @@ function AppContent() {
       setRoutines(loadedRoutines);
       setCompletionHistory(loadedHistory);
       setSettings(loadedSettings);
-      setWakeInput(minuteToHHMM(loadedSettings.wake));
-      setLunchInput(minuteToHHMM(loadedSettings.lunch));
-      setSleepInput(minuteToHHMM(loadedSettings.sleep));
       setBooting(false);
     };
 
@@ -470,29 +464,6 @@ function AppContent() {
   const removeRoutine = (id: string) => {
     setRoutines((prev) => prev.filter((item) => item.isDefault || item.id !== id));
     setStatusMsg('커스텀 루틴을 삭제했어요.');
-  };
-
-  const saveNotificationConfig = async () => {
-    const wake = hhmmToMinute(wakeInput);
-    const lunch = hhmmToMinute(lunchInput);
-    const sleep = hhmmToMinute(sleepInput);
-
-    if (wake === null || lunch === null || sleep === null) {
-      setStatusMsg('알림 시간 형식(HH:MM)을 확인해 주세요.');
-      return;
-    }
-
-    const next: NotificationSettings = {
-      ...settings,
-      wake,
-      lunch,
-      sleep,
-    };
-
-    setSettings(next);
-    await saveNotiSettings(next);
-    await scheduleDefaultNotifications(next);
-    setStatusMsg(next.enabled ? '알림 시간이 저장됐어요.' : '알림이 꺼져 있어요.');
   };
 
   const toggleNotifications = async (enabled: boolean) => {
@@ -656,11 +627,8 @@ function AppContent() {
 
       <Card mode="outlined" style={styles.card}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>기본 알림 시간</Text>
-          <TextInput mode="outlined" style={styles.paperInput} value={wakeInput} onChangeText={setWakeInput} placeholder="09:00" />
-          <TextInput mode="outlined" style={styles.paperInput} value={lunchInput} onChangeText={setLunchInput} placeholder="12:30" />
-          <TextInput mode="outlined" style={styles.paperInput} value={sleepInput} onChangeText={setSleepInput} placeholder="23:00" />
-          <Button mode="contained" onPress={() => void saveNotificationConfig()}>알림 설정 저장</Button>
+          <Text style={styles.sectionTitle}>알림 발송 기준</Text>
+          <Text style={styles.routineMeta}>푸시 알림은 항상 기본 루틴 시작시간(기상 09:00 / 식사 12:30 / 취침 23:00) 기준으로 발송됩니다.</Text>
         </Card.Content>
       </Card>
 
