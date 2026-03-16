@@ -661,76 +661,7 @@ export function TodayView() {
         </div>
       </section>
 
-      <section style={styles.progressCard}>
-        <div style={styles.addHeaderRow}>
-          <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
-          <button
-            style={{ ...styles.addToggleButton, ...(isAddFormOpen ? styles.addToggleButtonNeutral : {}) }}
-            onClick={() => {
-              if (isAddFormOpen) {
-                setEditingRoutineId(null);
-                setNewTitle('');
-                setNewStart('09:00');
-                setNewEnd('10:00');
-              }
-              setIsAddFormOpen((prev) => !prev);
-            }}
-          >
-            {isAddFormOpen ? '닫기' : '+ 추가'}
-          </button>
-        </div>
 
-        {isAddFormOpen ? (
-          <div style={styles.addRow}>
-            <input
-              className="routine-title-input"
-              style={styles.input}
-              placeholder="예: 독서 인증"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-            />
-            <div style={styles.timeRow}>
-              <div style={styles.timeFieldWrap}>
-                <span style={styles.timeFieldLabel}>시작</span>
-                <input
-                  style={styles.inputTime}
-                  type="time"
-                  value={newStart}
-                  onChange={(e) => {
-                    const nextStart = e.target.value;
-                    setNewStart(nextStart);
-
-                    setNewEnd(addOneHourHHMM(nextStart));
-                  }}
-                />
-              </div>
-              <div style={styles.timeFieldWrap}>
-                <span style={styles.timeFieldLabel}>종료</span>
-                <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
-              </div>
-            </div>
-            <div style={styles.addActionRow}>
-              <button style={styles.addButtonFull} onClick={submitRoutineForm}>
-                {editingRoutineId ? '수정 저장' : '추가'}
-              </button>
-              {editingRoutineId ? (
-                <button
-                  style={styles.cancelButton}
-                  onClick={() => {
-                    setEditingRoutineId(null);
-                    setNewTitle('');
-                    setNewStart('09:00');
-                    setNewEnd('10:00');
-                    setIsAddFormOpen(false);
-                  }}
-                >
-                  취소
-                </button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </section>
 
       <section style={styles.list}>
         {routines.map((routine) => {
@@ -813,6 +744,78 @@ export function TodayView() {
             </div>
           );
         })}
+      </section>
+
+
+      <section style={styles.progressCard}>
+        <div style={styles.addHeaderRow}>
+          <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
+          <button
+            style={{ ...styles.addToggleButton, ...(isAddFormOpen ? styles.addToggleButtonNeutral : {}) }}
+            onClick={() => {
+              if (isAddFormOpen) {
+                setEditingRoutineId(null);
+                setNewTitle('');
+                setNewStart('09:00');
+                setNewEnd('10:00');
+              }
+              setIsAddFormOpen((prev) => !prev);
+            }}
+          >
+            {isAddFormOpen ? '닫기' : '+ 추가'}
+          </button>
+        </div>
+
+        {isAddFormOpen ? (
+          <div style={styles.addRow}>
+            <input
+              className="routine-title-input"
+              style={styles.input}
+              placeholder="예: 독서 인증"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+            <div style={styles.timeRow}>
+              <div style={styles.timeFieldWrap}>
+                <span style={styles.timeFieldLabel}>시작</span>
+                <input
+                  style={styles.inputTime}
+                  type="time"
+                  value={newStart}
+                  onChange={(e) => {
+                    const nextStart = e.target.value;
+                    setNewStart(nextStart);
+
+                    setNewEnd(addOneHourHHMM(nextStart));
+                  }}
+                />
+              </div>
+              <div style={styles.timeFieldWrap}>
+                <span style={styles.timeFieldLabel}>종료</span>
+                <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+              </div>
+            </div>
+            <div style={styles.addActionRow}>
+              <button style={styles.addButtonFull} onClick={submitRoutineForm}>
+                {editingRoutineId ? '수정 저장' : '추가'}
+              </button>
+              {editingRoutineId ? (
+                <button
+                  style={styles.cancelButton}
+                  onClick={() => {
+                    setEditingRoutineId(null);
+                    setNewTitle('');
+                    setNewStart('09:00');
+                    setNewEnd('10:00');
+                    setIsAddFormOpen(false);
+                  }}
+                >
+                  취소
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <input
