@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
   Card,
@@ -210,7 +211,7 @@ async function scheduleDefaultNotifications(settings: NotificationSettings) {
 
 function AppError({ title, detail }: { title: string; detail: string }) {
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       <View style={styles.center}>
         <Text style={styles.errorTitle}>{title}</Text>
         <Text style={styles.errorText}>{detail}</Text>
@@ -246,7 +247,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.onboardingWrap}>
         <Text style={styles.onboardingTitle}>루틴 챌린지 시작하기</Text>
         <Text style={styles.onboardingDesc}>{message}</Text>
@@ -273,6 +274,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 }
 
 function AppContent() {
+  const insets = useSafeAreaInsets();
   const [booting, setBooting] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('today');
@@ -332,7 +334,7 @@ function AppContent() {
 
   if (booting) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView edges={['top']} style={styles.container}>
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#7cffb2" />
         </View>
@@ -552,7 +554,7 @@ function AppContent() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Routine Challenge</Text>
         <Text style={styles.headerSub}>
@@ -566,7 +568,7 @@ function AppContent() {
         {activeTab === 'settings' ? renderSettings() : null}
       </View>
 
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { height: 62 + Math.max(insets.bottom, 8), paddingBottom: Math.max(insets.bottom, 8) }]}>
         <Button mode={activeTab === 'today' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('today')} style={styles.tabBtn} compact>오늘</Button>
         <Button mode={activeTab === 'routines' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('routines')} style={styles.tabBtn} compact>루틴</Button>
         <Button mode={activeTab === 'settings' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('settings')} style={styles.tabBtn} compact>설정</Button>
@@ -576,7 +578,7 @@ function AppContent() {
         visible={Boolean(statusMsg)}
         onDismiss={() => setStatusMsg('')}
         duration={2500}
-        style={styles.toast}
+        style={[styles.toast, { marginBottom: 16 + 62 + Math.max(insets.bottom, 8) }]}
       >
         {statusMsg}
       </Snackbar>
@@ -695,7 +697,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toast: {
-    marginBottom: 70,
     backgroundColor: '#1f2730',
   },
   errorTitle: {
