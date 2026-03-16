@@ -633,7 +633,7 @@ export function TodayView() {
             />
             <div style={styles.timeRow}>
               <div style={styles.timeFieldWrap}>
-                <span style={styles.timeFieldLabel}>시작시간</span>
+                <span style={styles.timeFieldLabel}>시작</span>
                 <input
                   style={styles.inputTime}
                   type="time"
@@ -647,7 +647,7 @@ export function TodayView() {
                 />
               </div>
               <div style={styles.timeFieldWrap}>
-                <span style={styles.timeFieldLabel}>종료시간</span>
+                <span style={styles.timeFieldLabel}>종료</span>
                 <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
               </div>
             </div>
