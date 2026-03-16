@@ -462,11 +462,15 @@ export function TodayView() {
       return;
     }
 
-    const ok = await saveCertificationToSupabase(target.id, now.toISOString());
-    setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
+    try {
+      const ok = await saveCertificationToSupabase(target.id, now.toISOString());
+      setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
 
-    if (ok) {
-      void refreshFromSupabase();
+      if (ok) {
+        void refreshFromSupabase();
+      }
+    } catch {
+      setSyncMessage('사진 인증 로컬 저장 완료 (Supabase 저장 중 오류)');
     }
   };
 
