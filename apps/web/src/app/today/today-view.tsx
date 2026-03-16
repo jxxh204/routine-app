@@ -889,7 +889,7 @@ const styles: Record<string, CSSProperties> = {
   timeFieldWrap: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     minWidth: 0,
   },
   timeFieldLabel: {
