@@ -644,6 +644,7 @@ export function TodayView() {
         {isAddFormOpen ? (
           <div style={styles.addRow}>
             <input
+              className="routine-title-input"
               style={styles.input}
               placeholder="예: 독서 인증"
               value={newTitle}
@@ -785,6 +786,7 @@ export function TodayView() {
           </div>
         </section>
       ) : null}
+      <style>{`.routine-title-input::placeholder { color: #2b3138; }`}</style>
     </main>
   );
 }
@@ -866,11 +868,12 @@ const styles: Record<string, CSSProperties> = {
   },
   input: {
     width: '100%',
+    height: 32,
     background: '#111315',
     color: '#f5f7fa',
     border: '1px solid #2b3138',
     borderRadius: 8,
-    padding: '8px 10px',
+    padding: '0 10px',
     boxSizing: 'border-box',
   },
   timeRow: {
