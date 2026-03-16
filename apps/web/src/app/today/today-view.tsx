@@ -300,7 +300,9 @@ export function TodayView() {
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
   const [pendingCaptureRoutineId, setPendingCaptureRoutineId] = useState<string | null>(null);
+  const [thumbMenuRoutineId, setThumbMenuRoutineId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const thumbLongPressTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const snapshot = routines.map(({ id, doneByMe, doneAt, proofImage }) => ({ id, doneByMe, doneAt, proofImage }));
@@ -379,6 +381,14 @@ export function TodayView() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (thumbLongPressTimerRef.current) {
+        window.clearTimeout(thumbLongPressTimerRef.current);
+      }
+    };
+  }, []);
+
   const doneCount = useMemo(
     () => routines.filter((routine) => routine.doneByMe).length,
     [routines],
@@ -433,6 +443,29 @@ export function TodayView() {
 
     setPendingCaptureRoutineId(id);
     fileInputRef.current?.click();
+  };
+
+  const retakeRoutinePhoto = (id: string) => {
+    setThumbMenuRoutineId(null);
+    setPendingCaptureRoutineId(id);
+    fileInputRef.current?.click();
+  };
+
+  const startThumbLongPress = (id: string) => {
+    if (thumbLongPressTimerRef.current) {
+      window.clearTimeout(thumbLongPressTimerRef.current);
+    }
+
+    thumbLongPressTimerRef.current = window.setTimeout(() => {
+      setThumbMenuRoutineId(id);
+    }, 420);
+  };
+
+  const cancelThumbLongPress = () => {
+    if (thumbLongPressTimerRef.current) {
+      window.clearTimeout(thumbLongPressTimerRef.current);
+      thumbLongPressTimerRef.current = null;
+    }
   };
 
   const onPickPhotoFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -683,8 +716,23 @@ export function TodayView() {
                   친구 상태: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴은 미연동'}
                 </p>
                 {routine.proofImage ? (
-                  <div style={styles.thumbWrap}>
+                  <div
+                    style={styles.thumbWrap}
+                    onContextMenu={(event) => event.preventDefault()}
+                    onTouchStart={() => startThumbLongPress(routine.id)}
+                    onTouchEnd={cancelThumbLongPress}
+                    onTouchCancel={cancelThumbLongPress}
+                    onMouseDown={() => startThumbLongPress(routine.id)}
+                    onMouseUp={cancelThumbLongPress}
+                    onMouseLeave={cancelThumbLongPress}
+                  >
                     <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
+                    {thumbMenuRoutineId === routine.id ? (
+                      <div style={styles.thumbMenu}>
+                        <button style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</button>
+                        <button style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</button>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -979,10 +1027,42 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 10,
     overflow: 'hidden',
     border: '1px solid #2f3a46',
+    position: 'relative',
+    WebkitTouchCallout: 'none',
+    userSelect: 'none',
   },
   thumbImage: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
+    pointerEvents: 'none',
+  },
+  thumbMenu: {
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(8,10,14,0.8)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: 6,
+    padding: 6,
+  },
+  thumbMenuButton: {
+    border: '1px solid #2e664d',
+    background: '#1f3a2d',
+    color: '#7cffb2',
+    borderRadius: 6,
+    padding: '4px 6px',
+    fontSize: 11,
+    cursor: 'pointer',
+  },
+  thumbMenuCancel: {
+    border: '1px solid #3b4552',
+    background: '#2a3038',
+    color: '#d0d8e0',
+    borderRadius: 6,
+    padding: '4px 6px',
+    fontSize: 11,
+    cursor: 'pointer',
   },
 };
