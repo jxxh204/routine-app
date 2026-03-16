@@ -915,8 +915,9 @@ const styles: Record<string, CSSProperties> = {
   },
   itemInactive: {
     border: '1px solid #252a31',
-    opacity: 0.62,
-    filter: 'grayscale(0.2)',
+    background: '#171b20',
+    opacity: 1,
+    filter: 'grayscale(0.12)',
   },
   checkButton: {
     width: 72,
