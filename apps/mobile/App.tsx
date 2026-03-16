@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
@@ -54,6 +54,7 @@ type CompletedRoutine = {
   id: string;
   title: string;
   doneAt?: string;
+  proofImage?: string;
 };
 
 type CompletionHistory = Record<string, CompletedRoutine[]>;
@@ -267,6 +268,7 @@ function getWebviewCompletionSyncScript() {
                   id: String(item.id || ''),
                   title: String(item.title || '루틴'),
                   doneAt: item.doneAt ? String(item.doneAt) : undefined,
+                  proofImage: item.proofImage ? String(item.proofImage) : undefined,
                 };
               });
 
@@ -675,6 +677,7 @@ function AppContent() {
                 <View key={`${item.id}-${item.doneAt ?? ''}`} style={styles.calendarDoneItem}>
                   <Text style={styles.routineTitle}>{item.title}</Text>
                   <Text style={styles.routineMeta}>{item.doneAt ?? '완료 시간 미기록'}</Text>
+                  {item.proofImage ? <Image source={{ uri: item.proofImage }} style={styles.calendarThumb} /> : null}
                 </View>
               ))
             )}
@@ -928,6 +931,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#11151a',
     padding: 10,
     marginBottom: 6,
+  },
+  calendarThumb: {
+    marginTop: 8,
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    backgroundColor: '#0b0d10',
   },
   tabBar: {
     position: 'absolute',
