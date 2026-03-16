@@ -5,6 +5,24 @@ import { useState, type CSSProperties } from 'react';
 
 type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
+function sendNativeAction(action: 'open-settings' | 'request-notification-permission' | 'toggle-notification', enabled?: boolean) {
+  if (typeof window === 'undefined') return false;
+
+  const bridge = (window as Window & { ReactNativeWebView?: { postMessage: (msg: string) => void } }).ReactNativeWebView;
+  if (!bridge?.postMessage) return false;
+
+  bridge.postMessage(
+    JSON.stringify({
+      source: 'routine-web',
+      type: 'native-action',
+      action,
+      enabled,
+    }),
+  );
+
+  return true;
+}
+
 export default function SettingsPage() {
   const [permission, setPermission] = useState<PermissionState>(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
@@ -12,6 +30,8 @@ export default function SettingsPage() {
   });
 
   const requestPermission = async () => {
+    if (sendNativeAction('request-notification-permission')) return;
+
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     const result = await Notification.requestPermission();
     setPermission(result);
@@ -29,9 +49,12 @@ export default function SettingsPage() {
       <section style={cardStyle}>
         <strong>알림 권한 상태</strong>
         <p style={metaStyle}>현재 웹 알림 권한: {permissionLabel(permission)}</p>
-        <button style={buttonStyle} onClick={() => void requestPermission()}>
-          알림 권한 요청
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button style={buttonStyle} onClick={() => void requestPermission()}>알림 권한 요청</button>
+          <button style={buttonStyle} onClick={() => { void sendNativeAction('toggle-notification', true); }}>알림 켜기</button>
+          <button style={buttonStyle} onClick={() => { void sendNativeAction('toggle-notification', false); }}>알림 끄기</button>
+          <button style={buttonStyle} onClick={() => { void sendNativeAction('open-settings'); }}>시스템 설정 열기</button>
+        </div>
       </section>
 
       <section style={cardStyle}>

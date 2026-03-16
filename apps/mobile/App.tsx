@@ -561,10 +561,32 @@ function AppContent() {
               source?: string;
               type?: string;
               history?: CompletionHistory;
+              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
+              enabled?: boolean;
             };
 
-            if (payload.source !== 'routine-webview' || payload.type !== 'completion-history' || !payload.history) return;
-            setCompletionHistory(payload.history);
+            if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
+              setCompletionHistory(payload.history);
+              return;
+            }
+
+            if (payload.source === 'routine-web' && payload.type === 'native-action') {
+              if (payload.action === 'open-settings') {
+                void Linking.openSettings();
+                return;
+              }
+
+              if (payload.action === 'request-notification-permission') {
+                void Notifications.requestPermissionsAsync().then((perm) => {
+                  setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
+                });
+                return;
+              }
+
+              if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
+                void toggleNotifications(payload.enabled);
+              }
+            }
           } catch {
             // no-op
           }
@@ -734,10 +756,32 @@ function AppContent() {
               source?: string;
               type?: string;
               history?: CompletionHistory;
+              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
+              enabled?: boolean;
             };
 
-            if (payload.source !== 'routine-webview' || payload.type !== 'completion-history' || !payload.history) return;
-            setCompletionHistory(payload.history);
+            if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
+              setCompletionHistory(payload.history);
+              return;
+            }
+
+            if (payload.source === 'routine-web' && payload.type === 'native-action') {
+              if (payload.action === 'open-settings') {
+                void Linking.openSettings();
+                return;
+              }
+
+              if (payload.action === 'request-notification-permission') {
+                void Notifications.requestPermissionsAsync().then((perm) => {
+                  setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
+                });
+                return;
+              }
+
+              if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
+                void toggleNotifications(payload.enabled);
+              }
+            }
           } catch {
             // no-op
           }
