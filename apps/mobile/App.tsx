@@ -2,13 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
   Card,
   MD3DarkTheme,
   Provider as PaperProvider,
+  Modal,
+  Portal,
   Snackbar,
   Switch,
   Text,
@@ -26,8 +28,9 @@ const ALLOWED_HOSTS = (process.env.EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS ?? '')
 const ONBOARDING_DONE_KEY = 'routine-app:onboarding-done:v1';
 const ROUTINES_KEY = 'routine-app:routines:v1';
 const NOTI_SETTINGS_KEY = 'routine-app:noti-settings:v1';
+const COMPLETION_HISTORY_KEY = 'routine-app:completion-history:v1';
 
-type TabKey = 'today' | 'routines' | 'settings';
+type TabKey = 'today' | 'calendar' | 'settings';
 
 type Routine = {
   id: string;
@@ -43,6 +46,14 @@ type NotificationSettings = {
   lunch: number;
   sleep: number;
 };
+
+type CompletedRoutine = {
+  id: string;
+  title: string;
+  doneAt?: string;
+};
+
+type CompletionHistory = Record<string, CompletedRoutine[]>;
 
 const CARD_RADIUS = 14;
 
@@ -161,6 +172,36 @@ async function loadNotiSettings() {
 
 async function saveNotiSettings(settings: NotificationSettings) {
   await AsyncStorage.setItem(NOTI_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+async function loadCompletionHistory() {
+  try {
+    const raw = await AsyncStorage.getItem(COMPLETION_HISTORY_KEY);
+    if (!raw) return {} as CompletionHistory;
+    return JSON.parse(raw) as CompletionHistory;
+  } catch {
+    return {} as CompletionHistory;
+  }
+}
+
+function getMonthMatrix(baseDate: Date) {
+  const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  const startDay = first.getDay();
+  const start = new Date(first);
+  start.setDate(first.getDate() - startDay);
+
+  return Array.from({ length: 42 }).map((_, idx) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + idx);
+    return d;
+  });
+}
+
+function toDateKey(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function buildReminderMinutes(startMinute: number, durationMinute: number, intervalMinute = 30) {
@@ -308,6 +349,10 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<TabKey>('today');
 
   const [routines, setRoutines] = useState<Routine[]>(defaultRoutines);
+  const [completionHistory, setCompletionHistory] = useState<CompletionHistory>({});
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
+  const [calendarModalVisible, setCalendarModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -323,14 +368,16 @@ function AppContent() {
 
   useEffect(() => {
     const bootstrap = async () => {
-      const [done, loadedRoutines, loadedSettings] = await Promise.all([
+      const [done, loadedRoutines, loadedSettings, loadedHistory] = await Promise.all([
         AsyncStorage.getItem(ONBOARDING_DONE_KEY),
         loadRoutines(),
         loadNotiSettings(),
+        loadCompletionHistory(),
       ]);
 
       setOnboardingDone(done === '1');
       setRoutines(loadedRoutines);
+      setCompletionHistory(loadedHistory);
       setSettings(loadedSettings);
       setWakeInput(minuteToHHMM(loadedSettings.wake));
       setLunchInput(minuteToHHMM(loadedSettings.lunch));
@@ -493,65 +540,84 @@ function AppContent() {
     );
   };
 
-  const renderRoutines = () => (
-    <ScrollView contentContainerStyle={styles.bodyScroll}>
-      <Card mode="outlined" style={styles.card}>
-        <Card.Content>
-          <Text style={styles.sectionTitle}>루틴 추가/수정</Text>
-          <TextInput
-            mode="outlined"
-            style={styles.paperInput}
-            placeholder="루틴 제목"
-            value={newTitle}
-            onChangeText={setNewTitle}
-          />
-          <View style={styles.row}>
-            <TextInput
-              mode="outlined"
-              style={styles.paperInputTime}
-              placeholder="09:00"
-              value={newStart}
-              onChangeText={setNewStart}
-            />
-            <Text style={styles.separator}>~</Text>
-            <TextInput
-              mode="outlined"
-              style={styles.paperInputTime}
-              placeholder="10:00"
-              value={newEnd}
-              onChangeText={setNewEnd}
-            />
-          </View>
+  const renderCalendar = () => {
+    const days = getMonthMatrix(calendarMonth);
+    const monthTitle = `${calendarMonth.getFullYear()}년 ${calendarMonth.getMonth() + 1}월`;
 
-          {editingId ? (
-            <Button mode="contained" onPress={applyEditRoutine}>수정 저장</Button>
-          ) : (
-            <Button mode="contained" onPress={addRoutine}>커스텀 루틴 추가</Button>
-          )}
-        </Card.Content>
-      </Card>
+    const onPressDay = (date: Date) => {
+      const key = toDateKey(date);
+      setSelectedDateKey(key);
+      setCalendarModalVisible(true);
+    };
 
-      {routines.map((routine) => (
-        <Card key={routine.id} mode="outlined" style={styles.routineCard}>
-          <Card.Content style={styles.routineCardContent}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.routineTitle}>{routine.title}</Text>
-              <Text style={styles.routineMeta}>{formatRange(routine.startMinute, routine.endMinute)}</Text>
-              <Text style={styles.routineMeta}>{routine.isDefault ? '기본 루틴' : '커스텀 루틴'}</Text>
+    const selectedDoneList = selectedDateKey ? (completionHistory[selectedDateKey] ?? []) : [];
+
+    return (
+      <ScrollView contentContainerStyle={styles.bodyScroll}>
+        <Card mode="outlined" style={styles.card}>
+          <Card.Content>
+            <View style={styles.calendarHeaderRow}>
+              <Button mode="text" onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}>이전</Button>
+              <Text style={styles.sectionTitle}>{monthTitle}</Text>
+              <Button mode="text" onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}>다음</Button>
             </View>
-            {!routine.isDefault ? (
-              <View style={styles.actionCol}>
-                <Button mode="outlined" compact onPress={() => startEditRoutine(routine.id)}>수정</Button>
-                <Button mode="outlined" compact textColor="#ff9ba8" onPress={() => removeRoutine(routine.id)}>
-                  삭제
-                </Button>
-              </View>
-            ) : null}
+
+            <View style={styles.calendarWeekRow}>
+              {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
+                <Text key={w} style={styles.calendarWeekLabel}>{w}</Text>
+              ))}
+            </View>
+
+            <View style={styles.calendarGrid}>
+              {days.map((date) => {
+                const key = toDateKey(date);
+                const inMonth = date.getMonth() === calendarMonth.getMonth();
+                const doneCount = completionHistory[key]?.length ?? 0;
+
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.calendarCell,
+                      !inMonth ? styles.calendarCellDim : undefined,
+                      doneCount > 0 ? styles.calendarCellDone : undefined,
+                    ]}
+                    onPress={() => onPressDay(date)}
+                  >
+                    <Text style={styles.calendarDateText}>{date.getDate()}</Text>
+                    {doneCount > 0 ? <Text style={styles.calendarDoneDot}>완료 {doneCount}</Text> : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </Card.Content>
         </Card>
-      ))}
-    </ScrollView>
-  );
+
+        <Portal>
+          <Modal
+            visible={calendarModalVisible}
+            onDismiss={() => setCalendarModalVisible(false)}
+            contentContainerStyle={styles.calendarModalWrap}
+          >
+            <Text style={styles.sectionTitle}>{selectedDateKey ?? '-'} 완료 루틴</Text>
+            {selectedDoneList.length === 0 ? (
+              <Text style={styles.routineMeta}>해당일 완료된 루틴이 없습니다.</Text>
+            ) : (
+              selectedDoneList.map((item) => (
+                <View key={`${item.id}-${item.doneAt ?? ''}`} style={styles.calendarDoneItem}>
+                  <Text style={styles.routineTitle}>{item.title}</Text>
+                  <Text style={styles.routineMeta}>{item.doneAt ?? '완료 시간 미기록'}</Text>
+                </View>
+              ))
+            )}
+            <Button mode="contained" onPress={() => setCalendarModalVisible(false)}>
+              닫기
+            </Button>
+          </Modal>
+        </Portal>
+      </ScrollView>
+    );
+  };
 
   const renderSettings = () => (
     <ScrollView contentContainerStyle={styles.bodyScroll}>
@@ -586,19 +652,19 @@ function AppContent() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Routine Challenge</Text>
         <Text style={styles.headerSub}>
-          {activeTab === 'today' ? '오늘 인증' : activeTab === 'routines' ? '루틴 관리' : '알림/권한 설정'}
+          {activeTab === 'today' ? '오늘 인증' : activeTab === 'calendar' ? '캘린더' : '알림/권한 설정'}
         </Text>
       </View>
 
       <View style={styles.body}>
         {activeTab === 'today' ? renderToday() : null}
-        {activeTab === 'routines' ? renderRoutines() : null}
+        {activeTab === 'calendar' ? renderCalendar() : null}
         {activeTab === 'settings' ? renderSettings() : null}
       </View>
 
       <View style={[styles.tabBar, { height: 62 + Math.max(insets.bottom, 8), paddingBottom: Math.max(insets.bottom, 8) }]}>
         <Button mode={activeTab === 'today' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('today')} style={styles.tabBtn} compact>오늘</Button>
-        <Button mode={activeTab === 'routines' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('routines')} style={styles.tabBtn} compact>루틴</Button>
+        <Button mode={activeTab === 'calendar' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('calendar')} style={styles.tabBtn} compact>캘린더</Button>
         <Button mode={activeTab === 'settings' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('settings')} style={styles.tabBtn} compact>설정</Button>
       </View>
 
@@ -714,6 +780,73 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  calendarHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  calendarWeekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  calendarWeekLabel: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#8e99a7',
+    fontSize: 12,
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  calendarCell: {
+    width: '13.5%',
+    minHeight: 52,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#2b3138',
+    backgroundColor: '#11151a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+  },
+  calendarCellDim: {
+    opacity: 0.45,
+  },
+  calendarCellDone: {
+    borderColor: '#2e664d',
+    backgroundColor: '#1b2a22',
+  },
+  calendarDateText: {
+    color: '#e7edf4',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  calendarDoneDot: {
+    marginTop: 2,
+    color: '#7cffb2',
+    fontSize: 10,
+  },
+  calendarModalWrap: {
+    marginHorizontal: 20,
+    borderRadius: CARD_RADIUS,
+    borderWidth: 1,
+    borderColor: '#2b3138',
+    backgroundColor: '#161b21',
+    padding: 16,
+    gap: 10,
+  },
+  calendarDoneItem: {
+    borderWidth: 1,
+    borderColor: '#2b3138',
+    borderRadius: 10,
+    backgroundColor: '#11151a',
+    padding: 10,
+    marginBottom: 6,
   },
   tabBar: {
     height: 62,
