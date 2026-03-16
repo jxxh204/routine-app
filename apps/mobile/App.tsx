@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -332,6 +332,7 @@ function AppContent() {
   const [lunchInput, setLunchInput] = useState('12:30');
   const [sleepInput, setSleepInput] = useState('23:00');
   const [statusMsg, setStatusMsg] = useState('');
+  const didRestoreNotificationsRef = useRef(false);
 
   const parsedUrl = useMemo(() => (WEB_APP_URL ? getParsedUrl(WEB_APP_URL) : null), []);
 
@@ -362,6 +363,21 @@ function AppContent() {
       void saveRoutines(routines);
     }
   }, [routines, booting]);
+
+  useEffect(() => {
+    if (booting || !onboardingDone || didRestoreNotificationsRef.current) return;
+
+    const ensureNotificationSchedules = async () => {
+      const permission = await Notifications.getPermissionsAsync();
+      if (!permission.granted) return;
+
+      await scheduleDefaultNotifications(settings);
+      didRestoreNotificationsRef.current = true;
+      setStatusMsg(settings.enabled ? '알림 스케줄을 복구했어요.' : '알림이 꺼져 있어 스케줄을 생성하지 않았어요.');
+    };
+
+    void ensureNotificationSchedules();
+  }, [booting, onboardingDone, settings]);
 
   if (!WEB_APP_URL) {
     return <AppError title="환경변수 누락" detail="EXPO_PUBLIC_WEB_APP_URL 을 설정해 주세요." />;
