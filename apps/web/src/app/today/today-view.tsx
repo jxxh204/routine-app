@@ -895,8 +895,8 @@ const styles: Record<string, CSSProperties> = {
   timeFieldLabel: {
     color: '#9aa4af',
     fontSize: 12,
-    minWidth: 48,
     whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
   inputTime: {
     width: '100%',
