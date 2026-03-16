@@ -749,6 +749,7 @@ export function TodayView() {
 
       <section style={{ ...styles.progressCard, ...styles.addSection }}>
         <div style={styles.addHeaderRow}>
+          <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
           <button
             style={{ ...styles.addToggleButton, ...(isAddFormOpen ? styles.addToggleButtonNeutral : {}) }}
             onClick={() => {
@@ -761,7 +762,7 @@ export function TodayView() {
               setIsAddFormOpen((prev) => !prev);
             }}
           >
-            {isAddFormOpen ? '닫기' : '[+ 루틴 추가]'}
+            {isAddFormOpen ? '닫기' : '+ 추가'}
           </button>
         </div>
 
@@ -796,7 +797,7 @@ export function TodayView() {
             </div>
             <div style={styles.addActionRow}>
               <button style={styles.addButtonFull} onClick={submitRoutineForm}>
-                {editingRoutineId ? '수정 저장' : '루틴 추가'}
+                {editingRoutineId ? '수정 저장' : '추가'}
               </button>
               {editingRoutineId ? (
                 <button
@@ -882,7 +883,7 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: 16,
   },
   addSection: {
-    marginTop: 20,
+    marginTop: 8,
   },
   progressTop: {
     display: 'flex',
@@ -907,20 +908,23 @@ const styles: Record<string, CSSProperties> = {
   },
   addHeaderRow: {
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   addToggleButton: {
-    background: 'transparent',
-    color: '#c8d0da',
-    border: 'none',
-    padding: 0,
+    background: '#1f3a2d',
+    color: '#7cffb2',
+    border: '1px solid #2e664d',
+    borderRadius: 999,
+    padding: '6px 12px',
     cursor: 'pointer',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
   },
   addToggleButtonNeutral: {
-    color: '#9aa4af',
+    background: '#2a3038',
+    color: '#c8d0da',
+    border: '1px solid #3b4552',
   },
   addRow: {
     display: 'flex',
@@ -976,9 +980,9 @@ const styles: Record<string, CSSProperties> = {
   },
   addButtonFull: {
     width: '100%',
-    background: 'transparent',
-    color: '#c8d0da',
-    border: '1px solid #3b4552',
+    background: '#1f3a2d',
+    color: '#7cffb2',
+    border: '1px solid #2e664d',
     borderRadius: 8,
     padding: '10px 12px',
     cursor: 'pointer',
@@ -1009,7 +1013,7 @@ const styles: Record<string, CSSProperties> = {
     width: 152,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: 8,
     background: '#21262d',
     border: '1px solid #303844',
@@ -1048,7 +1052,7 @@ const styles: Record<string, CSSProperties> = {
   checkTag: {
     display: 'inline-flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     minWidth: 64,
     height: 26,
     borderRadius: 999,
@@ -1130,7 +1134,7 @@ const styles: Record<string, CSSProperties> = {
     background: 'rgba(8,10,14,0.8)',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: 6,
     padding: 6,
   },
@@ -1158,7 +1162,7 @@ const styles: Record<string, CSSProperties> = {
     background: 'rgba(8, 10, 14, 0.78)',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     padding: 16,
     zIndex: 30,
   },
