@@ -17,7 +17,9 @@
       "bundleIdentifier": "com.jxxh204.routinechallenge",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSUserNotificationUsageDescription": "루틴 인증 시간(기상/식사/취침)을 알림으로 알려드리기 위해 권한이 필요합니다."
+        "NSUserNotificationUsageDescription": "루틴 인증 시간(기상/식사/취침)을 알림으로 알려드리기 위해 권한이 필요합니다.",
+        "NSCameraUsageDescription": "루틴 인증 사진 촬영을 위해 카메라 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "루틴 인증 사진을 선택하기 위해 사진 라이브러리 접근 권한이 필요합니다."
       }
     },
     "android": {
@@ -27,7 +29,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
