@@ -791,7 +791,12 @@ export function TodayView() {
             </div>
 
             {cameraError ? <p style={styles.cameraError}>{cameraError}</p> : null}
-            <p style={styles.cameraHint}>촬영 또는 사진 선택 후 자동 저장됩니다.</p>
+
+            <div style={styles.cameraDock}>
+              <span style={styles.cameraDockIcon}>◻︎</span>
+              <span style={styles.cameraDockHome}>⌂</span>
+              <span style={styles.cameraDockIcon}>◯</span>
+            </div>
           </div>
         </section>
       ) : null}
@@ -1141,10 +1146,31 @@ const styles: Record<string, CSSProperties> = {
     background: '#f2f4f7',
     display: 'block',
   },
-  cameraHint: {
-    margin: '12px 0 0',
-    fontSize: 12,
-    color: '#8c97a5',
-    textAlign: 'center',
+  cameraDock: {
+    marginTop: 18,
+    alignSelf: 'center',
+    width: 168,
+    height: 44,
+    borderRadius: 22,
+    background: 'rgba(80,86,98,0.45)',
+    border: '1px solid rgba(120,126,138,0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    color: '#ffffff',
+  },
+  cameraDockIcon: {
+    fontSize: 16,
+    opacity: 0.8,
+  },
+  cameraDockHome: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    background: 'rgba(255,255,255,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 18,
   },
 };
