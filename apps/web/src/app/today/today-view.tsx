@@ -607,7 +607,7 @@ export function TodayView() {
         <div style={styles.addHeaderRow}>
           <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
           <button
-            style={styles.addToggleButton}
+            style={{ ...styles.addToggleButton, ...(isAddFormOpen ? styles.addToggleButtonNeutral : {}) }}
             onClick={() => {
               if (isAddFormOpen) {
                 setEditingRoutineId(null);
@@ -856,6 +856,11 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     fontSize: 12,
     fontWeight: 600,
+  },
+  addToggleButtonNeutral: {
+    background: '#2a3038',
+    color: '#c8d0da',
+    border: '1px solid #3b4552',
   },
   addRow: {
     display: 'flex',
