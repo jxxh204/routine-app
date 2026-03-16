@@ -182,7 +182,13 @@ function buildReminderMinutes(startMinute: number, durationMinute: number, inter
   return results;
 }
 
-async function scheduleDefaultNotifications(settings: NotificationSettings) {
+function getDurationMinute(startMinute: number, endMinute: number) {
+  if (endMinute > startMinute) return endMinute - startMinute;
+  if (endMinute < startMinute) return 24 * 60 - startMinute + endMinute;
+  return 60;
+}
+
+async function scheduleDefaultNotifications(settings: NotificationSettings, routines: Routine[]) {
   const existing = await Notifications.getAllScheduledNotificationsAsync();
   for (const item of existing) {
     if (item.content.data?.source === 'default-routine') {
@@ -192,29 +198,13 @@ async function scheduleDefaultNotifications(settings: NotificationSettings) {
 
   if (!settings.enabled) return;
 
-  const list = [
-    {
-      key: 'wake',
-      title: '⏰ 기상 인증 시간',
-      body: '09:00~11:00 사이에 기상 인증을 해주세요.',
-      minute: 9 * 60,
-      durationMinute: 120,
-    },
-    {
-      key: 'lunch',
-      title: '🍽️ 식사 인증 시간',
-      body: '12:30~13:30 사이에 식사 인증을 해주세요.',
-      minute: 12 * 60 + 30,
-      durationMinute: 60,
-    },
-    {
-      key: 'sleep',
-      title: '🌙 취침 인증 시간',
-      body: '23:00~02:00 사이에 취침 인증을 해주세요.',
-      minute: 23 * 60,
-      durationMinute: 180,
-    },
-  ] as const;
+  const list = routines.map((routine) => ({
+    key: routine.id,
+    title: `${routine.title} 인증 시간`,
+    body: `${formatRange(routine.startMinute, routine.endMinute)} 사이에 ${routine.title} 인증을 해주세요.`,
+    minute: routine.startMinute,
+    durationMinute: getDurationMinute(routine.startMinute, routine.endMinute),
+  }));
 
   for (const item of list) {
     const reminderMinutes = buildReminderMinutes(item.minute, item.durationMinute);
@@ -276,8 +266,8 @@ function Onboarding({ onDone }: { onDone: () => void }) {
         return;
       }
 
-      const settings = await loadNotiSettings();
-      await scheduleDefaultNotifications(settings);
+      const [settings, routines] = await Promise.all([loadNotiSettings(), loadRoutines()]);
+      await scheduleDefaultNotifications(settings, routines);
       await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
       onDone();
     } finally {
@@ -366,7 +356,7 @@ function AppContent() {
       const permission = await Notifications.getPermissionsAsync();
       if (!permission.granted) return;
 
-      await scheduleDefaultNotifications(settings);
+      await scheduleDefaultNotifications(settings, routines);
       didRestoreNotificationsRef.current = true;
       setStatusMsg(settings.enabled ? '알림 스케줄을 복구했어요.' : '알림이 꺼져 있어 스케줄을 생성하지 않았어요.');
     };
@@ -470,7 +460,7 @@ function AppContent() {
     const next = { ...settings, enabled };
     setSettings(next);
     await saveNotiSettings(next);
-    await scheduleDefaultNotifications(next);
+    await scheduleDefaultNotifications(next, routines);
     setStatusMsg(enabled ? '알림을 켰어요.' : '알림을 껐어요.');
   };
 
