@@ -299,11 +299,7 @@ export function TodayView() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
-  const [cameraRoutineId, setCameraRoutineId] = useState<string | null>(null);
-  const [cameraError, setCameraError] = useState('');
-  const [isCapturing, setIsCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const [pendingCaptureRoutineId, setPendingCaptureRoutineId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -383,26 +379,12 @@ export function TodayView() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    };
-  }, []);
-
   const doneCount = useMemo(
     () => routines.filter((routine) => routine.doneByMe).length,
     [routines],
   );
 
   const progress = Math.round((doneCount / routines.length) * 100);
-
-  const closeCamera = useCallback(() => {
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current = null;
-    setCameraRoutineId(null);
-    setCameraError('');
-  }, []);
 
   const finalizePhotoCertification = async (routineId: string, imageDataUrl: string) => {
     const now = new Date();
@@ -422,7 +404,7 @@ export function TodayView() {
       ),
     );
 
-    closeCamera();
+    setPendingCaptureRoutineId(null);
 
     if (!target) {
       setSyncMessage('로컬 저장 완료');
@@ -442,66 +424,19 @@ export function TodayView() {
     }
   };
 
-  const openCameraForRoutine = async (id: string) => {
+  const openCameraForRoutine = (id: string) => {
     const target = routines.find((routine) => routine.id === id);
     if (!target) return;
 
     const inWindow = isInTimeWindow(nowMinute, target.startMinute, target.endMinute);
     if (!inWindow || target.doneByMe) return;
 
-    setCameraRoutineId(id);
-    setCameraError('');
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      mediaStreamRef.current = stream;
-
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play();
-        }
-      }, 0);
-    } catch {
-      setCameraError('카메라 권한이 없거나 기기에서 지원되지 않습니다. 아래 버튼으로 사진을 선택해 인증할 수 있어요.');
-    }
-  };
-
-  const captureRoutinePhoto = async () => {
-    if (!cameraRoutineId || !videoRef.current || isCapturing) return;
-
-    const video = videoRef.current;
-    setIsCapturing(true);
-
-    try {
-      // iOS/WebView에서 videoWidth/videoHeight가 늦게 잡히는 경우를 대비해 짧게 대기
-      for (let i = 0; i < 10 && (!video.videoWidth || !video.videoHeight); i += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 80));
-      }
-
-      const width = video.videoWidth;
-      const height = video.videoHeight;
-      if (!width || !height) {
-        setCameraError('카메라 프레임을 아직 불러오지 못했습니다. 잠시 후 다시 눌러주세요.');
-        return;
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext('2d');
-      if (!context) return;
-
-      context.drawImage(video, 0, 0, width, height);
-      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      await finalizePhotoCertification(cameraRoutineId, imageDataUrl);
-    } finally {
-      setIsCapturing(false);
-    }
+    setPendingCaptureRoutineId(id);
+    fileInputRef.current?.click();
   };
 
   const onPickPhotoFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    if (!cameraRoutineId) return;
+    if (!pendingCaptureRoutineId) return;
 
     const file = event.target.files?.[0];
     if (!file) return;
@@ -510,7 +445,7 @@ export function TodayView() {
     reader.onload = async () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
       if (!result) return;
-      await finalizePhotoCertification(cameraRoutineId, result);
+      await finalizePhotoCertification(pendingCaptureRoutineId, result);
     };
     reader.readAsDataURL(file);
 
@@ -775,52 +710,14 @@ export function TodayView() {
         })}
       </section>
 
-      {cameraRoutineId ? (
-        <section style={styles.cameraOverlay}>
-          <div style={styles.cameraPage}>
-            <div style={styles.cameraTopRow}>
-              <button style={styles.cameraTopBtn} type="button">⚡</button>
-              <button style={styles.cameraTopBtn} type="button">1×</button>
-            </div>
-
-            <video ref={videoRef} autoPlay playsInline muted style={styles.cameraPreview} />
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              onChange={(event) => void onPickPhotoFile(event)}
-            />
-
-            <div style={styles.cameraBottomRow}>
-              <button style={styles.cameraSideIcon} type="button" onClick={() => fileInputRef.current?.click()}>🖼️</button>
-              <button
-                style={{
-                  ...styles.cameraShutter,
-                  ...(isCapturing ? styles.cameraShutterBusy : {}),
-                }}
-                type="button"
-                onClick={() => void captureRoutinePhoto()}
-                disabled={isCapturing}
-                aria-label="촬영 후 저장"
-              >
-                <span style={styles.cameraShutterInner} />
-              </button>
-              <button style={styles.cameraSideIcon} type="button" onClick={closeCamera}>↻</button>
-            </div>
-
-            {cameraError ? <p style={styles.cameraError}>{cameraError}</p> : null}
-
-            <div style={styles.cameraDock}>
-              <span style={styles.cameraDockIcon}>◻︎</span>
-              <span style={styles.cameraDockHome}>⌂</span>
-              <span style={styles.cameraDockIcon}>◯</span>
-            </div>
-          </div>
-        </section>
-      ) : null}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={(event) => void onPickPhotoFile(event)}
+      />
       <style>{`.routine-title-input::placeholder { color: #2b3138; }`}</style>
     </main>
   );
@@ -1087,119 +984,5 @@ const styles: Record<string, CSSProperties> = {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-  },
-  cameraOverlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(7, 9, 11, 0.78)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    zIndex: 10,
-  },
-  cameraPage: {
-    width: '100%',
-    maxWidth: 520,
-    background: '#0b0e13',
-    border: '1px solid #212833',
-    borderRadius: 18,
-    padding: 14,
-  },
-  cameraTopRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  cameraTopBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    border: '1px solid #3a4048',
-    background: 'rgba(160,160,160,0.35)',
-    color: '#ffffff',
-    fontSize: 18,
-    cursor: 'pointer',
-  },
-  cameraError: {
-    marginTop: 10,
-    color: '#ff9ba8',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  cameraPreview: {
-    width: '100%',
-    borderRadius: 28,
-    border: '1px solid #2f3a46',
-    background: '#0f1318',
-    aspectRatio: '3 / 4',
-    objectFit: 'cover',
-  },
-  cameraBottomRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-    padding: '0 10px',
-  },
-  cameraSideIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 999,
-    border: '1px solid #3b4048',
-    background: 'transparent',
-    color: '#f2f4f7',
-    fontSize: 24,
-    cursor: 'pointer',
-  },
-  cameraShutter: {
-    width: 88,
-    height: 88,
-    borderRadius: 999,
-    border: '4px solid #f1b74d',
-    background: '#11161d',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-  },
-  cameraShutterBusy: {
-    opacity: 0.7,
-    transform: 'scale(0.98)',
-    cursor: 'not-allowed',
-  },
-  cameraShutterInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 999,
-    background: '#f2f4f7',
-    display: 'block',
-  },
-  cameraDock: {
-    marginTop: 18,
-    alignSelf: 'center',
-    width: 168,
-    height: 44,
-    borderRadius: 22,
-    background: 'rgba(80,86,98,0.45)',
-    border: '1px solid rgba(120,126,138,0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    color: '#ffffff',
-  },
-  cameraDockIcon: {
-    fontSize: 16,
-    opacity: 0.8,
-  },
-  cameraDockHome: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    background: 'rgba(255,255,255,0.2)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 18,
   },
 };
