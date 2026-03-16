@@ -643,17 +643,36 @@ function AppContent() {
         {activeTab === 'settings' ? renderSettings() : null}
       </View>
 
-      <View style={[styles.tabBar, { height: 62 + Math.max(insets.bottom, 8), paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Button mode={activeTab === 'today' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('today')} style={styles.tabBtn} compact>오늘</Button>
-        <Button mode={activeTab === 'calendar' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('calendar')} style={styles.tabBtn} compact>캘린더</Button>
-        <Button mode={activeTab === 'settings' ? 'contained-tonal' : 'text'} onPress={() => setActiveTab('settings')} style={styles.tabBtn} compact>설정</Button>
+      <View style={[styles.tabBar, { bottom: 16 + Math.max(insets.bottom, 0) }]}>
+        {[
+          { key: 'today' as const, label: '오늘', icon: 'check-circle' },
+          { key: 'calendar' as const, label: '캘린더', icon: 'calendar' },
+          { key: 'settings' as const, label: '설정', icon: 'cog' },
+        ].map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tabItem, active ? styles.tabItemActive : undefined]}
+              onPress={() => setActiveTab(tab.key)}
+            >
+              <IconButton
+                icon={tab.icon}
+                size={18}
+                style={styles.tabIconBtn}
+                iconColor={active ? '#ffffff' : '#a6afbb'}
+              />
+              <Text style={[styles.tabLabel, active ? styles.tabLabelActive : undefined]}>{tab.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <Snackbar
         visible={Boolean(statusMsg)}
         onDismiss={() => setStatusMsg('')}
         duration={2500}
-        style={[styles.toast, { marginBottom: 16 + 62 + Math.max(insets.bottom, 8) }]}
+        style={[styles.toast, { marginBottom: 16 + 48 + 16 + Math.max(insets.bottom, 0) }]}
       >
         {statusMsg}
       </Snackbar>
@@ -706,7 +725,7 @@ const styles = StyleSheet.create({
   bodyScroll: {
     padding: 16,
     gap: 12,
-    paddingBottom: 100,
+    paddingBottom: 140,
   },
   webview: {
     flex: 1,
@@ -832,19 +851,44 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   tabBar: {
-    height: 62,
-    borderTopWidth: 1,
-    borderTopColor: '#20242a',
-    backgroundColor: '#13171c',
-    borderTopLeftRadius: CARD_RADIUS,
-    borderTopRightRadius: CARD_RADIUS,
+    position: 'absolute',
+    alignSelf: 'center',
+    width: '92%',
+    maxWidth: 400,
+    height: 48,
+    borderRadius: 48,
+    backgroundColor: '#181d24',
+    borderWidth: 1,
+    borderColor: '#262d37',
+    padding: 4,
     flexDirection: 'row',
-    paddingHorizontal: 8,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'space-between',
   },
-  tabBtn: {
+  tabItem: {
     flex: 1,
+    height: '100%',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+  },
+  tabItemActive: {
+    backgroundColor: '#323943',
+  },
+  tabIconBtn: {
+    margin: 0,
+    width: 20,
+    height: 20,
+  },
+  tabLabel: {
+    marginTop: 1,
+    fontSize: 11,
+    color: '#a6afbb',
+    lineHeight: 12,
+  },
+  tabLabelActive: {
+    color: '#ffffff',
   },
   toast: {
     backgroundColor: '#1f2730',
