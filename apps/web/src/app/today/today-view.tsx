@@ -746,20 +746,20 @@ export function TodayView() {
                 ...(swipedRoutineId === routine.id ? styles.itemSwiped : {}),
               }}
             >
-              <button
-                onClick={() => void openCameraForRoutine(routine.id)}
-                disabled={!canCertify}
+              <span
+                role={canCertify ? 'button' : undefined}
+                onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
                 style={{
-                  ...styles.checkButton,
+                  ...styles.checkTag,
                   ...(canCertify
-                    ? styles.checkButtonReady
+                    ? styles.checkTagReady
                     : routine.doneByMe
-                      ? styles.checkButtonDone
-                      : styles.checkButtonWaiting),
+                      ? styles.checkTagDone
+                      : styles.checkTagWaiting),
                 }}
               >
                 {routine.doneByMe ? '인증완료' : canCertify ? '인증하기' : '대기중'}
-              </button>
+              </span>
 
               <div style={styles.itemBody}>
                 <p style={styles.itemTitle}>{routine.title}</p>
@@ -1017,8 +1017,9 @@ const styles: Record<string, CSSProperties> = {
     position: 'relative',
     zIndex: 1,
     display: 'flex',
-    gap: 12,
-    alignItems: 'center',
+    flexDirection: 'column',
+    gap: 8,
+    alignItems: 'flex-start',
     background: '#1b1f23',
     border: '1px solid #2b3138',
     borderRadius: 14,
@@ -1039,38 +1040,39 @@ const styles: Record<string, CSSProperties> = {
     opacity: 1,
     filter: 'grayscale(0.12)',
   },
-  checkButton: {
-    width: 72,
-    height: 40,
-    borderRadius: 10,
+  checkTag: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 64,
+    height: 26,
+    borderRadius: 999,
     border: '1px solid #3c4652',
     background: '#242b33',
     color: '#e6edf3',
-    cursor: 'pointer',
+    padding: '0 10px',
     fontSize: 12,
     fontWeight: 600,
   },
-  checkButtonReady: {
+  checkTagReady: {
     background: '#1f3a2d',
     color: '#7cffb2',
     border: '1px solid #2e664d',
     boxShadow: '0 0 0 1px rgba(124,255,178,0.2) inset',
-    transform: 'scale(1.02)',
+    cursor: 'pointer',
   },
-  checkButtonWaiting: {
+  checkTagWaiting: {
     background: '#212834',
     color: '#b3c0d0',
     border: '1px solid #314156',
-    opacity: 0.88,
-    cursor: 'not-allowed',
+    opacity: 0.9,
   },
-  checkButtonDone: {
+  checkTagDone: {
     background: '#1a1f26',
     color: '#6f7b89',
     border: '1px solid #2c3440',
-    opacity: 0.62,
-    filter: 'grayscale(0.25)',
-    cursor: 'not-allowed',
+    opacity: 0.7,
+    filter: 'grayscale(0.2)',
   },
   editButton: {
     border: '1px solid #334050',
@@ -1089,7 +1091,7 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
   },
   itemBody: {
-    flex: 1,
+    width: '100%',
   },
   itemTitle: {
     margin: 0,
