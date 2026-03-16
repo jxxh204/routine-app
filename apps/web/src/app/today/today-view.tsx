@@ -664,8 +664,14 @@ export function TodayView() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
             />
-            <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
-            <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+            <div style={styles.timeFieldWrap}>
+              <span style={styles.timeFieldLabel}>시작시간</span>
+              <input style={styles.inputTime} type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+            </div>
+            <div style={styles.timeFieldWrap}>
+              <span style={styles.timeFieldLabel}>종료시간</span>
+              <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+            </div>
             <button style={styles.addButton} onClick={submitRoutineForm}>
               {editingRoutineId ? '수정 저장' : '추가'}
             </button>
@@ -858,6 +864,16 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #2b3138',
     borderRadius: 8,
     padding: '8px 10px',
+  },
+  timeFieldWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timeFieldLabel: {
+    color: '#9aa4af',
+    fontSize: 12,
+    minWidth: 48,
   },
   inputTime: {
     background: '#111315',
