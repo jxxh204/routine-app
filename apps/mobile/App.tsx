@@ -561,10 +561,32 @@ function AppContent() {
               source?: string;
               type?: string;
               history?: CompletionHistory;
+              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
+              enabled?: boolean;
             };
 
-            if (payload.source !== 'routine-webview' || payload.type !== 'completion-history' || !payload.history) return;
-            setCompletionHistory(payload.history);
+            if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
+              setCompletionHistory(payload.history);
+              return;
+            }
+
+            if (payload.source === 'routine-web' && payload.type === 'native-action') {
+              if (payload.action === 'open-settings') {
+                void Linking.openSettings();
+                return;
+              }
+
+              if (payload.action === 'request-notification-permission') {
+                void Notifications.requestPermissionsAsync().then((perm) => {
+                  setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
+                });
+                return;
+              }
+
+              if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
+                void toggleNotifications(payload.enabled);
+              }
+            }
           } catch {
             // no-op
           }
@@ -708,6 +730,66 @@ function AppContent() {
     </ScrollView>
   );
 
+  const renderWebRoute = (path: '/today' | '/calendar' | '/settings') => {
+    const pageUrl = `${parsedUrl?.origin ?? ''}${path}`;
+
+    return (
+      <WebView
+        style={styles.webview}
+        source={{ uri: pageUrl }}
+        startInLoadingState
+        originWhitelist={['https://*']}
+        onShouldStartLoadWithRequest={(request) => {
+          if (isAllowedUrl(request.url)) return true;
+          void Linking.openURL(request.url);
+          return false;
+        }}
+        renderLoading={() => (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#7cffb2" />
+          </View>
+        )}
+        injectedJavaScript={getWebviewCompletionSyncScript()}
+        onMessage={(event) => {
+          try {
+            const payload = JSON.parse(event.nativeEvent.data ?? '{}') as {
+              source?: string;
+              type?: string;
+              history?: CompletionHistory;
+              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
+              enabled?: boolean;
+            };
+
+            if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
+              setCompletionHistory(payload.history);
+              return;
+            }
+
+            if (payload.source === 'routine-web' && payload.type === 'native-action') {
+              if (payload.action === 'open-settings') {
+                void Linking.openSettings();
+                return;
+              }
+
+              if (payload.action === 'request-notification-permission') {
+                void Notifications.requestPermissionsAsync().then((perm) => {
+                  setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
+                });
+                return;
+              }
+
+              if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
+                void toggleNotifications(payload.enabled);
+              }
+            }
+          } catch {
+            // no-op
+          }
+        }}
+      />
+    );
+  };
+
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <View style={styles.header}>
@@ -718,9 +800,7 @@ function AppContent() {
       </View>
 
       <View style={styles.body}>
-        {activeTab === 'today' ? renderToday() : null}
-        {activeTab === 'calendar' ? renderCalendar() : null}
-        {activeTab === 'settings' ? renderSettings() : null}
+        {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
       </View>
 
       <View style={[styles.tabBar, { bottom: 16 + Math.max(insets.bottom, 0) }]}>
