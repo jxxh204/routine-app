@@ -41,7 +41,7 @@ git push origin v2026.03.17-1
 
 ## 5) 검증 체크리스트
 
-- 웹: lint/build 통과
-- 모바일: 타입체크/기능 시나리오 확인
+- 웹: CI(test/lint/build) 통과
+- 모바일: CI(typecheck/test) 통과
 - 릴리즈 노트/태그 메시지 작성
 - 롤백 포인트(직전 태그) 명시
