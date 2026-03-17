@@ -16,6 +16,16 @@ npx expo prebuild --platform ios
 
 > 이미 `ios/`가 있고 네이티브 변경이 없으면 prebuild 생략 가능.
 
+### 권장: 사전 점검 스크립트
+```bash
+cd /Users/jaehwan/.openclaw/workspace/routine-app
+./scripts/release/ios-local-preflight.sh
+```
+
+- Node/npm/Expo/Xcode 툴체인 확인
+- `tsc --noEmit`, `npm run test` 자동 점검
+- prebuild 메타 검증
+
 ## 2) Xcode 아카이브
 1. `apps/mobile/ios/*.xcworkspace` 열기
 2. Scheme: 앱 타깃 선택
