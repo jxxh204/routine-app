@@ -79,7 +79,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: >
-            pages deploy .vercel/output/static
+            pages deploy apps/web/.vercel/output/static
             --project-name=${{ vars.CF_PAGES_PROJECT }}
             --branch=pr-${{ github.event.pull_request.number }}
 
@@ -138,6 +138,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: >
-            pages deploy .vercel/output/static
+            pages deploy apps/web/.vercel/output/static
             --project-name=${{ vars.CF_PAGES_PROJECT }}
             --branch=main
