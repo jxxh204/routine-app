@@ -48,3 +48,11 @@
 - 영향 범위: (web/mobile/ci/release)
 - 롤백 기준: (문제 발생 시 어떤 커밋으로 되돌릴지)
 ```
+
+## 2026-03-18
+
+### [0701bd0] WebView 통합 후 네이티브 죽은 코드 제거
+- 재현: WebView 라우트 사용 중인데 renderToday/renderCalendar/renderSettings 및 관련 상태가 잔존
+- 원인: 전환 과정에서 기존 네이티브 탭 구현 정리 누락
+- 해결: App.tsx에서 미사용 상태/함수/import 제거(약 273줄 정리)
+- 영향 범위: mobile
