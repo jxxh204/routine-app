@@ -53,14 +53,23 @@ npm run ios     # 또는 npm run android
 
 ## 배포 커맨드 (원커맨드)
 
-### 웹 배포 (Cloudflare Pages production)
+### 웹 배포 (Provider 스위칭: Cloudflare/Vercel)
 
 ```bash
-./scripts/release/deploy-web.sh
+# Cloudflare로 배포
+./scripts/release/deploy-web.sh --provider cloudflare
+
+# Vercel로 배포
+./scripts/release/deploy-web.sh --provider vercel
 ```
 
-- 릴리즈 태그(`vYYYY.MM.DD-N`)를 자동 생성/푸시
-- GitHub Actions `web-cloudflare-pages` 실행 상태를 자동 모니터링
+- `--provider`는 필수(배포 전에 대상 선택 강제)
+- 릴리즈 태그(`vYYYY.MM.DD-N`) 자동 생성/푸시
+- 선택한 워크플로우 자동 트리거:
+  - Cloudflare: `web-cloudflare-pages`
+  - Vercel: `web-vercel`
+- 스위칭 시(`cloudflare ↔ vercel`) 모바일 `.env` WebView 대상 자동 변경
+- 스위칭 시 기본값으로 iOS 앱도 자동 재배포(필요 시 `--no-auto-ios-on-switch`)
 
 ### 앱 배포 (iOS App Store Connect 업로드)
 
@@ -106,3 +115,7 @@ cp apps/mobile/.env.example apps/mobile/.env
 
 - 공통 릴리즈 계약: `docs/release-contract.md`
 - 공통 사전검증: `scripts/release/preflight-common.sh --target web|ios`
+- Vercel 배포 준비(최초 1회): GitHub Secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+- 로컬에서 Vercel 타겟 지정(필수):
+  - `export VERCEL_WEB_APP_URL='https://<your-vercel-domain>/today'`
+  - `export VERCEL_WEB_APP_HOST='<your-vercel-domain>'`

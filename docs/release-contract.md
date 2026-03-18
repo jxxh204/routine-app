@@ -1,6 +1,6 @@
 # Release Contract (웹/앱 공통)
 
-배포 경로가 달라도(웹: Cloudflare+GHA, 앱: 직접 업로드) **릴리즈 기준은 하나**로 맞춘다.
+배포 경로가 달라도(웹: Cloudflare/Vercel+GHA, 앱: 직접 업로드) **릴리즈 기준은 하나**로 맞춘다.
 
 ## 1) 릴리즈 식별자
 
@@ -10,6 +10,7 @@
 
 ## 2) 필수 입력값
 
+- Web Provider: `cloudflare` 또는 `vercel` (배포 전 반드시 선택)
 - Web URL (모바일 WebView 대상): `https://<domain>/today`
 - Allowed Hosts: `<domain>[,<domain2>...]`
 - Release Notes (한 줄 요약)
@@ -34,7 +35,13 @@
 - [ ] iOS 버전/빌드 번호 확인
 - [ ] 롤백 기준 커밋 해시 기록
 
-## 5) 배포 후 보고 포맷 (이 채널)
+## 5) 스위칭 규칙
+
+- 웹 배포는 `deploy-web.sh --provider <cloudflare|vercel>`로 실행한다.
+- Provider가 바뀌면(`cloudflare ↔ vercel`) 모바일 WebView 대상 URL/호스트를 `.env`에 반영한다.
+- Provider 스위칭 시 앱 재배포가 필요하면 iOS 배포를 자동 실행한다(기본 동작).
+
+## 6) 배포 후 보고 포맷 (이 채널)
 
 아래 순서 고정:
 1. 재현(무엇을 실행했는지)
