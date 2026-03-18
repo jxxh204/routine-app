@@ -31,6 +31,15 @@ npm run ios     # 또는 npm run android
 - [x] 모바일 WebView 로컬 URL 연결 (`http://localhost:3000/today`)
 - [ ] 로그인/루틴 API 연결
 
+## 개발 이력/롤백 문서
+
+- 개발 이력: `docs/dev-history.md`
+- 롤백 가이드: `docs/rollback-guide.md`
+
+원칙:
+- 큰 변경은 `재현 → 원인 → 해결` 3줄로 기록
+- 커밋 해시를 반드시 남겨서 되돌리기 쉽게 유지
+
 ## 배포 커맨드 (원커맨드)
 
 ### 웹 배포 (Cloudflare Pages production)
