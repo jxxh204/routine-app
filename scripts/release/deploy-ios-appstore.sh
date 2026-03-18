@@ -57,7 +57,7 @@ done
 
 [[ -d "$MOBILE_DIR" ]] || { echo "❌ apps/mobile not found"; exit 1; }
 [[ -d "$IOS_DIR" ]] || { echo "❌ apps/mobile/ios not found. Run expo prebuild first."; exit 1; }
-[[ -f "$WORKSPACE_PATH" ]] || { echo "❌ Workspace not found: $WORKSPACE_PATH"; exit 1; }
+[[ -d "$WORKSPACE_PATH" ]] || { echo "❌ Workspace not found: $WORKSPACE_PATH"; exit 1; }
 
 if [[ ! -f "$MOBILE_DIR/.env" ]]; then
   echo "❌ apps/mobile/.env not found"
