@@ -49,6 +49,19 @@ npm run ios     # 또는 npm run android
 ```
 
 - preflight → archive → export → upload를 한 번에 실행
+- 실행 시 `app.json`의 `ios.buildNumber`를 자동 +1
+- 버전 고정 배포 예시:
+
+```bash
+./scripts/release/deploy-ios-appstore.sh --version 1.0.1
+```
+
+- 빌드번호 직접 지정 예시:
+
+```bash
+./scripts/release/deploy-ios-appstore.sh --version 1.0.1 --build-number 3
+```
+
 - 도중 keychain 접근 허용 팝업이 뜨면 "항상 허용" 또는 "허용" 필요
 
 ## 모바일 env 설정
