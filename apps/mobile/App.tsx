@@ -22,8 +22,8 @@ import { WebView } from 'react-native-webview';
 
 import { getMonthMatrix, hhmmToMinute, minuteToHHMM, toDateKey } from './src/lib/date-time';
 
-const WEB_APP_URL = process.env.EXPO_PUBLIC_WEB_APP_URL?.trim();
-const ALLOWED_HOSTS = (process.env.EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS ?? '')
+const WEB_APP_URL = (process.env.MOBILE_WEB_APP_URL ?? process.env.EXPO_PUBLIC_WEB_APP_URL)?.trim();
+const ALLOWED_HOSTS = (process.env.MOBILE_WEB_APP_ALLOWED_HOSTS ?? process.env.EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS ?? '')
   .split(',')
   .map((host: string) => host.trim().toLowerCase())
   .filter(Boolean);
@@ -436,14 +436,14 @@ function AppContent() {
   }, [booting, onboardingDone, settings]);
 
   if (!WEB_APP_URL) {
-    return <AppError title="환경변수 누락" detail="EXPO_PUBLIC_WEB_APP_URL 을 설정해 주세요." />;
+    return <AppError title="환경변수 누락" detail="MOBILE_WEB_APP_URL 또는 EXPO_PUBLIC_WEB_APP_URL 을 설정해 주세요." />;
   }
 
   if (!isAllowedUrl(WEB_APP_URL)) {
     return (
       <AppError
         title="보안 설정 오류"
-        detail="HTTPS URL 및 허용 도메인(EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS)을 확인해 주세요."
+        detail="HTTPS URL 및 허용 도메인(MOBILE_WEB_APP_ALLOWED_HOSTS 또는 EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS)을 확인해 주세요."
       />
     );
   }

@@ -65,13 +65,10 @@ if [[ ! -f "$MOBILE_DIR/.env" ]]; then
   exit 1
 fi
 
-if ! command -v xcodebuild >/dev/null 2>&1; then
-  echo "❌ xcodebuild not found"
-  exit 1
-fi
+"$ROOT_DIR/scripts/release/preflight-common.sh" --target ios
 
-if ! grep -q '^EXPO_PUBLIC_WEB_APP_URL=' "$MOBILE_DIR/.env"; then
-  echo "❌ EXPO_PUBLIC_WEB_APP_URL is missing in apps/mobile/.env"
+if ! grep -qE '^(MOBILE_WEB_APP_URL|EXPO_PUBLIC_WEB_APP_URL)=' "$MOBILE_DIR/.env"; then
+  echo "❌ MOBILE_WEB_APP_URL (or legacy EXPO_PUBLIC_WEB_APP_URL) is missing in apps/mobile/.env"
   exit 1
 fi
 

@@ -35,15 +35,7 @@ done
 
 cd "$ROOT_DIR"
 
-if ! command -v gh >/dev/null 2>&1; then
-  echo "❌ gh CLI not found. Install GitHub CLI first."
-  exit 1
-fi
-
-if ! gh auth status >/dev/null 2>&1; then
-  echo "❌ gh auth is not ready. Run: gh auth login"
-  exit 1
-fi
+"$ROOT_DIR/scripts/release/preflight-common.sh" --target web
 
 if [[ -z "${TAG}" ]]; then
   date_prefix="$(date +%Y.%m.%d)"

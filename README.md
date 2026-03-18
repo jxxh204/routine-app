@@ -92,7 +92,17 @@ npm run ios     # 또는 npm run android
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-필수 값:
+권장 값(신규):
 
-- `EXPO_PUBLIC_WEB_APP_URL` (HTTPS, 예: `https://<your-pages-domain>/today`)
-- `EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS` (쉼표 구분 allowlist)
+- `MOBILE_WEB_APP_URL` (HTTPS, 예: `https://<your-pages-domain>/today`)
+- `MOBILE_WEB_APP_ALLOWED_HOSTS` (쉼표 구분 allowlist)
+
+레거시 호환 값(기존 Expo 키):
+
+- `EXPO_PUBLIC_WEB_APP_URL`
+- `EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS`
+
+## 릴리즈 운영 기준
+
+- 공통 릴리즈 계약: `docs/release-contract.md`
+- 공통 사전검증: `scripts/release/preflight-common.sh --target web|ios`
