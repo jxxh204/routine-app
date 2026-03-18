@@ -35,10 +35,21 @@ npm run ios     # 또는 npm run android
 
 - 개발 이력: `docs/dev-history.md`
 - 롤백 가이드: `docs/rollback-guide.md`
+- 이력 append 스크립트: `scripts/release/log-dev-history.sh`
 
 원칙:
 - 큰 변경은 `재현 → 원인 → 해결` 3줄로 기록
 - 커밋 해시를 반드시 남겨서 되돌리기 쉽게 유지
+
+예시:
+```bash
+./scripts/release/log-dev-history.sh \
+  --title "Web 배포 경로 수정" \
+  --repro "Cloudflare 배포 결과가 비어있음" \
+  --cause "pages deploy 경로 오지정" \
+  --fix "apps/web/.vercel/output/static 경로로 수정" \
+  --scope "web,ci"
+```
 
 ## 배포 커맨드 (원커맨드)
 
