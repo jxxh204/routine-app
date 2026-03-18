@@ -31,12 +31,35 @@ npm run ios     # 또는 npm run android
 - [x] 모바일 WebView 로컬 URL 연결 (`http://localhost:3000/today`)
 - [ ] 로그인/루틴 API 연결
 
-## 설정 포인트
+## 배포 커맨드 (원커맨드)
 
-개발 중에는 `apps/mobile/App.tsx`가 로컬 웹으로 연결되어 있습니다.
+### 웹 배포 (Cloudflare Pages production)
 
-```ts
-const WEB_APP_URL = 'http://localhost:3000/today';
+```bash
+./scripts/release/deploy-web.sh
 ```
 
-배포 전에는 운영 URL로 교체하세요.
+- 릴리즈 태그(`vYYYY.MM.DD-N`)를 자동 생성/푸시
+- GitHub Actions `web-cloudflare-pages` 실행 상태를 자동 모니터링
+
+### 앱 배포 (iOS App Store Connect 업로드)
+
+```bash
+./scripts/release/deploy-ios-appstore.sh
+```
+
+- preflight → archive → export → upload를 한 번에 실행
+- 도중 keychain 접근 허용 팝업이 뜨면 "항상 허용" 또는 "허용" 필요
+
+## 모바일 env 설정
+
+`apps/mobile/.env` 파일이 필요합니다(로컬 실행/빌드 공통):
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+```
+
+필수 값:
+
+- `EXPO_PUBLIC_WEB_APP_URL` (HTTPS, 예: `https://<your-pages-domain>/today`)
+- `EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS` (쉼표 구분 allowlist)

@@ -27,9 +27,23 @@ Workflow: `.github/workflows/mobile-ci.yml`
 
 1. 기능 PR 머지
 2. CI 통과
-3. 태그 생성 (`vYYYY.MM.DD-N`)
-4. Web production 자동배포
-5. iOS는 로컬 Xcode Archive → TestFlight 업로드
+3. 아래 원커맨드 실행
+
+### 웹
+
+```bash
+./scripts/release/deploy-web.sh
+```
+
+- 태그 생성/푸시 + production 배포 워크플로 모니터링까지 포함
+
+### iOS 앱
+
+```bash
+./scripts/release/deploy-ios-appstore.sh
+```
+
+- preflight + archive + export + App Store Connect upload 자동화
 
 참고 문서:
 - `docs/release-policy.md`

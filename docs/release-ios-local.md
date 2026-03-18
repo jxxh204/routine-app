@@ -11,8 +11,13 @@
 ```bash
 cd apps/mobile
 npm ci
+cp .env.example .env   # 없으면 생성
 npx expo prebuild --platform ios
 ```
+
+필수 env:
+- `EXPO_PUBLIC_WEB_APP_URL` (HTTPS)
+- `EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS`
 
 > 이미 `ios/`가 있고 네이티브 변경이 없으면 prebuild 생략 가능.
 
