@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
@@ -10,17 +10,13 @@ import {
   IconButton,
   MD3DarkTheme,
   Provider as PaperProvider,
-  Modal,
-  Portal,
   Snackbar,
-  Switch,
   Text,
-  TextInput,
   type MD3Theme,
 } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
 
-import { getMonthMatrix, hhmmToMinute, minuteToHHMM, toDateKey } from './src/lib/date-time';
+import { minuteToHHMM } from './src/lib/date-time';
 
 const WEB_APP_URL = (process.env.MOBILE_WEB_APP_URL ?? process.env.EXPO_PUBLIC_WEB_APP_URL)?.trim();
 const ALLOWED_HOSTS = (process.env.MOBILE_WEB_APP_ALLOWED_HOSTS ?? process.env.EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS ?? '')
@@ -375,13 +371,6 @@ function AppContent() {
 
   const [routines, setRoutines] = useState<Routine[]>(defaultRoutines);
   const [completionHistory, setCompletionHistory] = useState<CompletionHistory>({});
-  const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
-  const [calendarModalVisible, setCalendarModalVisible] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newStart, setNewStart] = useState('09:00');
-  const [newEnd, setNewEnd] = useState('10:00');
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<NotificationSettings>(defaultNotiSettings);
   const [statusMsg, setStatusMsg] = useState('');
@@ -462,71 +451,6 @@ function AppContent() {
     return <Onboarding onDone={() => setOnboardingDone(true)} />;
   }
 
-  const addRoutine = () => {
-    const title = newTitle.trim();
-    const startMinute = hhmmToMinute(newStart);
-    const endMinute = hhmmToMinute(newEnd);
-
-    if (!title || startMinute === null || endMinute === null) {
-      setStatusMsg('루틴 제목/시간 형식을 확인해 주세요.');
-      return;
-    }
-
-    setRoutines((prev) => [
-      ...prev,
-      {
-        id: `custom-${Date.now()}`,
-        title,
-        startMinute,
-        endMinute,
-        isDefault: false,
-      },
-    ]);
-
-    setNewTitle('');
-    setStatusMsg('커스텀 루틴이 추가됐어요.');
-  };
-
-  const startEditRoutine = (id: string) => {
-    const routine = routines.find((item) => item.id === id);
-    if (!routine || routine.isDefault) return;
-
-    setEditingId(id);
-    setNewTitle(routine.title);
-    setNewStart(minuteToHHMM(routine.startMinute));
-    setNewEnd(minuteToHHMM(routine.endMinute));
-  };
-
-  const applyEditRoutine = () => {
-    if (!editingId) return;
-
-    const title = newTitle.trim();
-    const startMinute = hhmmToMinute(newStart);
-    const endMinute = hhmmToMinute(newEnd);
-
-    if (!title || startMinute === null || endMinute === null) {
-      setStatusMsg('수정값을 확인해 주세요.');
-      return;
-    }
-
-    setRoutines((prev) =>
-      prev.map((item) =>
-        item.id === editingId
-          ? { ...item, title, startMinute, endMinute }
-          : item,
-      ),
-    );
-
-    setEditingId(null);
-    setNewTitle('');
-    setStatusMsg('커스텀 루틴이 수정됐어요.');
-  };
-
-  const removeRoutine = (id: string) => {
-    setRoutines((prev) => prev.filter((item) => item.isDefault || item.id !== id));
-    setStatusMsg('커스텀 루틴을 삭제했어요.');
-  };
-
   const toggleNotifications = async (enabled: boolean) => {
     const next = { ...settings, enabled };
     setSettings(next);
@@ -534,201 +458,6 @@ function AppContent() {
     await scheduleDefaultNotifications(next, routines);
     setStatusMsg(enabled ? '알림을 켰어요.' : '알림을 껐어요.');
   };
-
-  const renderToday = () => {
-    const pageUrl = `${parsedUrl?.origin ?? ''}/today`;
-
-    return (
-      <WebView
-        style={styles.webview}
-        source={{ uri: pageUrl }}
-        startInLoadingState
-        originWhitelist={['https://*']}
-        onShouldStartLoadWithRequest={(request) => {
-          if (isAllowedUrl(request.url)) return true;
-          void Linking.openURL(request.url);
-          return false;
-        }}
-        renderLoading={() => (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color="#7cffb2" />
-          </View>
-        )}
-        injectedJavaScript={getWebviewCompletionSyncScript()}
-        onMessage={(event) => {
-          try {
-            const payload = JSON.parse(event.nativeEvent.data ?? '{}') as {
-              source?: string;
-              type?: string;
-              history?: CompletionHistory;
-              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
-              enabled?: boolean;
-            };
-
-            if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
-              setCompletionHistory(payload.history);
-              return;
-            }
-
-            if (payload.source === 'routine-web' && payload.type === 'native-action') {
-              if (payload.action === 'open-settings') {
-                void Linking.openSettings();
-                return;
-              }
-
-              if (payload.action === 'request-notification-permission') {
-                void Notifications.requestPermissionsAsync().then((perm) => {
-                  setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
-                });
-                return;
-              }
-
-              if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
-                void toggleNotifications(payload.enabled);
-              }
-            }
-          } catch {
-            // no-op
-          }
-        }}
-      />
-    );
-  };
-
-  const renderCalendar = () => {
-    const today = new Date();
-    const todayMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    const doneDates = Object.entries(completionHistory)
-      .filter(([, list]) => list.length > 0)
-      .map(([dateKey]) => new Date(`${dateKey}T00:00:00`))
-      .filter((date) => !Number.isNaN(date.getTime()));
-
-    const firstDone = doneDates.length > 0
-      ? doneDates.reduce((min, cur) => (cur.getTime() < min.getTime() ? cur : min), doneDates[0])
-      : today;
-
-    const minMonthStart = new Date(firstDone.getFullYear(), firstDone.getMonth(), 1);
-    const maxMonthStart = todayMonthStart;
-
-    const currentMonthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
-    const canGoPrev = currentMonthStart.getTime() > minMonthStart.getTime();
-    const canGoNext = currentMonthStart.getTime() < maxMonthStart.getTime();
-
-    const days = getMonthMatrix(calendarMonth);
-    const monthTitle = `${calendarMonth.getFullYear()}년 ${calendarMonth.getMonth() + 1}월`;
-
-    const onPressDay = (date: Date) => {
-      const key = toDateKey(date);
-      setSelectedDateKey(key);
-      setCalendarModalVisible(true);
-    };
-
-    const selectedDoneList = selectedDateKey ? (completionHistory[selectedDateKey] ?? []) : [];
-
-    return (
-      <ScrollView contentContainerStyle={styles.bodyScroll}>
-        <Card mode="outlined" style={styles.card}>
-          <Card.Content>
-            <View style={styles.calendarHeaderRow}>
-              <IconButton
-                icon="chevron-left"
-                size={22}
-                disabled={!canGoPrev}
-                onPress={() => {
-                  if (!canGoPrev) return;
-                  setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1));
-                }}
-              />
-              <Text style={styles.sectionTitle}>{monthTitle}</Text>
-              <IconButton
-                icon="chevron-right"
-                size={22}
-                disabled={!canGoNext}
-                onPress={() => {
-                  if (!canGoNext) return;
-                  setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
-                }}
-              />
-            </View>
-
-            <View style={styles.calendarWeekRow}>
-              {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
-                <Text key={w} style={styles.calendarWeekLabel}>{w}</Text>
-              ))}
-            </View>
-
-            <View style={styles.calendarGrid}>
-              {days.map((date) => {
-                const key = toDateKey(date);
-                const inMonth = date.getMonth() === calendarMonth.getMonth();
-                const doneCount = completionHistory[key]?.length ?? 0;
-                const isToday = key === toDateKey(today);
-
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.calendarCell,
-                      !inMonth ? styles.calendarCellDim : undefined,
-                      doneCount > 0 ? styles.calendarCellDone : undefined,
-                      isToday ? styles.calendarCellToday : undefined,
-                    ]}
-                    onPress={() => onPressDay(date)}
-                  >
-                    <Text style={styles.calendarDateText}>{date.getDate()}</Text>
-                    {doneCount > 0 ? <Text style={styles.calendarDoneDot}>완료 {doneCount}</Text> : null}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </Card.Content>
-        </Card>
-
-        <Portal>
-          <Modal
-            visible={calendarModalVisible}
-            onDismiss={() => setCalendarModalVisible(false)}
-            contentContainerStyle={styles.calendarModalWrap}
-          >
-            <Text style={styles.sectionTitle}>{selectedDateKey ?? '-'} 완료 루틴</Text>
-            {selectedDoneList.length === 0 ? (
-              <Text style={styles.routineMeta}>해당일 완료된 루틴이 없습니다.</Text>
-            ) : (
-              selectedDoneList.map((item) => (
-                <View key={`${item.id}-${item.doneAt ?? ''}`} style={styles.calendarDoneItem}>
-                  <Text style={styles.routineTitle}>{item.title}</Text>
-                  <Text style={styles.routineMeta}>{item.doneAt ?? '완료 시간 미기록'}</Text>
-                  {item.proofImage ? <Image source={{ uri: item.proofImage }} style={styles.calendarThumb} /> : null}
-                </View>
-              ))
-            )}
-            <Button mode="contained" onPress={() => setCalendarModalVisible(false)}>
-              닫기
-            </Button>
-          </Modal>
-        </Portal>
-      </ScrollView>
-    );
-  };
-
-  const renderSettings = () => (
-    <ScrollView contentContainerStyle={styles.bodyScroll}>
-      <Card mode="outlined" style={styles.card}>
-        <Card.Content>
-          <View style={styles.switchRow}>
-            <Text style={styles.sectionTitle}>알림 사용</Text>
-            <Switch value={settings.enabled} onValueChange={(value) => void toggleNotifications(value)} />
-          </View>
-          <Text style={styles.routineMeta}>잠금화면/백그라운드에서 루틴 시간 알림을 받습니다.</Text>
-        </Card.Content>
-      </Card>
-
-      <Button mode="outlined" textColor="#c4cfda" style={styles.settingsButton} onPress={() => void Linking.openSettings()}>
-        시스템 설정 열기
-      </Button>
-    </ScrollView>
-  );
 
   const renderWebRoute = (path: '/today' | '/calendar' | '/settings') => {
     const pageUrl = `${parsedUrl?.origin ?? ''}${path}`;
