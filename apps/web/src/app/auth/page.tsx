@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -11,7 +11,7 @@ import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-poli
 import { startSocialLogin } from '@/lib/social-login';
 import { supabase } from '@/lib/supabase';
 
-export default function AuthPage() {
+function AuthPageContent() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const router = useRouter();
@@ -25,12 +25,13 @@ export default function AuthPage() {
   const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID);
 
   useEffect(() => {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
 
     const target = resolvePostLoginPath(searchParams.get('next'));
 
     const check = async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await client.auth.getSession();
       if (data.session) {
         router.replace(target);
       }
@@ -174,5 +175,13 @@ export default function AuthPage() {
         <p style={{ marginTop: 12, color: '#ff9ba8', fontSize: 13 }}>{errorMessage}</p>
       ) : null}
     </main>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={null}>
+      <AuthPageContent />
+    </Suspense>
   );
 }
