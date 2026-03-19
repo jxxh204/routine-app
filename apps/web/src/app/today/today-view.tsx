@@ -19,6 +19,7 @@ import {
   isInTimeWindow,
   minuteToHHMM,
 } from '@/lib/routine-time';
+import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
@@ -281,7 +282,7 @@ function getInitialRoutines() {
     const raw = window.localStorage.getItem(getTodayStorageKey());
     if (!raw) return base;
 
-    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt' | 'proofImage'>>;
+    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt'> & { proofImage?: string }>;
     return base.map((routine) => {
       const match = saved.find((item) => item.id === routine.id);
       if (!match) return routine;
@@ -316,12 +317,11 @@ export function TodayView() {
   useEffect(() => {
     const todayKey = getTodayStorageKey();
 
-    const snapshot = routines.map(({ id, title, doneByMe, doneAt, proofImage }) => ({
+    const snapshot = routines.map(({ id, title, doneByMe, doneAt }) => ({
       id,
       title,
       doneByMe,
       doneAt,
-      proofImage,
     }));
 
     let preservedDeletedDone: Array<{
@@ -329,7 +329,6 @@ export function TodayView() {
       title?: string;
       doneByMe: boolean;
       doneAt?: string;
-      proofImage?: string;
     }> = [];
 
     try {
@@ -340,7 +339,6 @@ export function TodayView() {
           title?: string;
           doneByMe: boolean;
           doneAt?: string;
-          proofImage?: string;
         }>;
 
         const liveIds = new Set(snapshot.map((item) => item.id));
@@ -355,12 +353,7 @@ export function TodayView() {
     try {
       window.localStorage.setItem(todayKey, JSON.stringify(merged));
     } catch {
-      const lightweight = merged.map(({ id, title, doneByMe, doneAt }) => ({ id, title, doneByMe, doneAt }));
-      try {
-        window.localStorage.setItem(todayKey, JSON.stringify(lightweight));
-      } catch {
-        // ignore localStorage quota overflow
-      }
+      // ignore localStorage quota overflow
     }
 
     saveCustomRoutines(routines);
@@ -438,6 +431,34 @@ export function TodayView() {
   }, []);
 
   useEffect(() => {
+    const dateKey = getTodayDateKey();
+
+    const hydrateProofImages = async () => {
+      const imagePairs = await Promise.all(
+        routines
+          .filter((routine) => routine.doneByMe)
+          .map(async (routine) => ({
+            id: routine.id,
+            image: await readProofImage(dateKey, routine.id).catch(() => null),
+          })),
+      );
+
+      const imageMap = new Map(imagePairs.filter((item) => item.image).map((item) => [item.id, item.image as string]));
+      if (imageMap.size === 0) return;
+
+      setRoutines((prev) =>
+        prev.map((routine) => {
+          const image = imageMap.get(routine.id);
+          if (!image || routine.proofImage === image) return routine;
+          return { ...routine, proofImage: image };
+        }),
+      );
+    };
+
+    void hydrateProofImages();
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (thumbLongPressTimerRef.current) {
         window.clearTimeout(thumbLongPressTimerRef.current);
@@ -455,7 +476,12 @@ export function TodayView() {
   const finalizePhotoCertification = async (routineId: string, imageDataUrl: string) => {
     const now = new Date();
     const doneAtText = formatKoreanTime(now);
+    const dateKey = getTodayDateKey();
     const target = routines.find((routine) => routine.id === routineId);
+
+    await saveProofImage(dateKey, routineId, imageDataUrl).catch(() => {
+      // indexedDB unavailable: continue with in-memory/local snapshot only
+    });
 
     setRoutines((prev) =>
       prev.map((routine) =>
