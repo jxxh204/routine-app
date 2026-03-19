@@ -143,7 +143,12 @@
   - provider별 OAuth 시작 함수
 - `apps/web/src/lib/social-official-button-assets.ts`
   - provider별 공식 버튼 에셋 매핑
+- `apps/web/src/app/friends/page.tsx`
+  - 친구코드 요청/요청목록/수락 UI 초안
+- `apps/web/src/lib/friends.ts`
+  - friendships 조회/요청/수락 API 함수
 - 테스트
   - `social-auth-policy.test.ts`
   - `social-login.test.ts`
   - `social-official-button-assets.test.ts`
+  - `friend-code.test.ts`
