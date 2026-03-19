@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
+import { readProofImage } from '@/lib/proof-image-store';
 
 const STORAGE_PREFIX = 'routine-challenge-v1:';
 
@@ -26,10 +27,44 @@ export default function CalendarPage() {
 
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
 
   const days = useMemo(() => getMonthMatrix(month), [month]);
   const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
   const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
+
+  useEffect(() => {
+    if (!selectedDate || selectedItems.length === 0) return;
+
+    let cancelled = false;
+
+    const hydrateProofImages = async () => {
+      const nextEntries = await Promise.all(
+        selectedItems.map(async (item) => {
+          const itemKey = `${selectedDate}:${item.id}`;
+          const image = item.proofImage ?? (await readProofImage(selectedDate, item.id).catch(() => null));
+          return image ? [itemKey, image] as const : null;
+        }),
+      );
+
+      if (cancelled) return;
+
+      setProofByItemKey((prev) => {
+        const merged = { ...prev };
+        for (const entry of nextEntries) {
+          if (!entry) continue;
+          merged[entry[0]] = entry[1];
+        }
+        return merged;
+      });
+    };
+
+    void hydrateProofImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate, selectedItems]);
 
   return (
     <main style={{ minHeight: '100dvh', background: '#11151a', color: '#f5f7fa', padding: 16 }}>
@@ -75,16 +110,20 @@ export default function CalendarPage() {
               <p style={{ color: '#9aa4af' }}>해당일 완료 내역이 없습니다.</p>
             ) : (
               <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
-                {selectedItems.map((item) => (
-                  <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={{ border: '1px solid #303844', borderRadius: 10, padding: 10 }}>
-                    <div style={{ fontWeight: 600 }}>{item.title ?? item.id}</div>
-                    <div style={{ color: '#9aa4af', fontSize: 12 }}>{item.doneAt ?? '완료 시간 미기록'}</div>
-                    {item.proofImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.proofImage} alt="인증 썸네일" style={{ marginTop: 8, width: 72, height: 72, borderRadius: 8, objectFit: 'cover' }} />
-                    ) : null}
-                  </article>
-                ))}
+                {selectedItems.map((item) => {
+                  const image = selectedDate ? proofByItemKey[`${selectedDate}:${item.id}`] ?? item.proofImage : item.proofImage;
+
+                  return (
+                    <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={{ border: '1px solid #303844', borderRadius: 10, padding: 10 }}>
+                      <div style={{ fontWeight: 600 }}>{item.title ?? item.id}</div>
+                      <div style={{ color: '#9aa4af', fontSize: 12 }}>{item.doneAt ?? '완료 시간 미기록'}</div>
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={image} alt="인증 썸네일" style={{ marginTop: 8, width: 72, height: 72, borderRadius: 8, objectFit: 'cover' }} />
+                      ) : null}
+                    </article>
+                  );
+                })}
               </div>
             )}
             <button style={{ ...navButton, marginTop: 10, width: '100%' }} onClick={() => setSelectedDate(null)}>닫기</button>
