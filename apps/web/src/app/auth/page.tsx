@@ -10,7 +10,13 @@ import { startSocialLogin } from '@/lib/social-login';
 export default function AuthPage() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [assetUnavailable, setAssetUnavailable] = useState<Record<SocialProvider, boolean>>({
+    kakao: false,
+    apple: false,
+    google: false,
+  });
   const providers = useMemo(() => getEnabledProviders('p0'), []);
+  const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID);
 
   const onClickProvider = async (provider: SocialProvider) => {
     setPending(provider);
@@ -58,13 +64,56 @@ export default function AuthPage() {
           }
 
           if (asset.kind === 'apple-js') {
+            if (!appleConfigured) {
+              return (
+                <div
+                  key={provider}
+                  style={{
+                    width: asset.width,
+                    height: asset.height,
+                    margin: '0 auto',
+                    borderRadius: 10,
+                    border: '1px dashed #4b5563',
+                    color: '#9aa4af',
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: 12,
+                  }}
+                >
+                  Apple 로그인 설정 필요
+                </div>
+              );
+            }
+
             return (
               <div key={provider} style={{ margin: '0 auto', opacity: pending ? 0.6 : 1 }}>
                 <AppleOfficialButton
                   width={asset.width}
                   height={asset.height}
                   onPress={() => void onClickProvider(provider)}
+                  onUnavailable={() => setAssetUnavailable((prev) => ({ ...prev, apple: true }))}
                 />
+              </div>
+            );
+          }
+
+          if (assetUnavailable[provider]) {
+            return (
+              <div
+                key={provider}
+                style={{
+                  width: asset.width,
+                  height: asset.height,
+                  margin: '0 auto',
+                  borderRadius: 10,
+                  border: '1px dashed #4b5563',
+                  color: '#9aa4af',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 12,
+                }}
+              >
+                공식 버튼 로드 실패
               </div>
             );
           }
@@ -86,7 +135,14 @@ export default function AuthPage() {
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset.src} alt={asset.alt} width={asset.width} height={asset.height} style={{ display: 'block' }} />
+              <img
+                src={asset.src}
+                alt={asset.alt}
+                width={asset.width}
+                height={asset.height}
+                style={{ display: 'block' }}
+                onError={() => setAssetUnavailable((prev) => ({ ...prev, [provider]: true }))}
+              />
             </button>
           );
         })}

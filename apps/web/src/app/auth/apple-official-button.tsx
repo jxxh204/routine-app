@@ -16,9 +16,10 @@ type Props = {
   width: number;
   height: number;
   onPress: () => void;
+  onUnavailable?: () => void;
 };
 
-export function AppleOfficialButton({ width, height, onPress }: Props) {
+export function AppleOfficialButton({ width, height, onPress, onUnavailable }: Props) {
   const baseId = useId().replace(/[:]/g, '');
   const mountId = `appleid-signin-${baseId}`;
 
@@ -29,7 +30,10 @@ export function AppleOfficialButton({ width, height, onPress }: Props) {
       const clientId = process.env.NEXT_PUBLIC_APPLE_SERVICE_ID;
       const redirectURI = typeof window !== 'undefined' ? `${window.location.origin}/today` : undefined;
 
-      if (!clientId || !redirectURI || !window.AppleID?.auth?.init) return;
+      if (!clientId || !redirectURI || !window.AppleID?.auth?.init) {
+        onUnavailable?.();
+        return;
+      }
 
       window.AppleID.auth.init({
         clientId,
@@ -50,7 +54,7 @@ export function AppleOfficialButton({ width, height, onPress }: Props) {
     script.async = true;
     script.onload = init;
     document.head.appendChild(script);
-  }, []);
+  }, [onUnavailable]);
 
   return (
     <div style={{ position: 'relative', width, height }}>

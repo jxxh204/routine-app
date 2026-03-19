@@ -33,8 +33,9 @@
 - 계정연동: 같은 이메일/subject 매핑 시 기존 계정 연결
 - 디자인 가이드라인 반영:
   - 카카오: 공식 제공 로그인 버튼 이미지 사용
-  - 애플: 공식 제공 Sign in with Apple 버튼 이미지 사용
+  - 애플: 공식 JS Sign in with Apple 버튼 렌더 사용 (`NEXT_PUBLIC_APPLE_SERVICE_ID` 필요)
   - 구글(P1): 공식 제공 Google Sign-in 버튼 적용
+  - 공식 버튼 로드 실패/설정 미완료 시 명시적 오류 UI 노출
 
 ### 3.2 친구 관리 화면
 - 내 친구코드 카드 + 복사
