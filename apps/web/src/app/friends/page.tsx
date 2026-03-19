@@ -4,24 +4,34 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { AuthRequired } from '@/components/auth-required';
 import { isValidFriendCode, normalizeFriendCode } from '@/lib/friend-code';
-import { acceptFriendRequest, listMyFriendRequests, sendFriendRequestByCode, type FriendRequestRow } from '@/lib/friends';
+import { acceptFriendRequest, listMyFriendRequests, sendFriendRequestByCode, splitFriendRequests, type FriendRequestRow } from '@/lib/friends';
+import { ensureMyProfile } from '@/lib/profile-bootstrap';
 
 export default function FriendsPage() {
   const [friendCode, setFriendCode] = useState('');
   const [rows, setRows] = useState<FriendRequestRow[]>([]);
+  const [myUserId, setMyUserId] = useState<string>('');
+  const [myFriendCode, setMyFriendCode] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const normalized = useMemo(() => normalizeFriendCode(friendCode), [friendCode]);
   const canSubmit = isValidFriendCode(normalized);
+  const split = useMemo(() => splitFriendRequests(rows, myUserId), [rows, myUserId]);
 
   const refresh = async () => {
+    const profile = await ensureMyProfile();
+    if (profile.ok) {
+      setMyFriendCode(profile.friendCode);
+    }
+
     const res = await listMyFriendRequests();
     if (!res.ok) {
       setMessage('친구 목록을 불러오지 못했어요.');
       return;
     }
 
+    setMyUserId(res.me);
     setRows(res.data);
   };
 
@@ -109,32 +119,64 @@ export default function FriendsPage() {
       </section>
 
       <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
-        <p style={{ marginTop: 0 }}>받은/보낸 요청</p>
+        <p style={{ marginTop: 0 }}>내 친구 코드</p>
+        <strong style={{ letterSpacing: 1 }}>{myFriendCode || '생성 중...'}</strong>
+      </section>
+
+      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+        <p style={{ marginTop: 0 }}>받은 요청</p>
         <div style={{ display: 'grid', gap: 8 }}>
-          {rows.length === 0 ? (
-            <p style={{ color: '#9aa4af' }}>아직 친구 요청이 없어요.</p>
+          {split.incomingPending.length === 0 ? (
+            <p style={{ color: '#9aa4af' }}>받은 요청이 없어요.</p>
           ) : (
-            rows.map((row) => (
+            split.incomingPending.map((row) => (
               <article key={row.id} style={{ border: '1px solid #303844', borderRadius: 8, padding: 10 }}>
-                <div style={{ fontSize: 13, color: '#9aa4af' }}>status: {row.status}</div>
-                <div style={{ fontSize: 12, color: '#9aa4af', marginTop: 4 }}>
-                  {row.requester_id} → {row.addressee_id}
+                <div style={{ fontSize: 12, color: '#9aa4af' }}>요청자: {row.requester_id}</div>
+                <button
+                  onClick={() => void onAccept(row.id)}
+                  style={{
+                    marginTop: 8,
+                    borderRadius: 8,
+                    border: '1px solid #334050',
+                    background: '#1f2a36',
+                    color: '#9ed0ff',
+                    padding: '6px 10px',
+                  }}
+                >
+                  수락
+                </button>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+        <p style={{ marginTop: 0 }}>보낸 요청</p>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {split.outgoingPending.length === 0 ? (
+            <p style={{ color: '#9aa4af' }}>보낸 요청이 없어요.</p>
+          ) : (
+            split.outgoingPending.map((row) => (
+              <article key={row.id} style={{ border: '1px solid #303844', borderRadius: 8, padding: 10 }}>
+                <div style={{ fontSize: 12, color: '#9aa4af' }}>대상: {row.addressee_id}</div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+        <p style={{ marginTop: 0 }}>친구 목록</p>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {split.accepted.length === 0 ? (
+            <p style={{ color: '#9aa4af' }}>아직 친구가 없어요.</p>
+          ) : (
+            split.accepted.map((row) => (
+              <article key={row.id} style={{ border: '1px solid #303844', borderRadius: 8, padding: 10 }}>
+                <div style={{ fontSize: 12, color: '#9aa4af' }}>
+                  친구: {row.requester_id === myUserId ? row.addressee_id : row.requester_id}
                 </div>
-                {row.status === 'pending' ? (
-                  <button
-                    onClick={() => void onAccept(row.id)}
-                    style={{
-                      marginTop: 8,
-                      borderRadius: 8,
-                      border: '1px solid #334050',
-                      background: '#1f2a36',
-                      color: '#9ed0ff',
-                      padding: '6px 10px',
-                    }}
-                  >
-                    수락
-                  </button>
-                ) : null}
               </article>
             ))
           )}
