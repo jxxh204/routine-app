@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 
-import { getSocialButtonConfig } from '@/lib/social-button-guideline';
+import { AppleOfficialButton } from '@/app/auth/apple-official-button';
+import { getOfficialButtonAsset } from '@/lib/social-official-button-assets';
 import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-policy';
 import { startSocialLogin } from '@/lib/social-login';
 
@@ -32,20 +33,60 @@ export default function AuthPage() {
       <section style={{ marginTop: 24, display: 'grid', gap: 10 }}>
         {providers.map((provider) => {
           const isBusy = pending === provider;
-          const config = getSocialButtonConfig(provider);
+          const asset = getOfficialButtonAsset(provider);
+
+          if (isBusy) {
+            return (
+              <div
+                key={provider}
+                style={{
+                  width: asset.width,
+                  height: asset.height,
+                  borderRadius: 10,
+                  border: '1px solid #2b3138',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#9aa4af',
+                  background: '#1b1f23',
+                  fontWeight: 700,
+                  margin: '0 auto',
+                }}
+              >
+                처리 중...
+              </div>
+            );
+          }
+
+          if (asset.kind === 'apple-js') {
+            return (
+              <div key={provider} style={{ margin: '0 auto', opacity: pending ? 0.6 : 1 }}>
+                <AppleOfficialButton
+                  width={asset.width}
+                  height={asset.height}
+                  onPress={() => void onClickProvider(provider)}
+                />
+              </div>
+            );
+          }
 
           return (
             <button
               key={provider}
               onClick={() => void onClickProvider(provider)}
               disabled={Boolean(pending)}
+              aria-label={asset.alt}
               style={{
-                ...config.style,
-                opacity: pending && !isBusy ? 0.6 : 1,
+                padding: 0,
+                border: 'none',
+                background: 'transparent',
+                opacity: pending ? 0.6 : 1,
                 cursor: pending ? 'default' : 'pointer',
+                width: 'fit-content',
+                margin: '0 auto',
               }}
             >
-              {isBusy ? '처리 중...' : config.label}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={asset.src} alt={asset.alt} width={asset.width} height={asset.height} style={{ display: 'block' }} />
             </button>
           );
         })}

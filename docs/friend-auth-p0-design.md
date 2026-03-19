@@ -32,9 +32,9 @@
 - 상태: 로그인 처리중, 실패 재시도
 - 계정연동: 같은 이메일/subject 매핑 시 기존 계정 연결
 - 디자인 가이드라인 반영:
-  - 카카오: 카카오 컬러(노랑)와 문구 규칙 준수
-  - 애플: Apple 로그인 버튼 스타일(검정/흰색 대비) 준수
-  - 구글(P1): Google Identity Branding 가이드 버튼 적용 예정
+  - 카카오: 공식 제공 로그인 버튼 이미지 사용
+  - 애플: 공식 제공 Sign in with Apple 버튼 이미지 사용
+  - 구글(P1): 공식 제공 Google Sign-in 버튼 적용
 
 ### 3.2 친구 관리 화면
 - 내 친구코드 카드 + 복사
@@ -140,9 +140,9 @@
   - P0 소셜로그인(카카오/애플) 버튼 UI
 - `apps/web/src/lib/social-login.ts`
   - provider별 OAuth 시작 함수
-- `apps/web/src/lib/social-button-guideline.ts`
-  - provider별 버튼 문구/스타일 가이드 매핑
+- `apps/web/src/lib/social-official-button-assets.ts`
+  - provider별 공식 버튼 에셋 매핑
 - 테스트
   - `social-auth-policy.test.ts`
   - `social-login.test.ts`
-  - `social-button-guideline.test.ts`
+  - `social-official-button-assets.test.ts`
