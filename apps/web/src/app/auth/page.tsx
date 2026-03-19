@@ -2,14 +2,9 @@
 
 import { useMemo, useState } from 'react';
 
+import { getSocialButtonConfig } from '@/lib/social-button-guideline';
 import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-policy';
 import { startSocialLogin } from '@/lib/social-login';
-
-const labels: Record<SocialProvider, string> = {
-  kakao: '카카오로 시작',
-  apple: 'Apple로 시작',
-  google: 'Google로 시작',
-};
 
 export default function AuthPage() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
@@ -37,6 +32,7 @@ export default function AuthPage() {
       <section style={{ marginTop: 24, display: 'grid', gap: 10 }}>
         {providers.map((provider) => {
           const isBusy = pending === provider;
+          const config = getSocialButtonConfig(provider);
 
           return (
             <button
@@ -44,17 +40,12 @@ export default function AuthPage() {
               onClick={() => void onClickProvider(provider)}
               disabled={Boolean(pending)}
               style={{
-                height: 48,
-                borderRadius: 10,
-                border: '1px solid #2b3138',
-                background: '#1b1f23',
-                color: '#f5f7fa',
-                fontWeight: 700,
-                cursor: pending ? 'default' : 'pointer',
+                ...config.style,
                 opacity: pending && !isBusy ? 0.6 : 1,
+                cursor: pending ? 'default' : 'pointer',
               }}
             >
-              {isBusy ? '처리 중...' : labels[provider]}
+              {isBusy ? '처리 중...' : config.label}
             </button>
           );
         })}
