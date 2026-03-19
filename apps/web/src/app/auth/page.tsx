@@ -1,15 +1,21 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
+import { resolvePostLoginPath } from '@/lib/auth-redirect';
 import { getOfficialButtonAsset } from '@/lib/social-official-button-assets';
 import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-policy';
 import { startSocialLogin } from '@/lib/social-login';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthPage() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [assetUnavailable, setAssetUnavailable] = useState<Record<SocialProvider, boolean>>({
     kakao: false,
     apple: false,
@@ -18,11 +24,27 @@ export default function AuthPage() {
   const providers = useMemo(() => getEnabledProviders('p0'), []);
   const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID);
 
+  useEffect(() => {
+    if (!supabase) return;
+
+    const target = resolvePostLoginPath(searchParams.get('next'));
+
+    const check = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        router.replace(target);
+      }
+    };
+
+    void check();
+  }, [router, searchParams]);
+
   const onClickProvider = async (provider: SocialProvider) => {
     setPending(provider);
     setErrorMessage('');
 
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/today` : undefined;
+    const nextPath = resolvePostLoginPath(searchParams.get('next'));
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}${nextPath}` : undefined;
     const result = await startSocialLogin(provider, redirectTo);
 
     if (!result.ok) {
