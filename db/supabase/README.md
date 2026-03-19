@@ -6,6 +6,7 @@
 3. `schema_v1.sql` 실행
 4. `schema_v2_challenge_logs.sql` 실행
 5. `schema_v3_room_auth.sql` 실행
+6. `schema_v4_friend_auth_p0.sql` 실행 (친구연동 + 로그인 P0)
 
 ## MVP 쿼리 체크
 - 그룹 생성: `groups` insert + `group_members(owner)` insert

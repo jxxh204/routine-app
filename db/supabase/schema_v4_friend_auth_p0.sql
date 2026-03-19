@@ -61,3 +61,70 @@ create index if not exists idx_friendships_requester_status on friendships(reque
 create index if not exists idx_friendships_addressee_status on friendships(addressee_id, status);
 create index if not exists idx_push_tokens_user_enabled on push_tokens(user_id, enabled);
 create index if not exists idx_push_events_target_date on push_events(target_user_id, event_date);
+
+alter table profiles enable row level security;
+alter table friendships enable row level security;
+alter table push_tokens enable row level security;
+alter table user_push_prefs enable row level security;
+alter table push_events enable row level security;
+
+-- profiles
+create policy if not exists profiles_select_self_or_friend on profiles
+for select using (
+  auth.uid() = user_id
+  or exists (
+    select 1 from friendships f
+    where f.status = 'accepted'
+      and (
+        (f.requester_id = auth.uid() and f.addressee_id = profiles.user_id)
+        or (f.addressee_id = auth.uid() and f.requester_id = profiles.user_id)
+      )
+  )
+);
+
+create policy if not exists profiles_insert_self on profiles
+for insert with check (auth.uid() = user_id);
+
+create policy if not exists profiles_update_self on profiles
+for update using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- friendships
+create policy if not exists friendships_select_participant on friendships
+for select using (auth.uid() in (requester_id, addressee_id));
+
+create policy if not exists friendships_insert_requester on friendships
+for insert with check (auth.uid() = requester_id);
+
+create policy if not exists friendships_update_participant on friendships
+for update using (auth.uid() in (requester_id, addressee_id))
+with check (auth.uid() in (requester_id, addressee_id));
+
+-- push_tokens
+create policy if not exists push_tokens_select_self on push_tokens
+for select using (auth.uid() = user_id);
+
+create policy if not exists push_tokens_insert_self on push_tokens
+for insert with check (auth.uid() = user_id);
+
+create policy if not exists push_tokens_update_self on push_tokens
+for update using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy if not exists push_tokens_delete_self on push_tokens
+for delete using (auth.uid() = user_id);
+
+-- user_push_prefs
+create policy if not exists user_push_prefs_select_self on user_push_prefs
+for select using (auth.uid() = user_id);
+
+create policy if not exists user_push_prefs_insert_self on user_push_prefs
+for insert with check (auth.uid() = user_id);
+
+create policy if not exists user_push_prefs_update_self on user_push_prefs
+for update using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- push_events
+create policy if not exists push_events_select_participant on push_events
+for select using (auth.uid() in (sender_user_id, target_user_id));

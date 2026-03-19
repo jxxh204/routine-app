@@ -127,3 +127,15 @@
 4. 오늘/캘린더 친구 상태 연동
 5. 독려 판정 함수 + 푸시 이벤트 기록
 6. 통합 회귀 테스트
+
+## 9) 현재 반영된 착수 결과
+
+- `db/supabase/schema_v4_friend_auth_p0.sql`
+  - friendships/push 관련 테이블 + RLS 초안 포함
+- `apps/web/src/app/auth/page.tsx`
+  - P0 소셜로그인(카카오/애플) 버튼 UI
+- `apps/web/src/lib/social-login.ts`
+  - provider별 OAuth 시작 함수
+- 테스트
+  - `social-auth-policy.test.ts`
+  - `social-login.test.ts`
