@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
+import { AuthRequired } from '@/components/auth-required';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
 
@@ -67,6 +68,7 @@ export default function CalendarPage() {
   }, [selectedDate, selectedItems]);
 
   return (
+    <AuthRequired>
     <main style={{ minHeight: '100dvh', background: '#11151a', color: '#f5f7fa', padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>캘린더</h1>
@@ -131,6 +133,7 @@ export default function CalendarPage() {
         </section>
       ) : null}
     </main>
+    </AuthRequired>
   );
 }
 

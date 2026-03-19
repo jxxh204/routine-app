@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { AuthRequired } from '@/components/auth-required';
 import { isValidFriendCode, normalizeFriendCode } from '@/lib/friend-code';
 import { acceptFriendRequest, listMyFriendRequests, sendFriendRequestByCode, type FriendRequestRow } from '@/lib/friends';
 
@@ -68,6 +69,7 @@ export default function FriendsPage() {
   };
 
   return (
+    <AuthRequired>
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px', color: '#f5f7fa' }}>
       <h1 style={{ margin: 0, fontSize: 28 }}>친구 관리</h1>
       <p style={{ color: '#9aa4af' }}>친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요.</p>
@@ -141,5 +143,6 @@ export default function FriendsPage() {
 
       {message ? <p style={{ marginTop: 12, color: '#c4cfda' }}>{message}</p> : null}
     </main>
+    </AuthRequired>
   );
 }

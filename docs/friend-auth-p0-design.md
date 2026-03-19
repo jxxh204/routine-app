@@ -47,6 +47,7 @@
 - 내 루틴 카드(기존)
 - 친구 상태 리스트: 완료/미완료/완료 시각
 - 독려 버튼: 조건 충족 시만 활성
+- 인증 가드: 비로그인 상태에서 `/auth?next=/today` 리다이렉트
 
 ### 3.4 캘린더 상세 모달
 - 내 인증 내역 + 친구 인증 내역
@@ -143,6 +144,8 @@
   - provider별 OAuth 시작 함수
 - `apps/web/src/lib/social-official-button-assets.ts`
   - provider별 공식 버튼 에셋 매핑
+- `apps/web/src/components/auth-required.tsx`
+  - 비로그인 시 `/auth?next=...` 리다이렉트 가드
 - `apps/web/src/app/friends/page.tsx`
   - 친구코드 요청/요청목록/수락 UI 초안
 - `apps/web/src/lib/friends.ts`

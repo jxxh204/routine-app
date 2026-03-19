@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState, type CSSProperties } from 'react';
 
+import { AuthRequired } from '@/components/auth-required';
+
 type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
 function sendNativeAction(action: 'open-settings' | 'request-notification-permission' | 'toggle-notification', enabled?: boolean) {
@@ -38,6 +40,7 @@ export default function SettingsPage() {
   };
 
   return (
+    <AuthRequired>
     <main style={{ minHeight: '100dvh', background: '#11151a', color: '#f5f7fa', padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>설정</h1>
@@ -71,6 +74,7 @@ export default function SettingsPage() {
         <p style={metaStyle}>iOS WebView 환경에서는 시스템 설정에서 알림 권한을 최종 확인해 주세요.</p>
       </section>
     </main>
+    </AuthRequired>
   );
 }
 
