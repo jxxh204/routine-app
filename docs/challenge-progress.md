@@ -40,6 +40,9 @@
 - Step4 친구기능 연동 QA 완료
   - 비로그인 `/friends` 접근 시 인증 유도
   - 로그인 완료 후 `/friends` 복귀 및 친구 요청/수락 플로우 회귀 검증
+- 마스터 설계서 완료 처리
+  - `docs/kakao-login-master-design.md` Step1 체크박스 및 DoD 완료 표시
+  - 단계별 `재현→원인→해결→QA→다음스텝` 진행 로그 반영
 
 ## ⏳ 남은 작업
 

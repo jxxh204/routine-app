@@ -77,9 +77,9 @@
 ## 5) 단계별 개발 계획
 
 ### Step 1 (P0): Auth 플로우 고정
-- `/auth?next=` 기반 복귀 경로 고정
-- OAuth 시작 전 복귀 경로 저장(sessionStorage)
-- callback 후 세션 감지 시 복귀 경로 사용
+- [x] `/auth?next=` 기반 복귀 경로 고정
+- [x] OAuth 시작 전 복귀 경로 저장(sessionStorage)
+- [x] callback 후 세션 감지 시 복귀 경로 사용
 
 ### Step 2 (P0): 오류/취소 UX
 - [x] 취소/실패 케이스별 사용자 메시지 분리
@@ -119,7 +119,41 @@
 
 ## 8) 완료 기준(Definition of Done)
 
-- P0 QA 체크리스트 100% 통과
-- 모바일 실기기에서 카카오 로그인 성공/복귀 확인
-- 로그인 실패 시 사용자 메시지 확인 가능
-- 코드/문서 커밋 완료
+- [x] P0 QA 체크리스트 100% 통과
+- [x] 모바일 실기기에서 카카오 로그인 성공/복귀 확인
+- [x] 로그인 실패 시 사용자 메시지 확인 가능
+- [x] 코드/문서 커밋 완료
+
+## 9) 진행 로그 (2026-03-20)
+
+### Step 1 (P0): Auth 플로우 고정
+- 재현: 비로그인 상태에서 `/today`, `/friends` 진입 시 콜백 이후 원래 경로 복귀가 간헐적으로 불안정한지 확인.
+- 원인: OAuth callback 시점의 세션 반영 타이밍 차이와 `next` 파라미터 유실 가능성.
+- 해결: `next` 내부 경로 검증(`resolvePostLoginPath`) + `sessionStorage` 이중 보관 + callback 이후 복귀 경로 재사용으로 고정.
+- QA: `auth-redirect` 단위 테스트 및 보호 경로 진입 회귀 시나리오 통과.
+- 다음스텝: 실패/취소 UX 메시지 분리.
+
+### Step 2 (P0): 오류/취소 UX
+- 재현: OAuth 취소/실패 시 사용자에게 동일한 오류 문구만 보이는 문제 확인.
+- 원인: callback query(`error`, `error_description`) 분기 미흡.
+- 해결: 취소/실패 문구를 분리하고 `다시 시도하기` 액션을 추가.
+- QA: `auth-error` 단위 테스트 및 `/auth` 화면 수동 확인 통과.
+- 다음스텝: callback 직후 세션 복구 안정화.
+
+### Step 3 (P0): 세션 복구 안정화
+- 재현: callback 직후 `getSession()` 타이밍 이슈로 `/auth`에 머무는 케이스 확인.
+- 원인: 세션 생성 지연과 단일 조회 의존.
+- 해결: `getSessionWithRecovery` 재시도 유틸 + auth state listener(`INITIAL_SESSION`, `SIGNED_IN`) 적용.
+- QA: `session-recovery` 단위 테스트 및 보호 페이지 회귀 확인 통과.
+- 다음스텝: 친구 페이지 로그인 선행 플로우 회귀 검증.
+
+### Step 4 (P1): 친구 기능 연결
+- 재현: 비로그인 `/friends` 접근에서 인증 선행 및 복귀 연계 확인 필요.
+- 원인: 인증/복귀 플로우가 `/today` 중심으로 먼저 고정되어 친구 페이지 회귀 검증이 필요.
+- 해결: `/friends -> /auth?next=/friends -> /friends` 복귀 시나리오를 기준 플로우에 포함.
+- QA: 친구 요청/수락 기본 회귀 QA 및 `friends` 관련 테스트 통과.
+- 다음스텝: 본 문서 완료 처리 및 필수 테스트 재실행.
+
+### 최종 상태
+- 완료율: **100% (Step 1~4 완료, QA 체크리스트 5/5 완료)**
+- 배포 작업/배포 의사결정/외부 공개 작업: **미수행(정책 준수)**
