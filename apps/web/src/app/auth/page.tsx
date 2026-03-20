@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
+import { resolveAuthFailureMessage } from '@/lib/auth-error';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
+import { getSessionWithRecovery } from '@/lib/session-recovery';
 import { getOfficialButtonAsset } from '@/lib/social-official-button-assets';
 import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-policy';
 import { startSocialLogin } from '@/lib/social-login';
@@ -26,6 +28,10 @@ function AuthPageContent() {
   });
   const providers = useMemo(() => getEnabledProviders('p0'), []);
   const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID);
+  const queryErrorMessage = useMemo(
+    () => resolveAuthFailureMessage(searchParams.get('error'), searchParams.get('error_description')),
+    [searchParams],
+  );
 
   useEffect(() => {
     const client = supabase;
@@ -38,20 +44,44 @@ function AuthPageContent() {
         : '/today';
 
     const target = queryNext !== '/today' ? queryNext : storedNext;
+    if (queryErrorMessage) {
+      return;
+    }
 
     const check = async () => {
-      const { data } = await client.auth.getSession();
-      if (data.session) {
+      const session = await getSessionWithRecovery(client);
+      if (session) {
         await ensureMyProfile();
         if (typeof window !== 'undefined') {
           window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
         }
         router.replace(target);
+        return;
+      }
+
+      if (searchParams.has('code')) {
+        setErrorMessage('로그인 정보를 확인하지 못했어요. 다시 시도해 주세요.');
+        setPending(null);
       }
     };
 
     void check();
-  }, [router, searchParams]);
+
+    const { data: listener } = client.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        void ensureMyProfile().then(() => {
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
+          }
+          router.replace(target);
+        });
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [queryErrorMessage, router, searchParams]);
 
   const onClickProvider = async (provider: SocialProvider) => {
     setPending(provider);
@@ -67,7 +97,8 @@ function AuthPageContent() {
     const result = await startSocialLogin(provider, redirectTo);
 
     if (!result.ok) {
-      setErrorMessage('로그인에 실패했어요. 다시 시도해 주세요.');
+      const isCancel = result.error.toLowerCase().includes('cancel') || result.error.toLowerCase().includes('closed');
+      setErrorMessage(isCancel ? '로그인이 취소되었어요. 원하시면 다시 시도해 주세요.' : '로그인에 실패했어요. 다시 시도해 주세요.');
       setPending(null);
     }
   };
@@ -189,8 +220,28 @@ function AuthPageContent() {
         })}
       </section>
 
-      {errorMessage ? (
-        <p style={{ marginTop: 12, color: '#ff9ba8', fontSize: 13 }}>{errorMessage}</p>
+      {errorMessage || queryErrorMessage ? (
+        <div style={{ marginTop: 12, display: 'grid', gap: 8, justifyItems: 'start' }}>
+          <p style={{ margin: 0, color: '#ff9ba8', fontSize: 13 }}>{errorMessage || queryErrorMessage}</p>
+          <button
+            onClick={() => {
+              setErrorMessage('');
+              setPending(null);
+              const nextPath = resolvePostLoginPath(searchParams.get('next'));
+              router.replace(`/auth?next=${encodeURIComponent(nextPath)}`);
+            }}
+            style={{
+              borderRadius: 8,
+              border: '1px solid #334050',
+              background: '#1f2a36',
+              color: '#cfe7ff',
+              fontSize: 12,
+              padding: '6px 10px',
+            }}
+          >
+            다시 시도하기
+          </button>
+        </div>
       ) : null}
     </main>
   );
