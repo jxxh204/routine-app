@@ -22,6 +22,7 @@ import {
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
+import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader, StatCard } from '@/components/ui';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -686,30 +687,34 @@ export function TodayView() {
   });
 
   return (
-    <main style={styles.page}>
-      <div style={styles.headerRow}>
-        <div>
-          <h1 style={styles.title}>루틴 챌린지</h1>
-          <p style={styles.date}>{today}</p>
-        </div>
-      </div>
+    <PageShell>
+      <section style={styles.pageSection}>
+        <SectionHeader eyebrow="Today" title="루틴 챌린지" description={today} />
 
       {showWelcomeFeedback ? (
-        <section style={styles.welcomeCard}>
-          <strong style={styles.welcomeTitle}>로그인 완료! 오늘 루틴을 바로 시작해볼까요?</strong>
-          <p style={styles.welcomeDesc}>첫 진입 준비가 끝났어요.</p>
-        </section>
+        <AppCard className="today-card" >
+          <section style={styles.welcomeCard}>
+            <strong style={styles.welcomeTitle}>로그인 완료! 오늘 루틴을 바로 시작해볼까요?</strong>
+            <p style={styles.welcomeDesc}>첫 진입 준비가 끝났어요.</p>
+          </section>
+        </AppCard>
       ) : null}
 
-      <section style={styles.progressCard}>
-        <div style={styles.progressTop}>
-          <strong>{doneCount}/{routines.length} 완료</strong>
-          <span>{progress}%</span>
-        </div>
-        <div style={styles.progressTrack}>
-          <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-        </div>
-      </section>
+      <AppCard className="today-card">
+        <section style={styles.progressCard}>
+          <div style={styles.progressTop}>
+            <strong>{doneCount}/{routines.length} 완료</strong>
+            <span>{progress}%</span>
+          </div>
+          <div style={styles.progressTrack}>
+            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+          </div>
+          <div style={styles.statRow}>
+            <StatCard label="총 루틴" value={`${routines.length}`} />
+            <StatCard label="완료" value={`${doneCount}`} />
+          </div>
+        </section>
+      </AppCard>
 
 
 
@@ -766,8 +771,8 @@ export function TodayView() {
                     <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
                     {thumbMenuRoutineId === routine.id ? (
                       <div style={styles.thumbMenu}>
-                        <button style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</button>
-                        <button style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</button>
+                        <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
+                        <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
                       </div>
                     ) : null}
                   </div>
@@ -785,9 +790,9 @@ export function TodayView() {
               onTouchEnd={handleRoutineTouchEnd}
             >
               <div className="routine-card-surface" style={styles.actionWrap}>
-                <button style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</button>
+                <GhostButton style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</GhostButton>
                 {!routine.isDefault ? (
-                  <button style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</button>
+                  <GhostButton style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</GhostButton>
                 ) : null}
               </div>
               {card}
@@ -797,24 +802,25 @@ export function TodayView() {
       </section>
 
 
-      <section style={{ ...styles.progressCard, ...styles.addSection }}>
-        <div style={styles.addHeaderRow}>
-          <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
-          <button
-            style={{ ...styles.addToggleButton, ...(isAddFormOpen ? styles.addToggleButtonNeutral : {}) }}
-            onClick={() => {
-              if (isAddFormOpen) {
-                setEditingRoutineId(null);
-                setNewTitle('');
-                setNewStart('09:00');
-                setNewEnd('10:00');
-              }
-              setIsAddFormOpen((prev) => !prev);
-            }}
-          >
-            {isAddFormOpen ? '닫기' : '+ 추가'}
-          </button>
-        </div>
+      <AppCard className="today-card">
+        <section style={{ ...styles.progressCard, ...styles.addSection }}>
+          <div style={styles.addHeaderRow}>
+            <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
+            <GhostButton
+              style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
+              onClick={() => {
+                if (isAddFormOpen) {
+                  setEditingRoutineId(null);
+                  setNewTitle('');
+                  setNewStart('09:00');
+                  setNewEnd('10:00');
+                }
+                setIsAddFormOpen((prev) => !prev);
+              }}
+            >
+              {isAddFormOpen ? '닫기' : '+ 추가'}
+            </GhostButton>
+          </div>
 
         {isAddFormOpen ? (
           <div style={styles.addRow}>
@@ -846,11 +852,11 @@ export function TodayView() {
               </div>
             </div>
             <div style={styles.addActionRow}>
-              <button style={styles.addButtonFull} onClick={submitRoutineForm}>
+              <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
                 {editingRoutineId ? '수정 저장' : '추가'}
-              </button>
+              </PrimaryButton>
               {editingRoutineId ? (
-                <button
+                <GhostButton
                   style={styles.cancelButton}
                   onClick={() => {
                     setEditingRoutineId(null);
@@ -861,12 +867,13 @@ export function TodayView() {
                   }}
                 >
                   취소
-                </button>
+                </GhostButton>
               ) : null}
             </div>
           </div>
         ) : null}
-      </section>
+        </section>
+      </AppCard>
 
       <input
         ref={fileInputRef}
@@ -881,7 +888,7 @@ export function TodayView() {
         <section style={styles.previewOverlay} onClick={() => setPreviewImage(null)}>
           <div style={styles.previewCard} onClick={(event) => event.stopPropagation()}>
             <img src={previewImage} alt="인증 사진 확대" style={styles.previewImage} />
-            <button style={styles.previewCloseButton} onClick={() => setPreviewImage(null)}>닫기</button>
+            <GhostButton style={styles.previewCloseButton} onClick={() => setPreviewImage(null)}>닫기</GhostButton>
           </div>
         </section>
       ) : null}
@@ -895,35 +902,15 @@ export function TodayView() {
           -webkit-touch-callout: none;
         }
       `}</style>
-    </main>
+      </section>
+    </PageShell>
   );
 }
 
 const styles: Record<string, CSSProperties> = {
-  page: {
-    maxWidth: 680,
-    margin: '0 auto',
-    padding: '32px 20px 56px',
-    background: 'var(--background)',
-    minHeight: '100vh',
-    color: '#f5f7fa',
-    fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
-  },
-  headerRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  title: {
-    margin: 0,
-    fontSize: 32,
-    fontWeight: 700,
-  },
-  date: {
-    margin: '6px 0 0',
-    color: 'var(--text-muted)',
-    fontSize: 14,
+  pageSection: {
+    display: 'grid',
+    gap: 16,
   },
   progressCard: {
     background: 'var(--surface-1)',
@@ -966,7 +953,13 @@ const styles: Record<string, CSSProperties> = {
   },
   progressFill: {
     height: '100%',
-    background: '#7cffb2',
+    background: 'linear-gradient(90deg, var(--ds-color-accent), var(--ds-color-accent-strong))',
+  },
+  statRow: {
+    marginTop: 10,
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
   },
   syncText: {
     margin: '8px 0 0',
