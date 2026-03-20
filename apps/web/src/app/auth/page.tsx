@@ -130,8 +130,8 @@ function AuthPageContent() {
         display: 'grid',
         placeItems: 'center',
         padding: '24px 20px',
-        background: '#0f1115',
-        color: '#f5f7fa',
+        background: 'radial-gradient(circle at 20% 0%, #1a232f 0%, #0f1115 42%)',
+        color: 'var(--foreground)',
       }}
     >
       <section
@@ -139,10 +139,10 @@ function AuthPageContent() {
           width: '100%',
           maxWidth: 420,
           borderRadius: 20,
-          border: '1px solid #2b3138',
-          background: 'linear-gradient(180deg, #1b1f23 0%, #15191f 100%)',
-          padding: '28px 20px 22px',
-          boxShadow: '0 18px 44px rgba(0, 0, 0, 0.35)',
+          border: '1px solid var(--outline)',
+          background: 'linear-gradient(180deg, #1b2129 0%, #141920 100%)',
+          padding: '30px 22px 24px',
+          boxShadow: '0 24px 52px rgba(0, 0, 0, 0.42)',
         }}
       >
         <p style={{ margin: 0, fontSize: 12, color: '#9aa4af', letterSpacing: 1.2 }}>ROUTINE APP</p>

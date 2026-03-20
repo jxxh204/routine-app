@@ -80,11 +80,12 @@ export default function FriendsPage() {
 
   return (
     <AuthRequired>
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px', color: '#f5f7fa' }}>
-      <h1 style={{ margin: 0, fontSize: 28 }}>친구 관리</h1>
-      <p style={{ color: '#9aa4af' }}>친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요.</p>
+    <main style={{ maxWidth: 760, margin: '0 auto', padding: '30px 20px 48px', color: 'var(--foreground)' }}>
+      <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12, letterSpacing: 0.8 }}>SOCIAL</p>
+      <h1 style={{ margin: '8px 0 0', fontSize: 30 }}>친구 관리</h1>
+      <p style={{ color: 'var(--text-muted)', marginTop: 8 }}>친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요.</p>
 
-      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+      <section style={{ marginTop: 18, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
         <p style={{ marginTop: 0 }}>친구 코드로 요청 보내기</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
@@ -118,12 +119,12 @@ export default function FriendsPage() {
         </div>
       </section>
 
-      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
         <p style={{ marginTop: 0 }}>내 친구 코드</p>
         <strong style={{ letterSpacing: 1 }}>{myFriendCode || '생성 중...'}</strong>
       </section>
 
-      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
         <p style={{ marginTop: 0 }}>받은 요청</p>
         <div style={{ display: 'grid', gap: 8 }}>
           {split.incomingPending.length === 0 ? (
@@ -151,7 +152,7 @@ export default function FriendsPage() {
         </div>
       </section>
 
-      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
         <p style={{ marginTop: 0 }}>보낸 요청</p>
         <div style={{ display: 'grid', gap: 8 }}>
           {split.outgoingPending.length === 0 ? (
@@ -166,7 +167,7 @@ export default function FriendsPage() {
         </div>
       </section>
 
-      <section style={{ marginTop: 16, border: '1px solid #2b3138', borderRadius: 12, padding: 12 }}>
+      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
         <p style={{ marginTop: 0 }}>친구 목록</p>
         <div style={{ display: 'grid', gap: 8 }}>
           {split.accepted.length === 0 ? (

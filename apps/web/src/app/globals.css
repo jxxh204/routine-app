@@ -1,13 +1,13 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #0f1115;
+  --foreground: #f5f7fa;
+  --surface-1: #151a20;
+  --surface-2: #1b2129;
+  --surface-3: #232b35;
+  --outline: #303a46;
+  --text-muted: #9ca7b5;
+  --brand: #7cffb2;
+  --brand-soft: #1f3a2d;
 }
 
 html,
