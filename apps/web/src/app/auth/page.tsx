@@ -12,6 +12,8 @@ import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-poli
 import { startSocialLogin } from '@/lib/social-login';
 import { supabase } from '@/lib/supabase';
 
+const AUTH_NEXT_STORAGE_KEY = 'routine-auth-next';
+
 function AuthPageContent() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -29,12 +31,21 @@ function AuthPageContent() {
     const client = supabase;
     if (!client) return;
 
-    const target = resolvePostLoginPath(searchParams.get('next'));
+    const queryNext = resolvePostLoginPath(searchParams.get('next'));
+    const storedNext =
+      typeof window !== 'undefined'
+        ? resolvePostLoginPath(window.sessionStorage.getItem(AUTH_NEXT_STORAGE_KEY))
+        : '/today';
+
+    const target = queryNext !== '/today' ? queryNext : storedNext;
 
     const check = async () => {
       const { data } = await client.auth.getSession();
       if (data.session) {
         await ensureMyProfile();
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
+        }
         router.replace(target);
       }
     };
@@ -47,7 +58,12 @@ function AuthPageContent() {
     setErrorMessage('');
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}${nextPath}` : undefined;
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(AUTH_NEXT_STORAGE_KEY, nextPath);
+    }
+
+    const callbackPath = `/auth?next=${encodeURIComponent(nextPath)}`;
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}${callbackPath}` : undefined;
     const result = await startSocialLogin(provider, redirectTo);
 
     if (!result.ok) {
