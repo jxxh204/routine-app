@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
+import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 import { resolveAuthFailureMessage } from '@/lib/auth-error';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
@@ -57,6 +58,7 @@ function AuthPageContent() {
         setIsRedirecting(true);
         await ensureMyProfile();
         if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
           window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
         }
         router.replace(target);
@@ -78,6 +80,7 @@ function AuthPageContent() {
         setIsRedirecting(true);
         void ensureMyProfile().then(() => {
           if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
             window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
           }
           router.replace(target);

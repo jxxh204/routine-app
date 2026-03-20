@@ -7,6 +7,8 @@ import { buildAuthRedirectTarget } from '@/lib/auth-redirect';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
 import { supabase } from '@/lib/supabase';
 
+import { AuthStatusScreen } from './auth-status-screen';
+
 export function AuthRequired({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(true);
   const router = useRouter();
@@ -45,11 +47,7 @@ export function AuthRequired({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   if (checking) {
-    return (
-      <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', color: '#9aa4af' }}>
-        인증 상태 확인 중...
-      </main>
-    );
+    return <AuthStatusScreen title="로그인 상태 확인 중..." description="잠시만 기다리면 루틴 화면으로 이동해요." />;
   }
 
   return <>{children}</>;

@@ -21,6 +21,7 @@ import {
 } from '@/lib/routine-time';
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
+import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -311,6 +312,10 @@ export function TodayView() {
   const [pendingCaptureRoutineId, setPendingCaptureRoutineId] = useState<string | null>(null);
   const [thumbMenuRoutineId, setThumbMenuRoutineId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showWelcomeFeedback, setShowWelcomeFeedback] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.sessionStorage.getItem(AUTH_ENTRY_FEEDBACK_KEY) === '1';
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
@@ -429,6 +434,18 @@ export function TodayView() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !showWelcomeFeedback) return;
+
+    window.sessionStorage.removeItem(AUTH_ENTRY_FEEDBACK_KEY);
+
+    const timer = window.setTimeout(() => {
+      setShowWelcomeFeedback(false);
+    }, 2400);
+
+    return () => window.clearTimeout(timer);
+  }, [showWelcomeFeedback]);
 
   useEffect(() => {
     const dateKey = getTodayDateKey();
@@ -677,6 +694,13 @@ export function TodayView() {
         </div>
       </div>
 
+      {showWelcomeFeedback ? (
+        <section style={styles.welcomeCard}>
+          <strong style={styles.welcomeTitle}>로그인 완료! 오늘 루틴을 바로 시작해볼까요?</strong>
+          <p style={styles.welcomeDesc}>첫 진입 준비가 끝났어요.</p>
+        </section>
+      ) : null}
+
       <section style={styles.progressCard}>
         <div style={styles.progressTop}>
           <strong>{doneCount}/{routines.length} 완료</strong>
@@ -907,6 +931,23 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
+  },
+  welcomeCard: {
+    background: '#18222e',
+    border: '1px solid #334050',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  welcomeTitle: {
+    display: 'block',
+    color: '#cfe7ff',
+    fontSize: 14,
+  },
+  welcomeDesc: {
+    margin: '6px 0 0',
+    color: '#9fb3c8',
+    fontSize: 12,
   },
   addSection: {
     marginTop: 8,
