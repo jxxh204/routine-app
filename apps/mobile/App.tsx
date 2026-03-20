@@ -263,6 +263,14 @@ function getWebviewCompletionSyncScript() {
       var PREFIX = 'routine-challenge-v1:';
       var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+      function post(payload) {
+        try {
+          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        } catch (e) {
+          // ignore runtime errors
+        }
+      }
+
       function toHistory() {
         var result = {};
         for (var i = 0; i < localStorage.length; i += 1) {
@@ -299,22 +307,43 @@ function getWebviewCompletionSyncScript() {
         return result;
       }
 
-      function send() {
-        try {
-          var payload = {
-            source: 'routine-webview',
-            type: 'completion-history',
-            history: toHistory(),
-          };
-          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-        } catch (e) {
-          // ignore runtime errors
-        }
+      function sendHistory() {
+        post({
+          source: 'routine-webview',
+          type: 'completion-history',
+          history: toHistory(),
+        });
       }
 
-      send();
-      window.addEventListener('storage', send);
-      setInterval(send, 15000);
+      function sendRoute() {
+        post({
+          source: 'routine-webview',
+          type: 'route-path',
+          path: window.location.pathname || '/',
+        });
+      }
+
+      var originPushState = history.pushState;
+      history.pushState = function() {
+        originPushState.apply(history, arguments);
+        sendRoute();
+      };
+
+      var originReplaceState = history.replaceState;
+      history.replaceState = function() {
+        originReplaceState.apply(history, arguments);
+        sendRoute();
+      };
+
+      window.addEventListener('popstate', sendRoute);
+      window.addEventListener('hashchange', sendRoute);
+      window.addEventListener('storage', sendHistory);
+
+      sendRoute();
+      sendHistory();
+
+      setInterval(sendHistory, 15000);
+      setInterval(sendRoute, 1000);
     })();
     true;
   `;
@@ -522,9 +551,15 @@ function AppContent() {
               source?: string;
               type?: string;
               history?: CompletionHistory;
+              path?: string;
               action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
               enabled?: boolean;
             };
+
+            if (payload.source === 'routine-webview' && payload.type === 'route-path' && payload.path) {
+              setCurrentWebPath(payload.path);
+              return;
+            }
 
             if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
               setCompletionHistory(payload.history);

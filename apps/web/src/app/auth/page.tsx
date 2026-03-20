@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
-import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
+import { AUTH_ENTRY_FEEDBACK_KEY, AUTH_MOCK_LOGIN_KEY } from '@/lib/auth-entry-feedback';
 import { resolveAuthFailureMessage } from '@/lib/auth-error';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
@@ -99,6 +99,15 @@ function AuthPageContent() {
     setIsRedirecting(false);
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
+
+    // P0 임시 정책: 카카오 실연동 전에는 mock 로그인으로 바로 진입
+    if (provider === 'kakao' && typeof window !== 'undefined') {
+      window.localStorage.setItem(AUTH_MOCK_LOGIN_KEY, '1');
+      window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
+      router.replace(nextPath);
+      return;
+    }
+
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(AUTH_NEXT_STORAGE_KEY, nextPath);
     }
