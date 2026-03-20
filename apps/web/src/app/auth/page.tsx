@@ -18,6 +18,8 @@ const AUTH_NEXT_STORAGE_KEY = 'routine-auth-next';
 
 function AuthPageContent() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
+  const [isResolvingSession, setIsResolvingSession] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,8 +51,10 @@ function AuthPageContent() {
     }
 
     const check = async () => {
+      setIsResolvingSession(true);
       const session = await getSessionWithRecovery(client);
       if (session) {
+        setIsRedirecting(true);
         await ensureMyProfile();
         if (typeof window !== 'undefined') {
           window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
@@ -63,12 +67,15 @@ function AuthPageContent() {
         setErrorMessage('로그인 정보를 확인하지 못했어요. 다시 시도해 주세요.');
         setPending(null);
       }
+
+      setIsResolvingSession(false);
     };
 
     void check();
 
     const { data: listener } = client.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        setIsRedirecting(true);
         void ensureMyProfile().then(() => {
           if (typeof window !== 'undefined') {
             window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
@@ -86,6 +93,7 @@ function AuthPageContent() {
   const onClickProvider = async (provider: SocialProvider) => {
     setPending(provider);
     setErrorMessage('');
+    setIsRedirecting(false);
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
     if (typeof window !== 'undefined') {
@@ -128,6 +136,22 @@ function AuthPageContent() {
         <p style={{ margin: 0, fontSize: 12, color: '#9aa4af', letterSpacing: 1.2 }}>ROUTINE APP</p>
         <h1 style={{ margin: '10px 0 0', fontSize: 30, lineHeight: 1.2, fontWeight: 800 }}>카카오 로그인</h1>
         <p style={{ margin: '8px 0 0', color: '#b8c1cc', fontSize: 14 }}>로그인하고 바로 루틴앱으로 접속해요.</p>
+
+        {isResolvingSession || isRedirecting ? (
+          <div
+            style={{
+              marginTop: 14,
+              borderRadius: 10,
+              border: '1px solid #334050',
+              background: '#18222e',
+              color: '#cfe7ff',
+              fontSize: 12,
+              padding: '9px 10px',
+            }}
+          >
+            {isRedirecting ? '로그인 완료. 루틴앱으로 이동 중...' : '로그인 상태 확인 중...'}
+          </div>
+        ) : null}
 
         <section style={{ marginTop: 22, display: 'grid', gap: 10 }}>
           {providers.map((provider) => {
@@ -215,14 +239,14 @@ function AuthPageContent() {
               <button
                 key={provider}
                 onClick={() => void onClickProvider(provider)}
-                disabled={Boolean(pending)}
+                disabled={Boolean(pending) || isResolvingSession || isRedirecting}
                 aria-label={asset.alt}
                 style={{
                   padding: 0,
                   border: 'none',
                   background: 'transparent',
-                  opacity: pending ? 0.6 : 1,
-                  cursor: pending ? 'default' : 'pointer',
+                  opacity: pending || isResolvingSession || isRedirecting ? 0.6 : 1,
+                  cursor: pending || isResolvingSession || isRedirecting ? 'default' : 'pointer',
                   width: 'fit-content',
                   margin: '0 auto',
                 }}
@@ -248,6 +272,8 @@ function AuthPageContent() {
               onClick={() => {
                 setErrorMessage('');
                 setPending(null);
+                setIsResolvingSession(false);
+                setIsRedirecting(false);
                 const nextPath = resolvePostLoginPath(searchParams.get('next'));
                 router.replace(`/auth?next=${encodeURIComponent(nextPath)}`);
               }}
