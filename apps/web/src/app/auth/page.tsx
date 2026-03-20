@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
+import { ensureMyProfile } from '@/lib/profile-bootstrap';
 import { getOfficialButtonAsset } from '@/lib/social-official-button-assets';
 import { getEnabledProviders, type SocialProvider } from '@/lib/social-auth-policy';
 import { startSocialLogin } from '@/lib/social-login';
@@ -33,6 +34,7 @@ function AuthPageContent() {
     const check = async () => {
       const { data } = await client.auth.getSession();
       if (data.session) {
+        await ensureMyProfile();
         router.replace(target);
       }
     };

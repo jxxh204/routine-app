@@ -8,11 +8,24 @@ export type FriendRequestRow = {
   created_at: string;
 };
 
+export function splitFriendRequests(rows: FriendRequestRow[], me: string) {
+  const incomingPending = rows.filter((row) => row.status === 'pending' && row.addressee_id === me);
+  const outgoingPending = rows.filter((row) => row.status === 'pending' && row.requester_id === me);
+  const accepted = rows.filter((row) => row.status === 'accepted');
+
+  return { incomingPending, outgoingPending, accepted };
+}
+
+async function getMyUserId() {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
 export async function listMyFriendRequests() {
   if (!supabase) return { ok: false as const, error: 'supabase-client-unavailable' };
 
-  const { data: userRes } = await supabase.auth.getUser();
-  const uid = userRes.user?.id;
+  const uid = await getMyUserId();
   if (!uid) return { ok: false as const, error: 'unauthorized' };
 
   const { data, error } = await supabase
@@ -22,14 +35,13 @@ export async function listMyFriendRequests() {
     .order('created_at', { ascending: false });
 
   if (error) return { ok: false as const, error: error.message };
-  return { ok: true as const, data: (data ?? []) as FriendRequestRow[] };
+  return { ok: true as const, me: uid, data: (data ?? []) as FriendRequestRow[] };
 }
 
 export async function sendFriendRequestByCode(friendCode: string) {
   if (!supabase) return { ok: false as const, error: 'supabase-client-unavailable' };
 
-  const { data: userRes } = await supabase.auth.getUser();
-  const uid = userRes.user?.id;
+  const uid = await getMyUserId();
   if (!uid) return { ok: false as const, error: 'unauthorized' };
 
   const { data: target, error: profileError } = await supabase
