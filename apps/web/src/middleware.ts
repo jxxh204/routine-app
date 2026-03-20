@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 const PUBLIC_PATH_PREFIXES = ['/auth', '/_next', '/favicon.ico'];
 
 function isPublicPath(pathname: string) {
-  if (pathname === '/auth') return true;
+  if (pathname === '/' || pathname === '/auth') return true;
   return PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
