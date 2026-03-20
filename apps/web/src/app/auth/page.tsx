@@ -15,6 +15,35 @@ import { startSocialLogin } from '@/lib/social-login';
 import { supabase } from '@/lib/supabase';
 
 const AUTH_NEXT_STORAGE_KEY = 'routine-auth-next';
+const GUEST_ACCESS_COOKIE = 'routine_guest_access=1; path=/; max-age=86400; SameSite=Lax';
+
+function postNativeNavigate(path: '/today' | '/calendar' | '/settings' | '/friends') {
+  if (typeof window === 'undefined') return false;
+
+  const bridge = (window as Window & { ReactNativeWebView?: { postMessage: (msg: string) => void } }).ReactNativeWebView;
+  if (!bridge?.postMessage) return false;
+
+  bridge.postMessage(
+    JSON.stringify({
+      source: 'routine-web',
+      type: 'native-action',
+      action: 'navigate',
+      path,
+    }),
+  );
+
+  return true;
+}
+
+function isKakaoNotReadyError(error: string) {
+  const lowered = error.toLowerCase();
+  return (
+    lowered.includes('provider') ||
+    lowered.includes('supabase-client-unavailable') ||
+    lowered.includes('not enabled') ||
+    lowered.includes('unsupported')
+  );
+}
 
 function AuthPageContent() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
@@ -97,7 +126,23 @@ function AuthPageContent() {
     const result = await startSocialLogin(provider, redirectTo);
 
     if (!result.ok) {
-      const isCancel = result.error.toLowerCase().includes('cancel') || result.error.toLowerCase().includes('closed');
+      const lowered = result.error.toLowerCase();
+      const isCancel = lowered.includes('cancel') || lowered.includes('closed');
+      const canGuestBypass = provider === 'kakao' && isKakaoNotReadyError(result.error);
+
+      if (canGuestBypass) {
+        if (typeof document !== 'undefined') {
+          // eslint-disable-next-line react-hooks/immutability
+          document.cookie = GUEST_ACCESS_COOKIE;
+        }
+
+        const handledByNative = postNativeNavigate('/today');
+        if (!handledByNative) {
+          router.replace('/today');
+        }
+        return;
+      }
+
       setErrorMessage(isCancel ? '로그인이 취소되었어요. 원하시면 다시 시도해 주세요.' : '로그인에 실패했어요. 다시 시도해 주세요.');
       setPending(null);
     }

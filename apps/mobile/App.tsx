@@ -522,8 +522,9 @@ function AppContent() {
               source?: string;
               type?: string;
               history?: CompletionHistory;
-              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
+              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification' | 'navigate';
               enabled?: boolean;
+              path?: '/today' | '/calendar' | '/settings' | '/friends';
             };
 
             if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
@@ -541,6 +542,13 @@ function AppContent() {
                 void Notifications.requestPermissionsAsync().then((perm) => {
                   setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
                 });
+                return;
+              }
+
+              if (payload.action === 'navigate' && payload.path) {
+                if (payload.path === '/calendar') setActiveTab('calendar');
+                else if (payload.path === '/settings') setActiveTab('settings');
+                else setActiveTab('today');
                 return;
               }
 

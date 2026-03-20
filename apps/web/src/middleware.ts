@@ -13,6 +13,10 @@ function hasSupabaseSessionCookie(req: NextRequest) {
     .some((cookie) => cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token'));
 }
 
+function hasGuestAccessCookie(req: NextRequest) {
+  return req.cookies.get('routine_guest_access')?.value === '1';
+}
+
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
@@ -20,7 +24,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!hasSupabaseSessionCookie(req)) {
+  if (!hasSupabaseSessionCookie(req) && !hasGuestAccessCookie(req)) {
     const next = pathname + search;
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = '/auth';
