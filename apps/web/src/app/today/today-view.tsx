@@ -21,6 +21,7 @@ import {
 } from '@/lib/routine-time';
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
+import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -311,6 +312,10 @@ export function TodayView() {
   const [pendingCaptureRoutineId, setPendingCaptureRoutineId] = useState<string | null>(null);
   const [thumbMenuRoutineId, setThumbMenuRoutineId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showWelcomeFeedback, setShowWelcomeFeedback] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.sessionStorage.getItem(AUTH_ENTRY_FEEDBACK_KEY) === '1';
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
@@ -429,6 +434,18 @@ export function TodayView() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !showWelcomeFeedback) return;
+
+    window.sessionStorage.removeItem(AUTH_ENTRY_FEEDBACK_KEY);
+
+    const timer = window.setTimeout(() => {
+      setShowWelcomeFeedback(false);
+    }, 2400);
+
+    return () => window.clearTimeout(timer);
+  }, [showWelcomeFeedback]);
 
   useEffect(() => {
     const dateKey = getTodayDateKey();
@@ -677,6 +694,13 @@ export function TodayView() {
         </div>
       </div>
 
+      {showWelcomeFeedback ? (
+        <section style={styles.welcomeCard}>
+          <strong style={styles.welcomeTitle}>로그인 완료! 오늘 루틴을 바로 시작해볼까요?</strong>
+          <p style={styles.welcomeDesc}>첫 진입 준비가 끝났어요.</p>
+        </section>
+      ) : null}
+
       <section style={styles.progressCard}>
         <div style={styles.progressTop}>
           <strong>{doneCount}/{routines.length} 완료</strong>
@@ -880,7 +904,7 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: 680,
     margin: '0 auto',
     padding: '32px 20px 56px',
-    background: '#111315',
+    background: 'var(--background)',
     minHeight: '100vh',
     color: '#f5f7fa',
     fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
@@ -898,15 +922,32 @@ const styles: Record<string, CSSProperties> = {
   },
   date: {
     margin: '6px 0 0',
-    color: '#9aa4af',
+    color: 'var(--text-muted)',
     fontSize: 14,
   },
   progressCard: {
-    background: '#1b1f23',
-    border: '1px solid #2b3138',
+    background: 'var(--surface-1)',
+    border: '1px solid var(--outline)',
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
+  },
+  welcomeCard: {
+    background: '#18222e',
+    border: '1px solid #334050',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  welcomeTitle: {
+    display: 'block',
+    color: '#cfe7ff',
+    fontSize: 14,
+  },
+  welcomeDesc: {
+    margin: '6px 0 0',
+    color: '#9fb3c8',
+    fontSize: 12,
   },
   addSection: {
     marginTop: 8,
@@ -938,8 +979,8 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'center',
   },
   addToggleButton: {
-    background: '#1f3a2d',
-    color: '#7cffb2',
+    background: 'var(--brand-soft)',
+    color: 'var(--brand)',
     border: '1px solid #2e664d',
     borderRadius: 999,
     padding: '6px 12px',
@@ -962,9 +1003,9 @@ const styles: Record<string, CSSProperties> = {
   input: {
     width: '100%',
     height: 48,
-    background: '#111315',
+    background: 'var(--background)',
     color: '#f5f7fa',
-    border: '1px solid #2b3138',
+    border: '1px solid var(--outline)',
     borderRadius: 8,
     padding: '0 12px',
     fontSize: 16,
@@ -984,16 +1025,16 @@ const styles: Record<string, CSSProperties> = {
     minWidth: 0,
   },
   timeFieldLabel: {
-    color: '#9aa4af',
+    color: 'var(--text-muted)',
     fontSize: 12,
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
   inputTime: {
     width: '100%',
-    background: '#111315',
+    background: 'var(--background)',
     color: '#f5f7fa',
-    border: '1px solid #2b3138',
+    border: '1px solid var(--outline)',
     borderRadius: 8,
     padding: '8px 10px',
     fontSize: 16,
@@ -1006,8 +1047,8 @@ const styles: Record<string, CSSProperties> = {
   },
   addButtonFull: {
     width: '100%',
-    background: '#1f3a2d',
-    color: '#7cffb2',
+    background: 'var(--brand-soft)',
+    color: 'var(--brand)',
     border: '1px solid #2e664d',
     borderRadius: 8,
     padding: '10px 12px',
@@ -1052,8 +1093,8 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: 'column',
     gap: 8,
     alignItems: 'flex-start',
-    background: '#1b1f23',
-    border: '1px solid #2b3138',
+    background: 'var(--surface-1)',
+    border: '1px solid var(--outline)',
     borderRadius: 14,
     padding: 12,
     transition: 'all 0.2s ease',
@@ -1090,8 +1131,8 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 600,
   },
   checkTagReady: {
-    background: '#1f3a2d',
-    color: '#7cffb2',
+    background: 'var(--brand-soft)',
+    color: 'var(--brand)',
     border: '1px solid #2e664d',
     boxShadow: '0 0 0 1px rgba(124,255,178,0.2) inset',
   },
@@ -1135,7 +1176,7 @@ const styles: Record<string, CSSProperties> = {
   meta: {
     margin: '6px 0 0',
     fontSize: 13,
-    color: '#9aa4af',
+    color: 'var(--text-muted)',
   },
   thumbWrap: {
     marginTop: 10,
@@ -1166,8 +1207,8 @@ const styles: Record<string, CSSProperties> = {
   },
   thumbMenuButton: {
     border: '1px solid #2e664d',
-    background: '#1f3a2d',
-    color: '#7cffb2',
+    background: 'var(--brand-soft)',
+    color: 'var(--brand)',
     borderRadius: 6,
     padding: '4px 6px',
     fontSize: 11,

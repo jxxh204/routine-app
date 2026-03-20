@@ -41,9 +41,12 @@ export default function SettingsPage() {
 
   return (
     <AuthRequired>
-    <main style={{ minHeight: '100dvh', background: '#11151a', color: '#f5f7fa', padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h1 style={{ margin: 0, fontSize: 22 }}>설정</h1>
+    <main style={{ minHeight: '100dvh', background: 'var(--background)', color: 'var(--foreground)', padding: '28px 16px 40px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12, letterSpacing: 0.8 }}>SYSTEM</p>
+          <h1 style={{ margin: '6px 0 0', fontSize: 28 }}>설정</h1>
+        </div>
         <Link href="/today" style={{ color: '#9ed0ff', textDecoration: 'none' }}>
           오늘으로
         </Link>
@@ -86,21 +89,21 @@ function permissionLabel(state: PermissionState) {
 }
 
 const cardStyle: CSSProperties = {
-  border: '1px solid #2b3138',
-  borderRadius: 12,
-  background: '#1b1f23',
-  padding: 12,
-  marginBottom: 10,
+  border: '1px solid var(--outline)',
+  borderRadius: 14,
+  background: 'var(--surface-1)',
+  padding: 14,
+  marginBottom: 12,
 };
 
 const metaStyle: CSSProperties = {
   margin: '8px 0',
-  color: '#9aa4af',
+  color: 'var(--text-muted)',
 };
 
 const buttonStyle: CSSProperties = {
-  border: '1px solid #3b4552',
-  background: '#2a3038',
+  border: '1px solid var(--outline)',
+  background: 'var(--surface-2)',
   color: '#d0d8e0',
   borderRadius: 8,
   padding: '8px 10px',

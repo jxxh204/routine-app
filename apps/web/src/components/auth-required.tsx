@@ -4,8 +4,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { buildAuthRedirectTarget } from '@/lib/auth-redirect';
+import { AUTH_MOCK_LOGIN_KEY } from '@/lib/auth-entry-feedback';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
 import { supabase } from '@/lib/supabase';
+
+import { AuthStatusScreen } from './auth-status-screen';
 
 export function AuthRequired({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(true);
@@ -16,6 +19,11 @@ export function AuthRequired({ children }: { children: ReactNode }) {
     let mounted = true;
 
     const check = async () => {
+      if (typeof window !== 'undefined' && window.localStorage.getItem(AUTH_MOCK_LOGIN_KEY) === '1') {
+        if (mounted) setChecking(false);
+        return;
+      }
+
       if (!supabase) {
         router.replace(buildAuthRedirectTarget(pathname));
         return;
@@ -45,11 +53,7 @@ export function AuthRequired({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   if (checking) {
-    return (
-      <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', color: '#9aa4af' }}>
-        인증 상태 확인 중...
-      </main>
-    );
+    return <AuthStatusScreen title="로그인 상태 확인 중..." description="잠시만 기다리면 루틴 화면으로 이동해요." />;
   }
 
   return <>{children}</>;
