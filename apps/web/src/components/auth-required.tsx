@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { buildAuthRedirectTarget } from '@/lib/auth-redirect';
+import { getSessionWithRecovery } from '@/lib/session-recovery';
 import { supabase } from '@/lib/supabase';
 
 export function AuthRequired({ children }: { children: ReactNode }) {
@@ -20,8 +21,8 @@ export function AuthRequired({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
+      const session = await getSessionWithRecovery(supabase);
+      if (!session) {
         router.replace(buildAuthRedirectTarget(pathname));
         return;
       }

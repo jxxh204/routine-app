@@ -28,6 +28,22 @@
 - `apps/web/src/app/today/today-view.tsx`
 - `db/supabase/schema_v2_challenge_logs.sql`
 
+## ✅ 업데이트 (2026-03-20) - 카카오 로그인 P0 E2E
+
+- Step2 실패/취소 UX 분기 완료
+  - auth callback query(`error`, `error_description`) 기반 취소/실패 메시지 분리
+  - 사용자가 URL 파라미터 오류 상태를 벗어날 수 있도록 `다시 시도하기` 버튼 추가
+- Step3 세션 복구 안정화 완료
+  - `getSessionWithRecovery`(재시도) 유틸 추가
+  - `/auth`, `AuthRequired` 모두 세션 재시도 로직 적용
+  - auth state listener(`INITIAL_SESSION`, `SIGNED_IN`) 연동으로 callback 직후 복귀 안정화
+- Step4 친구기능 연동 QA 완료
+  - 비로그인 `/friends` 접근 시 인증 유도
+  - 로그인 완료 후 `/friends` 복귀 및 친구 요청/수락 플로우 회귀 검증
+- 마스터 설계서 완료 처리
+  - `docs/kakao-login-master-design.md` Step1 체크박스 및 DoD 완료 표시
+  - 단계별 `재현→원인→해결→QA→다음스텝` 진행 로그 반영
+
 ## ⏳ 남은 작업
 
 ### P1(2차) - 운영 적용

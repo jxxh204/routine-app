@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -124,6 +124,27 @@ function isAllowedUrl(rawUrl: string) {
   if (parsed.protocol !== 'https:') return false;
   if (ALLOWED_HOSTS.length === 0) return true;
   return ALLOWED_HOSTS.includes(parsed.hostname.toLowerCase());
+}
+
+function isAuthPath(pathname: string) {
+  return pathname === '/auth' || pathname.startsWith('/auth/');
+}
+
+function isOAuthNavigationUrl(rawUrl: string) {
+  const parsed = getParsedUrl(rawUrl);
+  if (!parsed) return false;
+  if (parsed.protocol !== 'https:') return false;
+
+  const host = parsed.hostname.toLowerCase();
+  const oauthHosts = [
+    'supabase.co',
+    'kakao.com',
+    'accounts.kakao.com',
+    'appleid.apple.com',
+    'accounts.google.com',
+  ];
+
+  return oauthHosts.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
 }
 
 function mergeWithDefaults(raw: Routine[]) {
@@ -368,6 +389,7 @@ function AppContent() {
   const [booting, setBooting] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('today');
+  const [currentWebPath, setCurrentWebPath] = useState('/today');
 
   const [routines, setRoutines] = useState<Routine[]>(defaultRoutines);
   const [completionHistory, setCompletionHistory] = useState<CompletionHistory>({});
@@ -377,6 +399,14 @@ function AppContent() {
   const didRestoreNotificationsRef = useRef(false);
 
   const parsedUrl = useMemo(() => (WEB_APP_URL ? getParsedUrl(WEB_APP_URL) : null), []);
+
+  const handleWebviewPathUpdate = useCallback((url: string) => {
+    const parsed = getParsedUrl(url);
+    if (!parsed) return;
+    setCurrentWebPath(parsed.pathname || '/');
+  }, []);
+
+  const isAuthScreen = isAuthPath(currentWebPath);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -468,8 +498,15 @@ function AppContent() {
         source={{ uri: pageUrl }}
         startInLoadingState
         originWhitelist={['https://*']}
+        onNavigationStateChange={(navState) => {
+          handleWebviewPathUpdate(navState.url);
+        }}
         onShouldStartLoadWithRequest={(request) => {
           if (isAllowedUrl(request.url)) return true;
+
+          // OAuth 진행 중에는 WebView 내부에서 provider 왕복을 허용해 세션이 앱 WebView에 반영되게 유지
+          if (isAuthScreen && isOAuthNavigationUrl(request.url)) return true;
+
           void Linking.openURL(request.url);
           return false;
         }}
@@ -521,18 +558,20 @@ function AppContent() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Routine Challenge</Text>
-        <Text style={styles.headerSub}>
-          {activeTab === 'today' ? '오늘 인증' : activeTab === 'calendar' ? '캘린더' : '알림/권한 설정'}
-        </Text>
-      </View>
+      {!isAuthScreen ? (
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Routine Challenge</Text>
+          <Text style={styles.headerSub}>
+            {activeTab === 'today' ? '오늘 인증' : activeTab === 'calendar' ? '캘린더' : '알림/권한 설정'}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.body}>
         {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
       </View>
 
-      <View style={[styles.tabBar, { bottom: 16 + Math.max(insets.bottom, 0) }]}>
+      {!isAuthScreen ? <View style={[styles.tabBar, { bottom: 16 + Math.max(insets.bottom, 0) }]}>
         {[
           { key: 'today' as const, label: '오늘', icon: 'check-circle' },
           { key: 'calendar' as const, label: '캘린더', icon: 'calendar' },
@@ -555,13 +594,16 @@ function AppContent() {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </View> : null}
 
       <Snackbar
         visible={Boolean(statusMsg)}
         onDismiss={() => setStatusMsg('')}
         duration={2500}
-        style={[styles.toast, { marginBottom: 12 + 48 + 16 + Math.max(insets.bottom, 0) }]}
+        style={[
+          styles.toast,
+          { marginBottom: isAuthScreen ? 12 + Math.max(insets.bottom, 0) : 12 + 48 + 16 + Math.max(insets.bottom, 0) },
+        ]}
       >
         <Text style={styles.toastText}>{statusMsg}</Text>
       </Snackbar>
