@@ -1,13 +1,15 @@
+@import '../components/ui/design-system.css';
+
 :root {
-  --background: #0f1115;
-  --foreground: #f5f7fa;
-  --surface-1: #151a20;
-  --surface-2: #1b2129;
-  --surface-3: #232b35;
-  --outline: #303a46;
-  --text-muted: #9ca7b5;
-  --brand: #7cffb2;
-  --brand-soft: #1f3a2d;
+  --background: var(--ds-color-bg);
+  --foreground: var(--ds-color-text);
+  --surface-1: var(--ds-color-surface);
+  --surface-2: var(--ds-color-surface-strong);
+  --surface-3: #242932;
+  --outline: var(--ds-color-border);
+  --text-muted: var(--ds-color-text-muted);
+  --brand: var(--ds-color-accent);
+  --brand-soft: var(--ds-color-accent-soft);
 }
 
 html,

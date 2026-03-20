@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
+import { AppCard, GhostButton, PageShell, SectionHeader, StatCard } from '@/components/ui';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
 import { AUTH_ENTRY_FEEDBACK_KEY, AUTH_MOCK_LOGIN_KEY } from '@/lib/auth-entry-feedback';
 import { resolveAuthFailureMessage } from '@/lib/auth-error';
@@ -100,7 +101,6 @@ function AuthPageContent() {
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
 
-    // P0 임시 정책: 카카오 실연동 전에는 mock 로그인으로 바로 진입
     if (provider === 'kakao' && typeof window !== 'undefined') {
       window.localStorage.setItem(AUTH_MOCK_LOGIN_KEY, '1');
       window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
@@ -124,46 +124,20 @@ function AuthPageContent() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: '100dvh',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '24px 20px',
-        background: 'radial-gradient(circle at 20% 0%, #1a232f 0%, #0f1115 42%)',
-        color: 'var(--foreground)',
-      }}
-    >
-      <section
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          borderRadius: 20,
-          border: '1px solid var(--outline)',
-          background: 'linear-gradient(180deg, #1b2129 0%, #141920 100%)',
-          padding: '30px 22px 24px',
-          boxShadow: '0 24px 52px rgba(0, 0, 0, 0.42)',
-        }}
-      >
-        <p style={{ margin: 0, fontSize: 12, color: '#9aa4af', letterSpacing: 1.2 }}>ROUTINE APP</p>
-        <h1 style={{ margin: '10px 0 0', fontSize: 30, lineHeight: 1.2, fontWeight: 800 }}>카카오 로그인</h1>
-        <p style={{ margin: '8px 0 0', color: '#b8c1cc', fontSize: 14 }}>로그인하고 바로 루틴앱으로 접속해요.</p>
+    <PageShell narrow>
+      <AppCard>
+        <SectionHeader
+          eyebrow="ROUTINE APP"
+          title="카카오 로그인"
+          description="로그인하고 바로 루틴앱으로 접속해요."
+        />
 
-        {isResolvingSession || isRedirecting ? (
-          <div
-            style={{
-              marginTop: 14,
-              borderRadius: 10,
-              border: '1px solid #334050',
-              background: '#18222e',
-              color: '#cfe7ff',
-              fontSize: 12,
-              padding: '9px 10px',
-            }}
-          >
-            {isRedirecting ? '로그인 완료. 루틴앱으로 이동 중...' : '로그인 상태 확인 중...'}
-          </div>
-        ) : null}
+        <div style={{ marginTop: 12 }}>
+          <StatCard
+            label="상태"
+            value={isRedirecting ? '로그인 완료 · 이동 중' : isResolvingSession ? '로그인 상태 확인 중' : '로그인 대기'}
+          />
+        </div>
 
         <section style={{ marginTop: 22, display: 'grid', gap: 10 }}>
           {providers.map((provider) => {
@@ -178,11 +152,11 @@ function AuthPageContent() {
                     width: asset.width,
                     height: asset.height,
                     borderRadius: 10,
-                    border: '1px solid #2b3138',
+                    border: '1px solid var(--outline)',
                     display: 'grid',
                     placeItems: 'center',
-                    color: '#9aa4af',
-                    background: '#1b1f23',
+                    color: 'var(--text-muted)',
+                    background: 'var(--surface-1)',
                     fontWeight: 700,
                     margin: '0 auto',
                   }}
@@ -202,8 +176,8 @@ function AuthPageContent() {
                       height: asset.height,
                       margin: '0 auto',
                       borderRadius: 10,
-                      border: '1px dashed #4b5563',
-                      color: '#9aa4af',
+                      border: '1px dashed var(--outline)',
+                      color: 'var(--text-muted)',
                       display: 'grid',
                       placeItems: 'center',
                       fontSize: 12,
@@ -235,8 +209,8 @@ function AuthPageContent() {
                     height: asset.height,
                     margin: '0 auto',
                     borderRadius: 10,
-                    border: '1px dashed #4b5563',
-                    color: '#9aa4af',
+                    border: '1px dashed var(--outline)',
+                    color: 'var(--text-muted)',
                     display: 'grid',
                     placeItems: 'center',
                     fontSize: 12,
@@ -279,8 +253,8 @@ function AuthPageContent() {
 
         {errorMessage || queryErrorMessage ? (
           <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
-            <p style={{ margin: 0, color: '#ff9ba8', fontSize: 13 }}>{errorMessage || queryErrorMessage}</p>
-            <button
+            <p style={{ margin: 0, color: '#ffb7b2', fontSize: 13 }}>{errorMessage || queryErrorMessage}</p>
+            <GhostButton
               onClick={() => {
                 setErrorMessage('');
                 setPending(null);
@@ -289,22 +263,14 @@ function AuthPageContent() {
                 const nextPath = resolvePostLoginPath(searchParams.get('next'));
                 router.replace(`/auth?next=${encodeURIComponent(nextPath)}`);
               }}
-              style={{
-                width: 'fit-content',
-                borderRadius: 8,
-                border: '1px solid #334050',
-                background: '#1f2a36',
-                color: '#cfe7ff',
-                fontSize: 12,
-                padding: '6px 10px',
-              }}
+              style={{ width: 'fit-content' }}
             >
               다시 시도하기
-            </button>
+            </GhostButton>
           </div>
         ) : null}
-      </section>
-    </main>
+      </AppCard>
+    </PageShell>
   );
 }
 
