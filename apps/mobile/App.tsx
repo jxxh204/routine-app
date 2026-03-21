@@ -263,6 +263,14 @@ function getWebviewCompletionSyncScript() {
       var PREFIX = 'routine-challenge-v1:';
       var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+      function post(payload) {
+        try {
+          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        } catch (e) {
+          // ignore runtime errors
+        }
+      }
+
       function toHistory() {
         var result = {};
         for (var i = 0; i < localStorage.length; i += 1) {
@@ -299,22 +307,43 @@ function getWebviewCompletionSyncScript() {
         return result;
       }
 
-      function send() {
-        try {
-          var payload = {
-            source: 'routine-webview',
-            type: 'completion-history',
-            history: toHistory(),
-          };
-          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-        } catch (e) {
-          // ignore runtime errors
-        }
+      function sendHistory() {
+        post({
+          source: 'routine-webview',
+          type: 'completion-history',
+          history: toHistory(),
+        });
       }
 
-      send();
-      window.addEventListener('storage', send);
-      setInterval(send, 15000);
+      function sendRoute() {
+        post({
+          source: 'routine-webview',
+          type: 'route-path',
+          path: window.location.pathname || '/',
+        });
+      }
+
+      var originPushState = history.pushState;
+      history.pushState = function() {
+        originPushState.apply(history, arguments);
+        sendRoute();
+      };
+
+      var originReplaceState = history.replaceState;
+      history.replaceState = function() {
+        originReplaceState.apply(history, arguments);
+        sendRoute();
+      };
+
+      window.addEventListener('popstate', sendRoute);
+      window.addEventListener('hashchange', sendRoute);
+      window.addEventListener('storage', sendHistory);
+
+      sendRoute();
+      sendHistory();
+
+      setInterval(sendHistory, 15000);
+      setInterval(sendRoute, 1000);
     })();
     true;
   `;
@@ -407,6 +436,22 @@ function AppContent() {
   }, []);
 
   const isAuthScreen = isAuthPath(currentWebPath);
+
+  useEffect(() => {
+    if (currentWebPath.startsWith('/calendar')) {
+      setActiveTab((prev) => (prev === 'calendar' ? prev : 'calendar'));
+      return;
+    }
+
+    if (currentWebPath.startsWith('/settings')) {
+      setActiveTab((prev) => (prev === 'settings' ? prev : 'settings'));
+      return;
+    }
+
+    if (currentWebPath.startsWith('/today') || isAuthScreen) {
+      setActiveTab((prev) => (prev === 'today' ? prev : 'today'));
+    }
+  }, [currentWebPath, isAuthScreen]);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -522,9 +567,15 @@ function AppContent() {
               source?: string;
               type?: string;
               history?: CompletionHistory;
+              path?: string;
               action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
               enabled?: boolean;
             };
+
+            if (payload.source === 'routine-webview' && payload.type === 'route-path' && payload.path) {
+              setCurrentWebPath(payload.path);
+              return;
+            }
 
             if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
               setCompletionHistory(payload.history);
@@ -567,7 +618,7 @@ function AppContent() {
         </View>
       ) : null}
 
-      <View style={styles.body}>
+      <View style={[styles.body, !isAuthScreen ? styles.bodyWithTabBarInset : undefined]}>
         {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
       </View>
 
@@ -588,7 +639,7 @@ function AppContent() {
                 icon={tab.icon}
                 size={18}
                 style={styles.tabIconBtn}
-                iconColor={active ? '#ffffff' : '#a6afbb'}
+                iconColor={active ? '#ffb278' : '#a6afbb'}
               />
               <Text style={[styles.tabLabel, active ? styles.tabLabelActive : undefined]}>{tab.label}</Text>
             </TouchableOpacity>
@@ -633,25 +684,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingHorizontal: 18,
+    paddingTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#20242a',
-    backgroundColor: '#13171c',
+    borderBottomColor: '#2a3240',
+    backgroundColor: '#10141d',
   },
   headerTitle: {
-    color: '#f5f7fa',
+    color: '#f4f7ff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   headerSub: {
     marginTop: 4,
-    color: '#8e99a7',
+    color: '#9ba5b5',
     fontSize: 12,
   },
   body: {
     flex: 1,
+  },
+  bodyWithTabBarInset: {
+    paddingBottom: 84,
   },
   bodyScroll: {
     padding: 16,
@@ -795,11 +850,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '92%',
     maxWidth: 400,
-    height: 48,
-    borderRadius: 48,
-    backgroundColor: '#181d24',
+    height: 50,
+    borderRadius: 999,
+    backgroundColor: '#10141d',
     borderWidth: 1,
-    borderColor: '#262d37',
+    borderColor: '#2a3240',
     padding: 4,
     flexDirection: 'row',
     alignItems: 'center',
@@ -814,7 +869,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   tabItemActive: {
-    backgroundColor: '#323943',
+    backgroundColor: '#2f1e11',
+    borderWidth: 1,
+    borderColor: '#6b421f',
   },
   tabIconBtn: {
     margin: 0,
@@ -828,7 +885,8 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   tabLabelActive: {
-    color: '#ffffff',
+    color: '#ffb278',
+    fontWeight: '700',
   },
   toast: {
     backgroundColor: '#1f2730',
