@@ -94,6 +94,15 @@ function AuthPageContent() {
     };
   }, [queryErrorMessage, router, searchParams]);
 
+  const continueWithMockLogin = () => {
+    const nextPath = resolvePostLoginPath(searchParams.get('next'));
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(AUTH_MOCK_LOGIN_KEY, '1');
+      window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
+    }
+    router.replace(nextPath);
+  };
+
   const onClickProvider = async (provider: SocialProvider) => {
     setPending(provider);
     setErrorMessage('');
@@ -101,10 +110,8 @@ function AuthPageContent() {
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
 
-    if (provider === 'kakao' && typeof window !== 'undefined') {
-      window.localStorage.setItem(AUTH_MOCK_LOGIN_KEY, '1');
-      window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
-      router.replace(nextPath);
+    if (provider === 'kakao') {
+      continueWithMockLogin();
       return;
     }
 
@@ -260,6 +267,14 @@ function AuthPageContent() {
                 </button>
               );
             })}
+
+            <GhostButton
+              onClick={continueWithMockLogin}
+              disabled={Boolean(pending) || isResolvingSession || isRedirecting}
+              style={{ width: '100%' }}
+            >
+              로그인 없이 계속하기 (임시)
+            </GhostButton>
 
             {errorMessage || queryErrorMessage ? (
               <div style={{ marginTop: 2, display: 'grid', gap: 8 }}>
