@@ -7,7 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
 import { AppCard, GhostButton, PageShell, SectionHeader, StatCard } from '@/components/ui';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
-import { AUTH_ENTRY_FEEDBACK_KEY, AUTH_MOCK_LOGIN_KEY } from '@/lib/auth-entry-feedback';
+import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
+import { applyMockLogin, resolveAuthEntryMode } from '@/lib/auth-entry-mode';
 import { resolveAuthFailureMessage } from '@/lib/auth-error';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
@@ -96,11 +97,7 @@ function AuthPageContent() {
 
   const continueWithMockLogin = () => {
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(AUTH_MOCK_LOGIN_KEY, '1');
-      window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
-    }
-    router.replace(nextPath);
+    applyMockLogin(nextPath, router.replace);
   };
 
   const onClickProvider = async (provider: SocialProvider) => {
@@ -110,7 +107,7 @@ function AuthPageContent() {
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
 
-    if (provider === 'kakao') {
+    if (resolveAuthEntryMode(provider) === 'mock') {
       continueWithMockLogin();
       return;
     }
