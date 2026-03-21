@@ -618,7 +618,7 @@ function AppContent() {
         </View>
       ) : null}
 
-      <View style={styles.body}>
+      <View style={[styles.body, !isAuthScreen ? styles.bodyWithTabBarInset : undefined]}>
         {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
       </View>
 
@@ -704,6 +704,9 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  bodyWithTabBarInset: {
+    paddingBottom: 84,
   },
   bodyScroll: {
     padding: 16,
