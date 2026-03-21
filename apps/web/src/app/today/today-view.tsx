@@ -689,191 +689,213 @@ export function TodayView() {
   return (
     <PageShell>
       <section style={styles.pageSection}>
-        <SectionHeader eyebrow="Today" title="루틴 챌린지" description={today} />
+        <SectionHeader eyebrow="Today" title="루틴 실행 대시보드" description={today} />
 
-      {showWelcomeFeedback ? (
-        <AppCard className="today-card" >
-          <section style={styles.welcomeCard}>
-            <strong style={styles.welcomeTitle}>로그인 완료! 오늘 루틴을 바로 시작해볼까요?</strong>
-            <p style={styles.welcomeDesc}>첫 진입 준비가 끝났어요.</p>
-          </section>
-        </AppCard>
-      ) : null}
+        {showWelcomeFeedback ? (
+          <AppCard>
+            <section style={styles.welcomeCard}>
+              <strong style={styles.welcomeTitle}>로그인 완료! 오늘 해야 할 루틴부터 시작하세요.</strong>
+              <p style={styles.welcomeDesc}>지금 가능한 루틴을 상단에서 바로 인증할 수 있어요.</p>
+            </section>
+          </AppCard>
+        ) : null}
 
-      <AppCard className="today-card">
-        <section style={styles.progressCard}>
-          <div style={styles.progressTop}>
-            <strong>{doneCount}/{routines.length} 완료</strong>
-            <span>{progress}%</span>
-          </div>
-          <div style={styles.progressTrack}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-          </div>
-          <div style={styles.statRow}>
-            <StatCard label="총 루틴" value={`${routines.length}`} />
-            <StatCard label="완료" value={`${doneCount}`} />
-          </div>
+        <section style={styles.kpiGrid}>
+          <AppCard>
+            <section style={styles.progressCard}>
+              <p style={styles.sectionLabel}>진행률</p>
+              <div style={styles.progressTop}>
+                <strong>{doneCount}/{routines.length} 완료</strong>
+                <span>{progress}%</span>
+              </div>
+              <div style={styles.progressTrack}>
+                <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+              </div>
+              <div style={styles.statRow}>
+                <StatCard label="총 루틴" value={`${routines.length}`} />
+                <StatCard label="완료" value={`${doneCount}`} />
+              </div>
+            </section>
+          </AppCard>
+
+          <AppCard>
+            <section style={styles.quickGuideCard}>
+              <p style={styles.sectionLabel}>인증 가이드</p>
+              <ul style={styles.guideList}>
+                <li>가능 시간에 카드 탭 → 카메라 인증</li>
+                <li>완료 썸네일 길게 누르면 다시찍기</li>
+                <li>루틴 카드 우측 스와이프 → 수정/삭제</li>
+              </ul>
+            </section>
+          </AppCard>
         </section>
-      </AppCard>
 
+        <section style={styles.boardSection}>
+          <div style={styles.boardHeader}>
+            <h2 style={styles.boardTitle}>오늘 할 일</h2>
+            <p style={styles.boardMeta}>지금 가능한 루틴부터 위에서 처리</p>
+          </div>
 
+          <section style={styles.list}>
+            {routines.map((routine) => {
+              const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
+              const canCertify = inWindow && !routine.doneByMe;
 
-      <section style={styles.list}>
-        {routines.map((routine) => {
-          const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
-          const canCertify = inWindow && !routine.doneByMe;
+              const card = (
+                <article
+                  className="routine-card-surface"
+                  onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
+                  style={{
+                    ...styles.item,
+                    ...(inWindow ? styles.itemActive : styles.itemInactive),
+                    ...(canCertify ? styles.itemClickable : {}),
+                    ...(swipedRoutineId === routine.id ? styles.itemSwiped : {}),
+                  }}
+                >
+                  <div style={styles.itemHead}>
+                    <p style={styles.itemTitle}>{routine.title}</p>
+                    <span
+                      style={{
+                        ...styles.checkTag,
+                        ...(canCertify
+                          ? styles.checkTagReady
+                          : routine.doneByMe
+                            ? styles.checkTagDone
+                            : styles.checkTagWaiting),
+                      }}
+                    >
+                      {routine.doneByMe ? '완료' : canCertify ? '지금 인증' : '대기'}
+                    </span>
+                  </div>
 
-          const card = (
-            <article
-              className="routine-card-surface"
-              onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
-              style={{
-                ...styles.item,
-                ...(inWindow ? styles.itemActive : styles.itemInactive),
-                ...(canCertify ? styles.itemClickable : {}),
-                ...(swipedRoutineId === routine.id ? styles.itemSwiped : {}),
-              }}
-            >
-              <span
-                style={{
-                  ...styles.checkTag,
-                  ...(canCertify
-                    ? styles.checkTagReady
-                    : routine.doneByMe
-                      ? styles.checkTagDone
-                      : styles.checkTagWaiting),
-                }}
-              >
-                {routine.doneByMe ? '인증완료' : canCertify ? '인증하기' : '대기중'}
-              </span>
-
-              <div style={styles.itemBody}>
-                <p style={styles.itemTitle}>{routine.title}</p>
-                <p style={styles.meta}>인증 가능 시간: {routine.timeRangeLabel}</p>
-                <p style={styles.meta}>
-                  친구 상태: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴은 미연동'}
-                </p>
-                {routine.proofImage ? (
-                  <div
-                    style={styles.thumbWrap}
-                    onContextMenu={(event) => event.preventDefault()}
-                    onTouchStart={() => startThumbLongPress(routine.id)}
-                    onTouchEnd={cancelThumbLongPress}
-                    onTouchCancel={cancelThumbLongPress}
-                    onMouseDown={() => startThumbLongPress(routine.id)}
-                    onMouseUp={cancelThumbLongPress}
-                    onMouseLeave={cancelThumbLongPress}
-                    onClick={() => {
-                      if (thumbMenuRoutineId === routine.id) return;
-                      setPreviewImage(routine.proofImage ?? null);
-                    }}
-                  >
-                    <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
-                    {thumbMenuRoutineId === routine.id ? (
-                      <div style={styles.thumbMenu}>
-                        <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
-                        <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                  <div style={styles.itemBody}>
+                    <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
+                    <p style={styles.meta}>
+                      친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
+                    </p>
+                    {routine.proofImage ? (
+                      <div
+                        style={styles.thumbWrap}
+                        onContextMenu={(event) => event.preventDefault()}
+                        onTouchStart={() => startThumbLongPress(routine.id)}
+                        onTouchEnd={cancelThumbLongPress}
+                        onTouchCancel={cancelThumbLongPress}
+                        onMouseDown={() => startThumbLongPress(routine.id)}
+                        onMouseUp={cancelThumbLongPress}
+                        onMouseLeave={cancelThumbLongPress}
+                        onClick={() => {
+                          if (thumbMenuRoutineId === routine.id) return;
+                          setPreviewImage(routine.proofImage ?? null);
+                        }}
+                      >
+                        <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
+                        {thumbMenuRoutineId === routine.id ? (
+                          <div style={styles.thumbMenu}>
+                            <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
+                            <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                          </div>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>
-                ) : null}
+                </article>
+              );
+
+              return (
+                <div
+                  key={routine.id}
+                  className="routine-card-surface"
+                  style={styles.swipeWrap}
+                  onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
+                  onTouchEnd={handleRoutineTouchEnd}
+                >
+                  <div className="routine-card-surface" style={styles.actionWrap}>
+                    <GhostButton style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</GhostButton>
+                    {!routine.isDefault ? (
+                      <GhostButton style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</GhostButton>
+                    ) : null}
+                  </div>
+                  {card}
+                </div>
+              );
+            })}
+          </section>
+        </section>
+
+        <AppCard>
+          <section style={{ ...styles.progressCard, ...styles.addSection }}>
+            <div style={styles.addHeaderRow}>
+              <div>
+                <p style={styles.sectionLabel}>루틴 편집</p>
+                <p style={{ ...styles.meta, margin: 0 }}>오늘 필요한 루틴을 추가/수정하세요.</p>
               </div>
-            </article>
-          );
-
-          return (
-            <div
-              key={routine.id}
-              className="routine-card-surface"
-              style={styles.swipeWrap}
-              onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
-              onTouchEnd={handleRoutineTouchEnd}
-            >
-              <div className="routine-card-surface" style={styles.actionWrap}>
-                <GhostButton style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</GhostButton>
-                {!routine.isDefault ? (
-                  <GhostButton style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</GhostButton>
-                ) : null}
-              </div>
-              {card}
-            </div>
-          );
-        })}
-      </section>
-
-
-      <AppCard className="today-card">
-        <section style={{ ...styles.progressCard, ...styles.addSection }}>
-          <div style={styles.addHeaderRow}>
-            <p style={{ ...styles.meta, margin: 0 }}>루틴 추가</p>
-            <GhostButton
-              style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
-              onClick={() => {
-                if (isAddFormOpen) {
-                  setEditingRoutineId(null);
-                  setNewTitle('');
-                  setNewStart('09:00');
-                  setNewEnd('10:00');
-                }
-                setIsAddFormOpen((prev) => !prev);
-              }}
-            >
-              {isAddFormOpen ? '닫기' : '+ 추가'}
-            </GhostButton>
-          </div>
-
-        {isAddFormOpen ? (
-          <div style={styles.addRow}>
-            <input
-              className="routine-title-input"
-              style={styles.input}
-              placeholder="예: 독서 인증"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-            />
-            <div style={styles.timeRow}>
-              <div style={styles.timeFieldWrap}>
-                <span style={styles.timeFieldLabel}>시작</span>
-                <input
-                  style={styles.inputTime}
-                  type="time"
-                  value={newStart}
-                  onChange={(e) => {
-                    const nextStart = e.target.value;
-                    setNewStart(nextStart);
-
-                    setNewEnd(addOneHourHHMM(nextStart));
-                  }}
-                />
-              </div>
-              <div style={styles.timeFieldWrap}>
-                <span style={styles.timeFieldLabel}>종료</span>
-                <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
-              </div>
-            </div>
-            <div style={styles.addActionRow}>
-              <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
-                {editingRoutineId ? '수정 저장' : '추가'}
-              </PrimaryButton>
-              {editingRoutineId ? (
-                <GhostButton
-                  style={styles.cancelButton}
-                  onClick={() => {
+              <GhostButton
+                style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
+                onClick={() => {
+                  if (isAddFormOpen) {
                     setEditingRoutineId(null);
                     setNewTitle('');
                     setNewStart('09:00');
                     setNewEnd('10:00');
-                    setIsAddFormOpen(false);
-                  }}
-                >
-                  취소
-                </GhostButton>
-              ) : null}
+                  }
+                  setIsAddFormOpen((prev) => !prev);
+                }}
+              >
+                {isAddFormOpen ? '닫기' : '+ 추가'}
+              </GhostButton>
             </div>
-          </div>
-        ) : null}
-        </section>
-      </AppCard>
+
+            {isAddFormOpen ? (
+              <div style={styles.addRow}>
+                <input
+                  className="routine-title-input"
+                  style={styles.input}
+                  placeholder="예: 독서 인증"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+                <div style={styles.timeRow}>
+                  <div style={styles.timeFieldWrap}>
+                    <span style={styles.timeFieldLabel}>시작</span>
+                    <input
+                      style={styles.inputTime}
+                      type="time"
+                      value={newStart}
+                      onChange={(e) => {
+                        const nextStart = e.target.value;
+                        setNewStart(nextStart);
+                        setNewEnd(addOneHourHHMM(nextStart));
+                      }}
+                    />
+                  </div>
+                  <div style={styles.timeFieldWrap}>
+                    <span style={styles.timeFieldLabel}>종료</span>
+                    <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+                  </div>
+                </div>
+                <div style={styles.addActionRow}>
+                  <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
+                    {editingRoutineId ? '수정 저장' : '추가'}
+                  </PrimaryButton>
+                  {editingRoutineId ? (
+                    <GhostButton
+                      style={styles.cancelButton}
+                      onClick={() => {
+                        setEditingRoutineId(null);
+                        setNewTitle('');
+                        setNewStart('09:00');
+                        setNewEnd('10:00');
+                        setIsAddFormOpen(false);
+                      }}
+                    >
+                      취소
+                    </GhostButton>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        </AppCard>
 
       <input
         ref={fileInputRef}
@@ -911,6 +933,49 @@ const styles: Record<string, CSSProperties> = {
   pageSection: {
     display: 'grid',
     gap: 18,
+  },
+  kpiGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1.2fr 1fr',
+    gap: 12,
+  },
+  sectionLabel: {
+    margin: '0 0 8px',
+    fontSize: 12,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.02em',
+  },
+  quickGuideCard: {
+    display: 'grid',
+    gap: 6,
+    minHeight: 132,
+  },
+  guideList: {
+    margin: 0,
+    paddingLeft: 18,
+    display: 'grid',
+    gap: 6,
+    color: 'var(--text-muted)',
+    fontSize: 13,
+    lineHeight: 1.45,
+  },
+  boardSection: {
+    display: 'grid',
+    gap: 10,
+  },
+  boardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  boardTitle: {
+    margin: 0,
+    fontSize: 22,
+  },
+  boardMeta: {
+    margin: 0,
+    color: 'var(--text-muted)',
+    fontSize: 12,
   },
   progressCard: {
     background: 'var(--surface-1)',
@@ -1160,6 +1225,13 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 8,
     padding: '6px 10px',
     cursor: 'pointer',
+  },
+  itemHead: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
   },
   itemBody: {
     width: '100%',

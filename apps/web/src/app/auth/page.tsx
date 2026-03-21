@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -125,49 +125,93 @@ function AuthPageContent() {
 
   return (
     <PageShell narrow>
-      <AppCard>
-        <SectionHeader
-          eyebrow="ROUTINE APP"
-          title="카카오 로그인"
-          description="로그인하고 바로 루틴앱으로 접속해요."
-        />
+      <section style={{ display: 'grid', gap: 14 }}>
+        <AppCard>
+          <section style={{ display: 'grid', gap: 18 }}>
+            <SectionHeader
+              eyebrow="ROUTINE APP"
+              title="3초 로그인"
+              description="카카오로 바로 들어가서 오늘 인증부터 시작해요."
+            />
 
-        <div style={{ marginTop: 16 }}>
-          <StatCard
-            label="상태"
-            value={isRedirecting ? '로그인 완료 · 이동 중' : isResolvingSession ? '로그인 상태 확인 중' : '로그인 대기'}
-          />
-        </div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div style={featureRowStyle}><span>1</span><p>로그인 후 자동으로 오늘 화면 이동</p></div>
+              <div style={featureRowStyle}><span>2</span><p>인증 내역은 즉시 저장</p></div>
+              <div style={featureRowStyle}><span>3</span><p>친구 진행 상태와 함께 확인</p></div>
+            </div>
 
-        <section style={{ marginTop: 24, display: 'grid', gap: 12 }}>
-          {providers.map((provider) => {
-            const isBusy = pending === provider;
-            const asset = getOfficialButtonAsset(provider);
+            <StatCard
+              label="상태"
+              value={isRedirecting ? '로그인 완료 · 이동 중' : isResolvingSession ? '로그인 상태 확인 중' : '로그인 대기'}
+            />
+          </section>
+        </AppCard>
 
-            if (isBusy) {
-              return (
-                <div
-                  key={provider}
-                  style={{
-                    width: asset.width,
-                    height: asset.height,
-                    borderRadius: 12,
-                    border: '1px solid var(--outline)',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-muted)',
-                    background: 'var(--surface-1)',
-                    fontWeight: 700,
-                    margin: '0 auto',
-                  }}
-                >
-                  카카오 로그인 처리 중...
-                </div>
-              );
-            }
+        <AppCard>
+          <section style={{ display: 'grid', gap: 14 }}>
+            <h2 style={{ margin: 0, fontSize: 18 }}>시작하기</h2>
 
-            if (asset.kind === 'apple-js') {
-              if (!appleConfigured) {
+            {providers.map((provider) => {
+              const isBusy = pending === provider;
+              const asset = getOfficialButtonAsset(provider);
+
+              if (isBusy) {
+                return (
+                  <div
+                    key={provider}
+                    style={{
+                      width: asset.width,
+                      height: asset.height,
+                      borderRadius: 12,
+                      border: '1px solid var(--outline)',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--text-muted)',
+                      background: 'var(--surface-1)',
+                      fontWeight: 700,
+                      margin: '0 auto',
+                    }}
+                  >
+                    카카오 로그인 처리 중...
+                  </div>
+                );
+              }
+
+              if (asset.kind === 'apple-js') {
+                if (!appleConfigured) {
+                  return (
+                    <div
+                      key={provider}
+                      style={{
+                        width: asset.width,
+                        height: asset.height,
+                        margin: '0 auto',
+                        borderRadius: 10,
+                        border: '1px dashed var(--outline)',
+                        color: 'var(--text-muted)',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: 12,
+                      }}
+                    >
+                      Apple 로그인 설정 필요
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={provider} style={{ margin: '0 auto', opacity: pending ? 0.6 : 1 }}>
+                    <AppleOfficialButton
+                      width={asset.width}
+                      height={asset.height}
+                      onPress={() => void onClickProvider(provider)}
+                      onUnavailable={() => setAssetUnavailable((prev) => ({ ...prev, apple: true }))}
+                    />
+                  </div>
+                );
+              }
+
+              if (assetUnavailable[provider]) {
                 return (
                   <div
                     key={provider}
@@ -183,96 +227,75 @@ function AuthPageContent() {
                       fontSize: 12,
                     }}
                   >
-                    Apple 로그인 설정 필요
+                    카카오 버튼 로드 실패
                   </div>
                 );
               }
 
               return (
-                <div key={provider} style={{ margin: '0 auto', opacity: pending ? 0.6 : 1 }}>
-                  <AppleOfficialButton
-                    width={asset.width}
-                    height={asset.height}
-                    onPress={() => void onClickProvider(provider)}
-                    onUnavailable={() => setAssetUnavailable((prev) => ({ ...prev, apple: true }))}
-                  />
-                </div>
-              );
-            }
-
-            if (assetUnavailable[provider]) {
-              return (
-                <div
+                <button
                   key={provider}
+                  onClick={() => void onClickProvider(provider)}
+                  disabled={Boolean(pending) || isResolvingSession || isRedirecting}
+                  aria-label={asset.alt}
                   style={{
-                    width: asset.width,
-                    height: asset.height,
+                    padding: 0,
+                    border: 'none',
+                    background: 'transparent',
+                    opacity: pending || isResolvingSession || isRedirecting ? 0.6 : 1,
+                    cursor: pending || isResolvingSession || isRedirecting ? 'default' : 'pointer',
+                    width: 'fit-content',
                     margin: '0 auto',
-                    borderRadius: 10,
-                    border: '1px dashed var(--outline)',
-                    color: 'var(--text-muted)',
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontSize: 12,
                   }}
                 >
-                  카카오 버튼 로드 실패
-                </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={asset.src}
+                    alt={asset.alt}
+                    width={asset.width}
+                    height={asset.height}
+                    style={{ display: 'block' }}
+                    onError={() => setAssetUnavailable((prev) => ({ ...prev, [provider]: true }))}
+                  />
+                </button>
               );
-            }
+            })}
 
-            return (
-              <button
-                key={provider}
-                onClick={() => void onClickProvider(provider)}
-                disabled={Boolean(pending) || isResolvingSession || isRedirecting}
-                aria-label={asset.alt}
-                style={{
-                  padding: 0,
-                  border: 'none',
-                  background: 'transparent',
-                  opacity: pending || isResolvingSession || isRedirecting ? 0.6 : 1,
-                  cursor: pending || isResolvingSession || isRedirecting ? 'default' : 'pointer',
-                  width: 'fit-content',
-                  margin: '0 auto',
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={asset.src}
-                  alt={asset.alt}
-                  width={asset.width}
-                  height={asset.height}
-                  style={{ display: 'block' }}
-                  onError={() => setAssetUnavailable((prev) => ({ ...prev, [provider]: true }))}
-                />
-              </button>
-            );
-          })}
-        </section>
-
-        {errorMessage || queryErrorMessage ? (
-          <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
-            <p style={{ margin: 0, color: '#ffb7b2', fontSize: 13 }}>{errorMessage || queryErrorMessage}</p>
-            <GhostButton
-              onClick={() => {
-                setErrorMessage('');
-                setPending(null);
-                setIsResolvingSession(false);
-                setIsRedirecting(false);
-                const nextPath = resolvePostLoginPath(searchParams.get('next'));
-                router.replace(`/auth?next=${encodeURIComponent(nextPath)}`);
-              }}
-              style={{ width: 'fit-content' }}
-            >
-              다시 시도하기
-            </GhostButton>
-          </div>
-        ) : null}
-      </AppCard>
+            {errorMessage || queryErrorMessage ? (
+              <div style={{ marginTop: 2, display: 'grid', gap: 8 }}>
+                <p style={{ margin: 0, color: '#ffb7b2', fontSize: 13 }}>{errorMessage || queryErrorMessage}</p>
+                <GhostButton
+                  onClick={() => {
+                    setErrorMessage('');
+                    setPending(null);
+                    setIsResolvingSession(false);
+                    setIsRedirecting(false);
+                    const nextPath = resolvePostLoginPath(searchParams.get('next'));
+                    router.replace(`/auth?next=${encodeURIComponent(nextPath)}`);
+                  }}
+                  style={{ width: 'fit-content' }}
+                >
+                  다시 시도하기
+                </GhostButton>
+              </div>
+            ) : null}
+          </section>
+        </AppCard>
+      </section>
     </PageShell>
   );
 }
+
+const featureRowStyle: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '24px 1fr',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 10px',
+  borderRadius: 10,
+  background: 'rgba(255,255,255,0.02)',
+  border: '1px solid var(--outline)',
+};
 
 export default function AuthPage() {
   return (

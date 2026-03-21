@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 import { AuthRequired } from '@/components/auth-required';
-import { AppCard, GhostButton, PageShell, SectionHeader } from '@/components/ui';
+import { AppCard, GhostButton, PageShell, SectionHeader, StatCard } from '@/components/ui';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
 
@@ -34,6 +34,12 @@ export default function CalendarPage() {
   const days = useMemo(() => getMonthMatrix(month), [month]);
   const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
   const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
+  const monthDoneCount = useMemo(() => {
+    const prefix = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-`;
+    return history
+      .filter((entry) => entry.date.startsWith(prefix))
+      .reduce((acc, entry) => acc + entry.items.length, 0);
+  }, [history, month]);
 
   useEffect(() => {
     if (!selectedDate || selectedItems.length === 0) return;
@@ -73,76 +79,83 @@ export default function CalendarPage() {
       <PageShell>
         <section style={styles.pageSection}>
           <div style={styles.headerRow}>
-            <SectionHeader eyebrow="History" title="캘린더" description="완료 내역을 날짜별로 확인해요." />
+            <SectionHeader eyebrow="History" title="캘린더" description="월별 완료 흐름과 날짜별 내역을 함께 확인해요." />
             <Link href="/today" style={styles.todayLink}>
               오늘으로
             </Link>
           </div>
 
-          <AppCard>
-            <section>
-              <div style={styles.monthHeader}>
-                <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
-                  ‹
-                </GhostButton>
-                <strong>{monthTitle}</strong>
-                <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
-                  ›
-                </GhostButton>
-              </div>
+          <div style={styles.summaryGrid}>
+            <StatCard label="이번 달 완료" value={`${monthDoneCount}`} />
+            <StatCard label="기록된 날짜" value={`${history.length}`} />
+          </div>
 
-              <div style={styles.grid}>
-                {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
-                  <div key={w} style={styles.weekday}>
-                    {w}
-                  </div>
-                ))}
-
-                {days.map((date) => {
-                  const key = toDateKey(date);
-                  const count = byDate.get(key)?.length ?? 0;
-                  const inMonth = date.getMonth() === month.getMonth();
-
-                  return (
-                    <button key={key} style={{ ...styles.dayCell, opacity: inMonth ? 1 : 0.45 }} onClick={() => setSelectedDate(key)}>
-                      <div>{date.getDate()}</div>
-                      {count > 0 ? <div style={styles.doneCount}>완료 {count}</div> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </AppCard>
-
-          {selectedDate ? (
-            <section style={styles.modalOverlay} onClick={() => setSelectedDate(null)}>
-              <AppCard className="calendar-modal-card">
-                <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-                  <strong>{selectedDate} 완료 루틴</strong>
-                  {selectedItems.length === 0 ? (
-                    <p style={styles.emptyText}>해당일 완료 내역이 없습니다.</p>
-                  ) : (
-                    <div style={styles.itemGrid}>
-                      {selectedItems.map((item) => {
-                        const image = selectedDate ? proofByItemKey[`${selectedDate}:${item.id}`] ?? item.proofImage : item.proofImage;
-
-                        return (
-                          <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={styles.itemCard}>
-                            <div style={styles.itemTitle}>{item.title ?? item.id}</div>
-                            <div style={styles.itemTime}>{item.doneAt ?? '완료 시간 미기록'}</div>
-                            {image ? <img src={image} alt="인증 썸네일" style={styles.thumb} /> : null}
-                          </article>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <GhostButton style={{ ...styles.navButton, marginTop: 10, width: '100%' }} onClick={() => setSelectedDate(null)}>
-                    닫기
+          <div style={styles.layoutGrid}>
+            <AppCard>
+              <section>
+                <div style={styles.monthHeader}>
+                  <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
+                    이전달
+                  </GhostButton>
+                  <strong style={{ fontSize: 24 }}>{monthTitle}</strong>
+                  <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
+                    다음달
                   </GhostButton>
                 </div>
-              </AppCard>
-            </section>
-          ) : null}
+
+                <div style={styles.grid}>
+                  {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
+                    <div key={w} style={styles.weekday}>
+                      {w}
+                    </div>
+                  ))}
+
+                  {days.map((date) => {
+                    const key = toDateKey(date);
+                    const count = byDate.get(key)?.length ?? 0;
+                    const inMonth = date.getMonth() === month.getMonth();
+                    const isSelected = selectedDate === key;
+
+                    return (
+                      <button
+                        key={key}
+                        style={{ ...styles.dayCell, opacity: inMonth ? 1 : 0.35, ...(isSelected ? styles.dayCellSelected : {}) }}
+                        onClick={() => setSelectedDate(key)}
+                      >
+                        <div style={{ fontSize: 18, fontWeight: 700 }}>{date.getDate()}</div>
+                        <div style={styles.doneCount}>{count > 0 ? `완료 ${count}` : '기록 없음'}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            </AppCard>
+
+            <AppCard>
+              <section style={styles.detailPanel}>
+                <strong style={{ fontSize: 20 }}>{selectedDate ?? '날짜를 선택해 주세요'}</strong>
+                {!selectedDate ? (
+                  <p style={styles.emptyText}>좌측 캘린더에서 날짜를 고르면 완료 루틴이 표시됩니다.</p>
+                ) : selectedItems.length === 0 ? (
+                  <p style={styles.emptyText}>해당일 완료 내역이 없습니다.</p>
+                ) : (
+                  <div style={styles.itemGrid}>
+                    {selectedItems.map((item) => {
+                      const image = selectedDate ? proofByItemKey[`${selectedDate}:${item.id}`] ?? item.proofImage : item.proofImage;
+
+                      return (
+                        <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={styles.itemCard}>
+                          <div style={styles.itemTitle}>{item.title ?? item.id}</div>
+                          <div style={styles.itemTime}>{item.doneAt ?? '완료 시간 미기록'}</div>
+                          {image ? <img src={image} alt="인증 썸네일" style={styles.thumb} /> : null}
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            </AppCard>
+          </div>
         </section>
       </PageShell>
     </AuthRequired>
@@ -153,36 +166,33 @@ const styles: Record<string, CSSProperties> = {
   pageSection: { display: 'grid', gap: 18 },
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 },
   todayLink: { color: '#ffd7bd', fontSize: 14 },
-  monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  navButton: { padding: '6px 10px' },
+  summaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 },
+  layoutGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 },
+  monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 },
+  navButton: { padding: '8px 12px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 },
-  weekday: { textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 },
-  doneCount: { fontSize: 10, color: 'var(--ds-color-accent-strong)', marginTop: 2 },
+  weekday: { textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, marginBottom: 4 },
+  doneCount: { fontSize: 11, color: 'var(--text-muted)', marginTop: 2 },
   dayCell: {
     border: '1px solid var(--outline)',
     background: 'var(--surface-1)',
     color: '#f5f7fa',
-    borderRadius: 10,
-    minHeight: 56,
+    borderRadius: 12,
+    minHeight: 72,
     padding: 8,
     textAlign: 'center',
     cursor: 'pointer',
     boxShadow: 'var(--ds-shadow-soft)',
   },
-  modalOverlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.6)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+  dayCellSelected: {
+    border: '1px solid #8a4f1e',
+    boxShadow: '0 0 0 1px rgba(255, 143, 63, 0.45) inset',
   },
-  modalCard: { width: '100%', maxWidth: 420 },
+  detailPanel: { display: 'grid', gap: 10, minHeight: 520, alignContent: 'flex-start' },
   emptyText: { color: 'var(--text-muted)', marginTop: 8 },
-  itemGrid: { display: 'grid', gap: 8, marginTop: 8 },
-  itemCard: { border: '1px solid var(--outline)', borderRadius: 10, padding: 10 },
+  itemGrid: { display: 'grid', gap: 8, marginTop: 4 },
+  itemCard: { border: '1px solid var(--outline)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)' },
   itemTitle: { fontWeight: 600 },
-  itemTime: { color: 'var(--text-muted)', fontSize: 12 },
-  thumb: { marginTop: 8, width: 72, height: 72, borderRadius: 8, objectFit: 'cover' },
+  itemTime: { color: 'var(--text-muted)', fontSize: 12, marginTop: 3 },
+  thumb: { marginTop: 8, width: 96, height: 96, borderRadius: 8, objectFit: 'cover' },
 };
