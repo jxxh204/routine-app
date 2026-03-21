@@ -1,113 +1,137 @@
 :root {
-  --ds-color-bg: #0d0f12;
-  --ds-color-surface: #171a1f;
-  --ds-color-surface-strong: #1f232a;
-  --ds-color-border: #2e333b;
-  --ds-color-text: #f5f7fb;
-  --ds-color-text-muted: #a4acb8;
+  --ds-color-bg: #07090d;
+  --ds-color-bg-glow: #2a1409;
+  --ds-color-surface: #10141d;
+  --ds-color-surface-strong: #171d29;
+  --ds-color-surface-soft: #0c1119;
+  --ds-color-border: #2a3240;
+  --ds-color-border-strong: #3b4454;
 
-  --ds-color-accent: #ff7a18;
-  --ds-color-accent-strong: #ff8f3f;
-  --ds-color-accent-soft: #3a2414;
+  --ds-color-text: #f4f7ff;
+  --ds-color-text-muted: #9ba5b5;
+  --ds-color-text-faint: #697588;
 
-  --ds-radius-lg: 20px;
+  --ds-color-accent: #ff7a1a;
+  --ds-color-accent-strong: #ff9a4f;
+  --ds-color-accent-soft: #2f1e11;
+
+  --ds-radius-xl: 24px;
+  --ds-radius-lg: 18px;
   --ds-radius-md: 14px;
   --ds-radius-sm: 10px;
+  --ds-radius-pill: 999px;
 
-  --ds-shadow-card: 0 14px 32px rgba(0, 0, 0, 0.38);
-  --ds-shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.24);
+  --ds-shadow-page: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --ds-shadow-card: 0 22px 44px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --ds-shadow-soft: 0 12px 28px rgba(0, 0, 0, 0.32);
 
   --ds-space-1: 6px;
   --ds-space-2: 10px;
   --ds-space-3: 14px;
   --ds-space-4: 20px;
   --ds-space-5: 28px;
+  --ds-space-6: 36px;
 }
 
 .ds-page-shell {
   min-height: 100dvh;
-  background: radial-gradient(circle at 20% 0%, #2a1d14 0%, var(--ds-color-bg) 48%);
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--ds-color-bg-glow) 88%, transparent) 0%, transparent 44%),
+    linear-gradient(180deg, #090c12 0%, var(--ds-color-bg) 55%);
   color: var(--ds-color-text);
-  padding: 24px 20px;
+  padding: 28px 20px 48px;
+  box-shadow: var(--ds-shadow-page);
 }
 
 .ds-page-shell__inner {
   width: 100%;
-  max-width: 760px;
+  max-width: 980px;
   margin: 0 auto;
 }
 
 .ds-page-shell--narrow .ds-page-shell__inner {
-  max-width: 420px;
+  max-width: 440px;
+}
+
+.ds-section-header {
+  display: grid;
+  gap: var(--ds-space-1);
 }
 
 .ds-section-header__eyebrow {
   margin: 0;
   color: var(--ds-color-text-muted);
   font-size: 12px;
-  letter-spacing: 1.2px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .ds-section-header__title {
-  margin: 10px 0 0;
-  font-size: 32px;
-  line-height: 1.2;
+  margin: 0;
+  font-size: clamp(32px, 4.2vw, 52px);
+  line-height: 1.06;
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .ds-section-header__description {
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--ds-color-text-muted);
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .ds-app-card {
-  border-radius: var(--ds-radius-lg);
+  border-radius: var(--ds-radius-xl);
   border: 1px solid var(--ds-color-border);
   background: linear-gradient(180deg, var(--ds-color-surface-strong) 0%, var(--ds-color-surface) 100%);
   box-shadow: var(--ds-shadow-card);
-  padding: var(--ds-space-5) 22px 24px;
+  padding: var(--ds-space-5);
 }
 
 .ds-btn {
-  border-radius: 999px;
+  border-radius: var(--ds-radius-pill);
   padding: 10px 16px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.ds-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .ds-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.58;
   cursor: default;
 }
 
 .ds-btn--primary {
-  color: #2b1808;
+  color: #2f1808;
   background: linear-gradient(180deg, var(--ds-color-accent-strong), var(--ds-color-accent));
-  border-color: #c95f12;
-  box-shadow: 0 8px 18px rgba(255, 122, 24, 0.35);
+  border-color: #cf6616;
+  box-shadow: 0 8px 18px rgba(255, 122, 24, 0.34);
 }
 
 .ds-btn--ghost {
-  color: #ffd7bd;
-  background: var(--ds-color-accent-soft);
-  border-color: #61402a;
+  color: #ffd8be;
+  background: color-mix(in oklab, var(--ds-color-accent-soft) 88%, #111);
+  border-color: #61442d;
 }
 
 .ds-stat-card {
-  border-radius: var(--ds-radius-sm);
-  border: 1px solid #4d3828;
-  background: #231911;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid #5a3822;
+  background: #24170e;
   color: #ffd6b8;
-  font-size: 12px;
-  padding: 9px 10px;
+  font-size: 13px;
+  padding: 10px 12px;
 }
 
 .ds-stat-card__label {
-  color: #f0bf98;
+  color: #f2bd93;
 }
 
 .ds-stat-card__value {
