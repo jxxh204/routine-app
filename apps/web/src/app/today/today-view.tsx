@@ -700,25 +700,33 @@ export function TodayView() {
     event: TouchEvent<HTMLDivElement>,
   ) => {
     event.currentTarget.dataset.startX = String(event.touches[0]?.clientX ?? 0);
+    event.currentTarget.dataset.startY = String(event.touches[0]?.clientY ?? 0);
     event.currentTarget.dataset.routineId = id;
   };
 
   const handleRoutineTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     const startX = Number(event.currentTarget.dataset.startX ?? 0);
+    const startY = Number(event.currentTarget.dataset.startY ?? 0);
     const endX = event.changedTouches[0]?.clientX ?? startX;
+    const endY = event.changedTouches[0]?.clientY ?? startY;
+
     const deltaX = startX - endX;
+    const deltaY = startY - endY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
     const id = event.currentTarget.dataset.routineId;
 
     if (!id) return;
 
-    if (deltaX > 40) {
+    const isHorizontalSwipe = absX > 48 && absX > absY * 1.4;
+    if (!isHorizontalSwipe) return;
+
+    if (deltaX > 0) {
       setSwipedRoutineId(id);
       return;
     }
 
-    if (deltaX < -40) {
-      setSwipedRoutineId(null);
-    }
+    setSwipedRoutineId(null);
   };
 
   const today = new Date().toLocaleDateString('ko-KR', {
@@ -1193,6 +1201,7 @@ const styles: Record<string, CSSProperties> = {
     position: 'relative',
     overflow: 'hidden',
     borderRadius: 16,
+    touchAction: 'pan-y',
   },
   actionWrap: {
     position: 'absolute',
