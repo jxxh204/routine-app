@@ -910,21 +910,23 @@ export function TodayView() {
 const styles: Record<string, CSSProperties> = {
   pageSection: {
     display: 'grid',
-    gap: 16,
+    gap: 18,
   },
   progressCard: {
     background: 'var(--surface-1)',
     border: '1px solid var(--outline)',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 0,
+    boxShadow: 'var(--ds-shadow-soft)',
   },
   welcomeCard: {
     background: '#18222e',
     border: '1px solid #334050',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 0,
+    boxShadow: 'var(--ds-shadow-soft)',
   },
   welcomeTitle: {
     display: 'block',
@@ -937,12 +939,12 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
   },
   addSection: {
-    marginTop: 8,
+    marginTop: 2,
   },
   progressTop: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
     fontSize: 14,
   },
   progressTrack: {
@@ -1058,12 +1060,12 @@ const styles: Record<string, CSSProperties> = {
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
+    gap: 12,
   },
   swipeWrap: {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 14,
+    borderRadius: 16,
   },
   actionWrap: {
     position: 'absolute',
@@ -1077,20 +1079,21 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
     background: '#21262d',
     border: '1px solid #303844',
-    borderRadius: 14,
+    borderRadius: 16,
   },
   item: {
     position: 'relative',
     zIndex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 10,
     alignItems: 'flex-start',
     background: 'var(--surface-1)',
     border: '1px solid var(--outline)',
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     transition: 'all 0.2s ease',
+    boxShadow: 'var(--ds-shadow-soft)',
   },
   itemSwiped: {
     transform: 'translateX(-152px)',

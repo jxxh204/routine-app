@@ -150,23 +150,24 @@ export default function CalendarPage() {
 }
 
 const styles: Record<string, CSSProperties> = {
-  pageSection: { display: 'grid', gap: 16 },
+  pageSection: { display: 'grid', gap: 18 },
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 },
   todayLink: { color: '#ffd7bd', fontSize: 14 },
-  monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  navButton: { padding: '4px 8px' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 },
+  monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  navButton: { padding: '6px 10px' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 },
   weekday: { textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 },
-  doneCount: { fontSize: 10, color: 'var(--ds-color-accent-strong)' },
+  doneCount: { fontSize: 10, color: 'var(--ds-color-accent-strong)', marginTop: 2 },
   dayCell: {
     border: '1px solid var(--outline)',
-    background: '#121821',
+    background: 'var(--surface-1)',
     color: '#f5f7fa',
-    borderRadius: 8,
-    minHeight: 52,
-    padding: 6,
+    borderRadius: 10,
+    minHeight: 56,
+    padding: 8,
     textAlign: 'center',
     cursor: 'pointer',
+    boxShadow: 'var(--ds-shadow-soft)',
   },
   modalOverlay: {
     position: 'fixed',

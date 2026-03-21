@@ -132,14 +132,14 @@ function AuthPageContent() {
           description="로그인하고 바로 루틴앱으로 접속해요."
         />
 
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 16 }}>
           <StatCard
             label="상태"
             value={isRedirecting ? '로그인 완료 · 이동 중' : isResolvingSession ? '로그인 상태 확인 중' : '로그인 대기'}
           />
         </div>
 
-        <section style={{ marginTop: 22, display: 'grid', gap: 10 }}>
+        <section style={{ marginTop: 24, display: 'grid', gap: 12 }}>
           {providers.map((provider) => {
             const isBusy = pending === provider;
             const asset = getOfficialButtonAsset(provider);
@@ -151,7 +151,7 @@ function AuthPageContent() {
                   style={{
                     width: asset.width,
                     height: asset.height,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     border: '1px solid var(--outline)',
                     display: 'grid',
                     placeItems: 'center',
