@@ -35,6 +35,7 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
 
   const days = useMemo(() => getMonthMatrix(month), [month]);
   const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
@@ -87,6 +88,18 @@ export default function CalendarPage() {
     };
   }, [selectedDate, selectedItems]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const update = () => {
+      setIsCompactLayout(window.innerWidth < 1024);
+    };
+
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   return (
     <AuthRequired>
       <PageShell>
@@ -98,12 +111,12 @@ export default function CalendarPage() {
             </Link>
           </div>
 
-          <div style={styles.summaryGrid}>
+          <div style={{ ...styles.summaryGrid, ...(isCompactLayout ? styles.summaryGridCompact : {}) }}>
             <StatCard label="이번 달 완료" value={`${monthDoneCount}`} />
             <StatCard label="기록된 날짜" value={`${history.length}`} />
           </div>
 
-          <div style={styles.layoutGrid}>
+          <div style={{ ...styles.layoutGrid, ...(isCompactLayout ? styles.layoutGridCompact : {}) }}>
             <AppCard>
               <section>
                 <div style={styles.monthHeader}>
@@ -145,7 +158,7 @@ export default function CalendarPage() {
             </AppCard>
 
             <AppCard>
-              <section style={styles.detailPanel}>
+              <section style={{ ...styles.detailPanel, ...(isCompactLayout ? styles.detailPanelCompact : {}) }}>
                 <strong style={{ fontSize: 20 }}>{selectedDate ?? '날짜를 선택해 주세요'}</strong>
                 {selectedDate ? (
                   <div style={styles.detailStats}>
@@ -194,7 +207,9 @@ const styles: Record<string, CSSProperties> = {
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 },
   todayLink: { color: '#ffd7bd', fontSize: 14 },
   summaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 },
+  summaryGridCompact: { gridTemplateColumns: '1fr' },
   layoutGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 },
+  layoutGridCompact: { gridTemplateColumns: '1fr' },
   monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 },
   navButton: { padding: '8px 12px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 },
@@ -216,6 +231,7 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: '0 0 0 1px rgba(255, 143, 63, 0.45) inset',
   },
   detailPanel: { display: 'grid', gap: 10, minHeight: 520, alignContent: 'flex-start' },
+  detailPanelCompact: { minHeight: 'auto' },
   detailStats: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 },
   emptyText: { color: 'var(--text-muted)', marginTop: 8 },
   itemGrid: { display: 'grid', gap: 8, marginTop: 4 },
