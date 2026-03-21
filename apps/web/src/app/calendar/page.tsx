@@ -37,8 +37,21 @@ export default function CalendarPage() {
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
   const [isCompactLayout, setIsCompactLayout] = useState(false);
 
+  const availableMonths = useMemo(() => {
+    const keys = Array.from(new Set(history.map((entry) => entry.date.slice(0, 7)))).sort();
+    return keys.map((key) => {
+      const [year, monthText] = key.split('-').map(Number);
+      return new Date(year, (monthText ?? 1) - 1, 1);
+    });
+  }, [history]);
+
   const days = useMemo(() => getMonthMatrix(month), [month]);
   const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
+  const monthIndex = availableMonths.findIndex(
+    (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
+  );
+  const canGoPrevMonth = monthIndex > 0;
+  const canGoNextMonth = monthIndex >= 0 && monthIndex < availableMonths.length - 1;
   const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
   const selectedProofCount = useMemo(
     () =>
@@ -100,6 +113,19 @@ export default function CalendarPage() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
+  useEffect(() => {
+    if (availableMonths.length === 0) return;
+
+    const hasCurrent = availableMonths.some(
+      (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
+    );
+
+    if (!hasCurrent) {
+      setMonth(availableMonths[availableMonths.length - 1]);
+      setSelectedDate(null);
+    }
+  }, [availableMonths, month]);
+
   return (
     <AuthRequired>
       <PageShell>
@@ -120,11 +146,27 @@ export default function CalendarPage() {
             <AppCard>
               <section>
                 <div style={styles.monthHeader}>
-                  <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
+                  <GhostButton
+                    style={styles.navButton}
+                    onClick={() => {
+                      if (!canGoPrevMonth) return;
+                      setSelectedDate(null);
+                      setMonth(availableMonths[monthIndex - 1]);
+                    }}
+                    disabled={!canGoPrevMonth}
+                  >
                     이전달
                   </GhostButton>
                   <strong style={{ fontSize: 24 }}>{monthTitle}</strong>
-                  <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
+                  <GhostButton
+                    style={styles.navButton}
+                    onClick={() => {
+                      if (!canGoNextMonth) return;
+                      setSelectedDate(null);
+                      setMonth(availableMonths[monthIndex + 1]);
+                    }}
+                    disabled={!canGoNextMonth}
+                  >
                     다음달
                   </GhostButton>
                 </div>
@@ -141,15 +183,25 @@ export default function CalendarPage() {
                     const count = byDate.get(key)?.length ?? 0;
                     const inMonth = date.getMonth() === month.getMonth();
                     const isSelected = selectedDate === key;
+                    const isEnabled = inMonth && count > 0;
 
                     return (
                       <button
                         key={key}
-                        style={{ ...styles.dayCell, opacity: inMonth ? 1 : 0.35, ...(isSelected ? styles.dayCellSelected : {}) }}
-                        onClick={() => setSelectedDate(key)}
+                        style={{
+                          ...styles.dayCell,
+                          ...(inMonth ? {} : styles.dayCellOutMonth),
+                          ...(!isEnabled ? styles.dayCellDisabled : {}),
+                          ...(isSelected ? styles.dayCellSelected : {}),
+                        }}
+                        onClick={() => {
+                          if (!isEnabled) return;
+                          setSelectedDate(key);
+                        }}
+                        disabled={!isEnabled}
                       >
-                        <div style={{ fontSize: 18, fontWeight: 700 }}>{date.getDate()}</div>
-                        <div style={styles.doneCount}>{count > 0 ? `완료 ${count}` : '기록 없음'}</div>
+                        <div style={{ fontSize: 18, fontWeight: 700 }}>{inMonth ? date.getDate() : ''}</div>
+                        <div style={styles.doneCount}>{count > 0 ? `완료 ${count}` : ''}</div>
                       </button>
                     );
                   })}
@@ -225,6 +277,13 @@ const styles: Record<string, CSSProperties> = {
     textAlign: 'center',
     cursor: 'pointer',
     boxShadow: 'var(--ds-shadow-soft)',
+  },
+  dayCellOutMonth: {
+    opacity: 0.3,
+  },
+  dayCellDisabled: {
+    cursor: 'default',
+    opacity: 0.42,
   },
   dayCellSelected: {
     border: '1px solid #8a4f1e',
