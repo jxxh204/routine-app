@@ -183,7 +183,8 @@ export default function CalendarPage() {
                     const count = byDate.get(key)?.length ?? 0;
                     const inMonth = date.getMonth() === month.getMonth();
                     const isSelected = selectedDate === key;
-                    const isEnabled = inMonth && count > 0;
+                    const hasSavedRecord = byDate.has(key);
+                    const isEnabled = inMonth && hasSavedRecord;
 
                     return (
                       <button
@@ -192,6 +193,7 @@ export default function CalendarPage() {
                           ...styles.dayCell,
                           ...(inMonth ? {} : styles.dayCellOutMonth),
                           ...(!isEnabled ? styles.dayCellDisabled : {}),
+                          ...(isEnabled ? styles.dayCellEnabled : {}),
                           ...(isSelected ? styles.dayCellSelected : {}),
                         }}
                         onClick={() => {
@@ -284,6 +286,10 @@ const styles: Record<string, CSSProperties> = {
   dayCellDisabled: {
     cursor: 'default',
     opacity: 0.42,
+  },
+  dayCellEnabled: {
+    border: '1px solid #3b4454',
+    boxShadow: '0 0 0 1px rgba(255,255,255,0.03) inset',
   },
   dayCellSelected: {
     border: '1px solid #8a4f1e',
