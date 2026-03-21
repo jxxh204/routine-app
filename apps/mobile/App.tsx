@@ -438,6 +438,22 @@ function AppContent() {
   const isAuthScreen = isAuthPath(currentWebPath);
 
   useEffect(() => {
+    if (currentWebPath.startsWith('/calendar')) {
+      setActiveTab((prev) => (prev === 'calendar' ? prev : 'calendar'));
+      return;
+    }
+
+    if (currentWebPath.startsWith('/settings')) {
+      setActiveTab((prev) => (prev === 'settings' ? prev : 'settings'));
+      return;
+    }
+
+    if (currentWebPath.startsWith('/today') || isAuthScreen) {
+      setActiveTab((prev) => (prev === 'today' ? prev : 'today'));
+    }
+  }, [currentWebPath, isAuthScreen]);
+
+  useEffect(() => {
     const bootstrap = async () => {
       const [done, loadedRoutines, loadedSettings, loadedHistory] = await Promise.all([
         AsyncStorage.getItem(ONBOARDING_DONE_KEY),
@@ -623,7 +639,7 @@ function AppContent() {
                 icon={tab.icon}
                 size={18}
                 style={styles.tabIconBtn}
-                iconColor={active ? '#ffffff' : '#a6afbb'}
+                iconColor={active ? '#ffb278' : '#a6afbb'}
               />
               <Text style={[styles.tabLabel, active ? styles.tabLabelActive : undefined]}>{tab.label}</Text>
             </TouchableOpacity>
@@ -668,21 +684,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingHorizontal: 18,
+    paddingTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#20242a',
-    backgroundColor: '#13171c',
+    borderBottomColor: '#2a3240',
+    backgroundColor: '#10141d',
   },
   headerTitle: {
-    color: '#f5f7fa',
+    color: '#f4f7ff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   headerSub: {
     marginTop: 4,
-    color: '#8e99a7',
+    color: '#9ba5b5',
     fontSize: 12,
   },
   body: {
@@ -830,11 +847,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '92%',
     maxWidth: 400,
-    height: 48,
-    borderRadius: 48,
-    backgroundColor: '#181d24',
+    height: 50,
+    borderRadius: 999,
+    backgroundColor: '#10141d',
     borderWidth: 1,
-    borderColor: '#262d37',
+    borderColor: '#2a3240',
     padding: 4,
     flexDirection: 'row',
     alignItems: 'center',
@@ -849,7 +866,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   tabItemActive: {
-    backgroundColor: '#323943',
+    backgroundColor: '#2f1e11',
+    borderWidth: 1,
+    borderColor: '#6b421f',
   },
   tabIconBtn: {
     margin: 0,
@@ -863,7 +882,8 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   tabLabelActive: {
-    color: '#ffffff',
+    color: '#ffb278',
+    fontWeight: '700',
   },
   toast: {
     backgroundColor: '#1f2730',
