@@ -303,7 +303,7 @@ function getInitialRoutines() {
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
-  const [, setSyncMessage] = useState('로컬 저장 모드');
+  const [syncMessage, setSyncMessage] = useState('로컬 저장 모드');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -715,6 +715,7 @@ export function TodayView() {
                 <StatCard label="총 루틴" value={`${routines.length}`} />
                 <StatCard label="완료" value={`${doneCount}`} />
               </div>
+              <p style={styles.syncText}>{syncMessage}</p>
             </section>
           </AppCard>
 
