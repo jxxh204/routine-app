@@ -10,6 +10,11 @@ import { readProofImage } from '@/lib/proof-image-store';
 
 const STORAGE_PREFIX = 'routine-challenge-v1:';
 
+function getRoutineTypeLabel(id: string) {
+  if (id === 'wake' || id === 'lunch' || id === 'sleep') return '기본 루틴';
+  return '커스텀';
+}
+
 function readHistory() {
   if (typeof window === 'undefined') return [] as Array<{ date: string; items: DoneItem[] }>;
 
@@ -34,6 +39,14 @@ export default function CalendarPage() {
   const days = useMemo(() => getMonthMatrix(month), [month]);
   const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
   const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
+  const selectedProofCount = useMemo(
+    () =>
+      selectedItems.filter((item) => {
+        const key = selectedDate ? `${selectedDate}:${item.id}` : '';
+        return Boolean(item.proofImage || (key && proofByItemKey[key]));
+      }).length,
+    [selectedDate, selectedItems, proofByItemKey],
+  );
   const monthDoneCount = useMemo(() => {
     const prefix = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-`;
     return history
@@ -134,6 +147,13 @@ export default function CalendarPage() {
             <AppCard>
               <section style={styles.detailPanel}>
                 <strong style={{ fontSize: 20 }}>{selectedDate ?? '날짜를 선택해 주세요'}</strong>
+                {selectedDate ? (
+                  <div style={styles.detailStats}>
+                    <StatCard label="완료 루틴" value={`${selectedItems.length}`} />
+                    <StatCard label="인증 이미지" value={`${selectedProofCount}`} />
+                  </div>
+                ) : null}
+
                 {!selectedDate ? (
                   <p style={styles.emptyText}>좌측 캘린더에서 날짜를 고르면 완료 루틴이 표시됩니다.</p>
                 ) : selectedItems.length === 0 ? (
@@ -145,9 +165,16 @@ export default function CalendarPage() {
 
                       return (
                         <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={styles.itemCard}>
-                          <div style={styles.itemTitle}>{item.title ?? item.id}</div>
-                          <div style={styles.itemTime}>{item.doneAt ?? '완료 시간 미기록'}</div>
-                          {image ? <img src={image} alt="인증 썸네일" style={styles.thumb} /> : null}
+                          <div style={styles.itemTopRow}>
+                            <div style={styles.itemTitle}>{item.title ?? item.id}</div>
+                            <span style={styles.typeChip}>{getRoutineTypeLabel(item.id)}</span>
+                          </div>
+                          <div style={styles.itemTime}>완료 시간: {item.doneAt ?? '미기록'}</div>
+                          {image ? (
+                            <img src={image} alt="인증 썸네일" style={styles.thumb} />
+                          ) : (
+                            <div style={styles.emptyThumb}>인증 이미지 없음</div>
+                          )}
                         </article>
                       );
                     })}
@@ -189,10 +216,31 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: '0 0 0 1px rgba(255, 143, 63, 0.45) inset',
   },
   detailPanel: { display: 'grid', gap: 10, minHeight: 520, alignContent: 'flex-start' },
+  detailStats: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 },
   emptyText: { color: 'var(--text-muted)', marginTop: 8 },
   itemGrid: { display: 'grid', gap: 8, marginTop: 4 },
   itemCard: { border: '1px solid var(--outline)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)' },
+  itemTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   itemTitle: { fontWeight: 600 },
-  itemTime: { color: 'var(--text-muted)', fontSize: 12, marginTop: 3 },
+  typeChip: {
+    borderRadius: 999,
+    border: '1px solid #5a3822',
+    background: '#24170e',
+    color: '#f2bd93',
+    padding: '2px 8px',
+    fontSize: 11,
+  },
+  itemTime: { color: 'var(--text-muted)', fontSize: 12, marginTop: 6 },
   thumb: { marginTop: 8, width: 96, height: 96, borderRadius: 8, objectFit: 'cover' },
+  emptyThumb: {
+    marginTop: 8,
+    width: 96,
+    height: 96,
+    borderRadius: 8,
+    border: '1px dashed var(--outline)',
+    display: 'grid',
+    placeItems: 'center',
+    color: 'var(--text-muted)',
+    fontSize: 11,
+  },
 };
