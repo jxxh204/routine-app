@@ -307,6 +307,7 @@ export function TodayView() {
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
+  const [formError, setFormError] = useState('');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [swipedRoutineId, setSwipedRoutineId] = useState<string | null>(null);
@@ -323,11 +324,12 @@ export function TodayView() {
   useEffect(() => {
     const todayKey = getTodayStorageKey();
 
-    const snapshot = routines.map(({ id, title, doneByMe, doneAt }) => ({
+    const snapshot = routines.map(({ id, title, doneByMe, doneAt, proofImage }) => ({
       id,
       title,
       doneByMe,
       doneAt,
+      proofImage,
     }));
 
     let preservedDeletedDone: Array<{
@@ -335,6 +337,7 @@ export function TodayView() {
       title?: string;
       doneByMe: boolean;
       doneAt?: string;
+      proofImage?: string;
     }> = [];
 
     try {
@@ -345,6 +348,7 @@ export function TodayView() {
           title?: string;
           doneByMe: boolean;
           doneAt?: string;
+          proofImage?: string;
         }>;
 
         const liveIds = new Set(snapshot.map((item) => item.id));
@@ -591,15 +595,37 @@ export function TodayView() {
 
   const submitRoutineForm = () => {
     const title = newTitle.trim();
-    if (!title) return;
+    if (!title) {
+      setFormError('루틴 이름을 입력해 주세요.');
+      return;
+    }
 
     const [startH, startM] = newStart.split(':').map(Number);
     const [endH, endM] = newEnd.split(':').map(Number);
 
-    if ([startH, startM, endH, endM].some((value) => Number.isNaN(value))) return;
+    if ([startH, startM, endH, endM].some((value) => Number.isNaN(value))) {
+      setFormError('시작/종료 시간을 다시 확인해 주세요.');
+      return;
+    }
 
     const startMinute = startH * 60 + startM;
     const endMinute = endH * 60 + endM;
+
+    if (startMinute === endMinute) {
+      setFormError('시작/종료 시간은 다르게 설정해 주세요.');
+      return;
+    }
+
+    const duplicated = routines.some(
+      (routine) => routine.title.trim() === title && routine.id !== editingRoutineId,
+    );
+
+    if (duplicated) {
+      setFormError('같은 이름의 루틴이 이미 있어요.');
+      return;
+    }
+
+    setFormError('');
 
     if (editingRoutineId) {
       setRoutines((prev) =>
@@ -643,6 +669,7 @@ export function TodayView() {
     if (!target) return;
 
     setEditingRoutineId(id);
+    setFormError('');
     setNewTitle(target.title);
     setNewStart(minuteToHHMM(target.startMinute));
     setNewEnd(minuteToHHMM(target.endMinute));
@@ -835,6 +862,7 @@ export function TodayView() {
                 onClick={() => {
                   if (isAddFormOpen) {
                     setEditingRoutineId(null);
+                    setFormError('');
                     setNewTitle('');
                     setNewStart('09:00');
                     setNewEnd('10:00');
@@ -853,7 +881,10 @@ export function TodayView() {
                   style={styles.input}
                   placeholder="예: 독서 인증"
                   value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
+                  onChange={(e) => {
+                    setFormError('');
+                    setNewTitle(e.target.value);
+                  }}
                 />
                 <div style={styles.timeRow}>
                   <div style={styles.timeFieldWrap}>
@@ -864,6 +895,7 @@ export function TodayView() {
                       value={newStart}
                       onChange={(e) => {
                         const nextStart = e.target.value;
+                        setFormError('');
                         setNewStart(nextStart);
                         setNewEnd(addOneHourHHMM(nextStart));
                       }}
@@ -871,9 +903,18 @@ export function TodayView() {
                   </div>
                   <div style={styles.timeFieldWrap}>
                     <span style={styles.timeFieldLabel}>종료</span>
-                    <input style={styles.inputTime} type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+                    <input
+                      style={styles.inputTime}
+                      type="time"
+                      value={newEnd}
+                      onChange={(e) => {
+                        setFormError('');
+                        setNewEnd(e.target.value);
+                      }}
+                    />
                   </div>
                 </div>
+                {formError ? <p style={styles.formError}>{formError}</p> : null}
                 <div style={styles.addActionRow}>
                   <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
                     {editingRoutineId ? '수정 저장' : '추가'}
@@ -883,6 +924,7 @@ export function TodayView() {
                       style={styles.cancelButton}
                       onClick={() => {
                         setEditingRoutineId(null);
+                        setFormError('');
                         setNewTitle('');
                         setNewStart('09:00');
                         setNewEnd('10:00');
@@ -1105,6 +1147,11 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+  },
+  formError: {
+    margin: 0,
+    color: '#ffb7b2',
+    fontSize: 12,
   },
   addButtonFull: {
     width: '100%',
