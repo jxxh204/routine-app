@@ -495,6 +495,20 @@ export function TodayView() {
 
   const progress = Math.round((doneCount / routines.length) * 100);
 
+  const orderedRoutines = useMemo(() => {
+    return [...routines].sort((a, b) => {
+      const aInWindow = isInTimeWindow(nowMinute, a.startMinute, a.endMinute);
+      const bInWindow = isInTimeWindow(nowMinute, b.startMinute, b.endMinute);
+
+      const aRank = a.doneByMe ? 2 : aInWindow ? 0 : 1;
+      const bRank = b.doneByMe ? 2 : bInWindow ? 0 : 1;
+
+      if (aRank !== bRank) return aRank - bRank;
+      if (a.startMinute !== b.startMinute) return a.startMinute - b.startMinute;
+      return a.title.localeCompare(b.title);
+    });
+  }, [routines, nowMinute]);
+
   const finalizePhotoCertification = async (routineId: string, imageDataUrl: string) => {
     const now = new Date();
     const doneAtText = formatKoreanTime(now);
@@ -765,7 +779,7 @@ export function TodayView() {
           </div>
 
           <section style={styles.list}>
-            {routines.map((routine) => {
+            {orderedRoutines.map((routine) => {
               const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
               const canCertify = inWindow && !routine.doneByMe;
 
