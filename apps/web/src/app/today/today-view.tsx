@@ -853,11 +853,11 @@ export function TodayView() {
                             setNewTitle(e.target.value);
                           }}
                         />
-                        <div style={{ ...styles.timeRow, ...(isCompactLayout ? styles.timeRowCompact : {}) }}>
+                        <div style={styles.timeRow}>
                           <div style={styles.timeFieldWrap}>
-                            <span style={styles.timeFieldLabel}>시작</span>
+                            <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>시작</span>
                             <input
-                              style={styles.inputTime}
+                              style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
                               type="time"
                               value={newStart}
                               onChange={(e) => {
@@ -869,9 +869,9 @@ export function TodayView() {
                             />
                           </div>
                           <div style={styles.timeFieldWrap}>
-                            <span style={styles.timeFieldLabel}>종료</span>
+                            <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>종료</span>
                             <input
-                              style={styles.inputTime}
+                              style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
                               type="time"
                               value={newEnd}
                               onChange={(e) => {
@@ -981,11 +981,11 @@ export function TodayView() {
                     setNewTitle(e.target.value);
                   }}
                 />
-                <div style={{ ...styles.timeRow, ...(isCompactLayout ? styles.timeRowCompact : {}) }}>
+                <div style={styles.timeRow}>
                   <div style={styles.timeFieldWrap}>
-                    <span style={styles.timeFieldLabel}>시작</span>
+                    <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>시작</span>
                     <input
-                      style={styles.inputTime}
+                      style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
                       type="time"
                       value={newStart}
                       onChange={(e) => {
@@ -997,9 +997,9 @@ export function TodayView() {
                     />
                   </div>
                   <div style={styles.timeFieldWrap}>
-                    <span style={styles.timeFieldLabel}>종료</span>
+                    <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>종료</span>
                     <input
-                      style={styles.inputTime}
+                      style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
                       type="time"
                       value={newEnd}
                       onChange={(e) => {
@@ -1218,11 +1218,8 @@ const styles: Record<string, CSSProperties> = {
   timeRow: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: 8,
+    gap: 6,
     alignItems: 'center',
-  },
-  timeRowCompact: {
-    gridTemplateColumns: '1fr',
   },
   timeFieldWrap: {
     display: 'flex',
@@ -1236,6 +1233,9 @@ const styles: Record<string, CSSProperties> = {
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
+  timeFieldLabelCompact: {
+    fontSize: 11,
+  },
   inputTime: {
     width: '100%',
     background: 'var(--background)',
@@ -1245,6 +1245,11 @@ const styles: Record<string, CSSProperties> = {
     padding: '8px 10px',
     fontSize: 16,
     boxSizing: 'border-box',
+    minWidth: 0,
+  },
+  inputTimeCompact: {
+    padding: '6px 8px',
+    fontSize: 14,
   },
   addActionRow: {
     display: 'flex',
