@@ -772,34 +772,21 @@ export function TodayView() {
         ) : null}
 
         <section style={{ ...styles.kpiGrid, ...(isCompactLayout ? styles.kpiGridCompact : {}) }}>
-          <AppCard>
-            <section style={styles.progressCard}>
-              <p style={styles.sectionLabel}>진행률</p>
-              <div style={styles.progressTop}>
-                <strong>{doneCount}/{routines.length} 완료</strong>
-                <span>{progress}%</span>
-              </div>
-              <div style={styles.progressTrack}>
-                <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-              </div>
-              <div style={styles.statRow}>
-                <StatCard label="총 루틴" value={`${routines.length}`} />
-                <StatCard label="완료" value={`${doneCount}`} />
-              </div>
-              <p style={styles.syncText}>{syncMessage}</p>
-            </section>
-          </AppCard>
-
-          <AppCard>
-            <section style={styles.quickGuideCard}>
-              <p style={styles.sectionLabel}>인증 가이드</p>
-              <ul style={styles.guideList}>
-                <li>가능 시간에 카드 탭 → 카메라 인증</li>
-                <li>완료 썸네일 길게 누르면 다시찍기</li>
-                <li>루틴 카드 우측 스와이프 → 수정/삭제</li>
-              </ul>
-            </section>
-          </AppCard>
+          <section style={styles.progressCard}>
+            <p style={styles.sectionLabel}>진행률</p>
+            <div style={styles.progressTop}>
+              <strong>{doneCount}/{routines.length} 완료</strong>
+              <span>{progress}%</span>
+            </div>
+            <div style={styles.progressTrack}>
+              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+            </div>
+            <div style={styles.statRow}>
+              <StatCard label="총 루틴" value={`${routines.length}`} />
+              <StatCard label="완료" value={`${doneCount}`} />
+            </div>
+            <p style={styles.syncText}>{syncMessage}</p>
+          </section>
         </section>
 
         <section style={styles.boardSection}>
