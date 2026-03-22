@@ -45,13 +45,15 @@ export default function CalendarPage() {
     });
   }, [history]);
 
-  const days = useMemo(() => getMonthMatrix(month), [month]);
-  const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
   const monthIndex = availableMonths.findIndex(
     (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
   );
-  const canGoPrevMonth = monthIndex > 0;
-  const canGoNextMonth = monthIndex >= 0 && monthIndex < availableMonths.length - 1;
+  const effectiveMonth = monthIndex === -1 && availableMonths.length > 0 ? availableMonths[availableMonths.length - 1] : month;
+  const effectiveMonthIndex = monthIndex === -1 ? availableMonths.length - 1 : monthIndex;
+  const days = useMemo(() => getMonthMatrix(effectiveMonth), [effectiveMonth]);
+  const monthTitle = `${effectiveMonth.getFullYear()}년 ${effectiveMonth.getMonth() + 1}월`;
+  const canGoPrevMonth = effectiveMonthIndex > 0;
+  const canGoNextMonth = effectiveMonthIndex >= 0 && effectiveMonthIndex < availableMonths.length - 1;
   const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
   const selectedProofCount = useMemo(
     () =>
@@ -62,11 +64,11 @@ export default function CalendarPage() {
     [selectedDate, selectedItems, proofByItemKey],
   );
   const monthDoneCount = useMemo(() => {
-    const prefix = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-`;
+    const prefix = `${effectiveMonth.getFullYear()}-${String(effectiveMonth.getMonth() + 1).padStart(2, '0')}-`;
     return history
       .filter((entry) => entry.date.startsWith(prefix))
       .reduce((acc, entry) => acc + entry.items.length, 0);
-  }, [history, month]);
+  }, [history, effectiveMonth]);
 
   useEffect(() => {
     if (!selectedDate || selectedItems.length === 0) return;
@@ -113,19 +115,6 @@ export default function CalendarPage() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  useEffect(() => {
-    if (availableMonths.length === 0) return;
-
-    const hasCurrent = availableMonths.some(
-      (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
-    );
-
-    if (!hasCurrent) {
-      setMonth(availableMonths[availableMonths.length - 1]);
-      setSelectedDate(null);
-    }
-  }, [availableMonths, month]);
-
   return (
     <AuthRequired>
       <PageShell>
@@ -151,7 +140,7 @@ export default function CalendarPage() {
                     onClick={() => {
                       if (!canGoPrevMonth) return;
                       setSelectedDate(null);
-                      setMonth(availableMonths[monthIndex - 1]);
+                      setMonth(availableMonths[effectiveMonthIndex - 1]);
                     }}
                     disabled={!canGoPrevMonth}
                   >
@@ -163,7 +152,7 @@ export default function CalendarPage() {
                     onClick={() => {
                       if (!canGoNextMonth) return;
                       setSelectedDate(null);
-                      setMonth(availableMonths[monthIndex + 1]);
+                      setMonth(availableMonths[effectiveMonthIndex + 1]);
                     }}
                     disabled={!canGoNextMonth}
                   >
@@ -181,7 +170,7 @@ export default function CalendarPage() {
                   {days.map((date) => {
                     const key = toDateKey(date);
                     const count = byDate.get(key)?.length ?? 0;
-                    const inMonth = date.getMonth() === month.getMonth();
+                    const inMonth = date.getMonth() === effectiveMonth.getMonth();
                     const isSelected = selectedDate === key;
                     const isEnabled = inMonth && count > 0;
 
