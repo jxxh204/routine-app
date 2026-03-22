@@ -853,7 +853,7 @@ export function TodayView() {
                             setNewTitle(e.target.value);
                           }}
                         />
-                        <div style={styles.timeRow}>
+                        <div style={{ ...styles.timeRow, ...(isCompactLayout ? styles.timeRowCompact : {}) }}>
                           <div style={styles.timeFieldWrap}>
                             <span style={styles.timeFieldLabel}>시작</span>
                             <input
@@ -981,7 +981,7 @@ export function TodayView() {
                     setNewTitle(e.target.value);
                   }}
                 />
-                <div style={styles.timeRow}>
+                <div style={{ ...styles.timeRow, ...(isCompactLayout ? styles.timeRowCompact : {}) }}>
                   <div style={styles.timeFieldWrap}>
                     <span style={styles.timeFieldLabel}>시작</span>
                     <input
@@ -1220,6 +1220,9 @@ const styles: Record<string, CSSProperties> = {
     gridTemplateColumns: '1fr 1fr',
     gap: 8,
     alignItems: 'center',
+  },
+  timeRowCompact: {
+    gridTemplateColumns: '1fr',
   },
   timeFieldWrap: {
     display: 'flex',
