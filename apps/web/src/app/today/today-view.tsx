@@ -883,8 +883,8 @@ export function TodayView() {
                         </div>
                         {formError ? <p style={styles.formError}>{formError}</p> : null}
                         <div style={styles.inlineEditActions}>
-                          <PrimaryButton style={styles.inlineSaveButton} onClick={submitRoutineForm}>저장</PrimaryButton>
                           <GhostButton style={styles.inlineCancelButton} onClick={cancelInlineEdit}>취소</GhostButton>
+                          <PrimaryButton style={styles.inlineSaveButton} onClick={submitRoutineForm}>저장</PrimaryButton>
                         </div>
                       </div>
                     ) : (
@@ -1401,6 +1401,7 @@ const styles: Record<string, CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: 8,
+    marginTop: 14,
   },
   inlineSaveButton: {
     width: '100%',
