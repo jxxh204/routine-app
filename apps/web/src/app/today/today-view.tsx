@@ -696,11 +696,20 @@ export function TodayView() {
     if (!target) return;
 
     setEditingRoutineId(id);
+    setIsAddFormOpen(false);
     setFormError('');
     setNewTitle(target.title);
     setNewStart(minuteToHHMM(target.startMinute));
     setNewEnd(minuteToHHMM(target.endMinute));
-    setIsAddFormOpen(true);
+    setSwipedRoutineId(null);
+  };
+
+  const cancelInlineEdit = () => {
+    setEditingRoutineId(null);
+    setFormError('');
+    setNewTitle('');
+    setNewStart('09:00');
+    setNewEnd('10:00');
   };
 
   const removeRoutine = (id: string) => {
@@ -802,7 +811,8 @@ export function TodayView() {
           <section style={styles.list}>
             {orderedRoutines.map((routine) => {
               const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
-              const canCertify = inWindow && !routine.doneByMe;
+              const isEditing = editingRoutineId === routine.id;
+              const canCertify = inWindow && !routine.doneByMe && !isEditing;
 
               const card = (
                 <article
@@ -832,34 +842,83 @@ export function TodayView() {
                   </div>
 
                   <div style={styles.itemBody}>
-                    <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
-                    <p style={styles.meta}>
-                      친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
-                    </p>
-                    {routine.proofImage ? (
-                      <div
-                        style={styles.thumbWrap}
-                        onContextMenu={(event) => event.preventDefault()}
-                        onTouchStart={() => startThumbLongPress(routine.id)}
-                        onTouchEnd={cancelThumbLongPress}
-                        onTouchCancel={cancelThumbLongPress}
-                        onMouseDown={() => startThumbLongPress(routine.id)}
-                        onMouseUp={cancelThumbLongPress}
-                        onMouseLeave={cancelThumbLongPress}
-                        onClick={() => {
-                          if (thumbMenuRoutineId === routine.id) return;
-                          setPreviewImage(routine.proofImage ?? null);
-                        }}
-                      >
-                        <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
-                        {thumbMenuRoutineId === routine.id ? (
-                          <div style={styles.thumbMenu}>
-                            <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
-                            <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                    {isEditing ? (
+                      <div style={styles.inlineEditWrap} onClick={(event) => event.stopPropagation()}>
+                        <input
+                          className="routine-title-input"
+                          style={styles.input}
+                          value={newTitle}
+                          onChange={(e) => {
+                            setFormError('');
+                            setNewTitle(e.target.value);
+                          }}
+                        />
+                        <div style={styles.timeRow}>
+                          <div style={styles.timeFieldWrap}>
+                            <span style={styles.timeFieldLabel}>시작</span>
+                            <input
+                              style={styles.inputTime}
+                              type="time"
+                              value={newStart}
+                              onChange={(e) => {
+                                const nextStart = e.target.value;
+                                setFormError('');
+                                setNewStart(nextStart);
+                                setNewEnd(addOneHourHHMM(nextStart));
+                              }}
+                            />
+                          </div>
+                          <div style={styles.timeFieldWrap}>
+                            <span style={styles.timeFieldLabel}>종료</span>
+                            <input
+                              style={styles.inputTime}
+                              type="time"
+                              value={newEnd}
+                              onChange={(e) => {
+                                setFormError('');
+                                setNewEnd(e.target.value);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        {formError ? <p style={styles.formError}>{formError}</p> : null}
+                        <div style={styles.inlineEditActions}>
+                          <PrimaryButton style={styles.inlineSaveButton} onClick={submitRoutineForm}>저장</PrimaryButton>
+                          <GhostButton style={styles.inlineCancelButton} onClick={cancelInlineEdit}>취소</GhostButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
+                        <p style={styles.meta}>
+                          친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
+                        </p>
+                        {routine.proofImage ? (
+                          <div
+                            style={styles.thumbWrap}
+                            onContextMenu={(event) => event.preventDefault()}
+                            onTouchStart={() => startThumbLongPress(routine.id)}
+                            onTouchEnd={cancelThumbLongPress}
+                            onTouchCancel={cancelThumbLongPress}
+                            onMouseDown={() => startThumbLongPress(routine.id)}
+                            onMouseUp={cancelThumbLongPress}
+                            onMouseLeave={cancelThumbLongPress}
+                            onClick={() => {
+                              if (thumbMenuRoutineId === routine.id) return;
+                              setPreviewImage(routine.proofImage ?? null);
+                            }}
+                          >
+                            <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
+                            {thumbMenuRoutineId === routine.id ? (
+                              <div style={styles.thumbMenu}>
+                                <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
+                                <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
-                      </div>
-                    ) : null}
+                      </>
+                    )}
                   </div>
                 </article>
               );
@@ -896,11 +955,12 @@ export function TodayView() {
                 style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
                 onClick={() => {
                   if (isAddFormOpen) {
-                    setEditingRoutineId(null);
                     setFormError('');
                     setNewTitle('');
                     setNewStart('09:00');
                     setNewEnd('10:00');
+                  } else {
+                    cancelInlineEdit();
                   }
                   setIsAddFormOpen((prev) => !prev);
                 }}
@@ -952,23 +1012,20 @@ export function TodayView() {
                 {formError ? <p style={styles.formError}>{formError}</p> : null}
                 <div style={styles.addActionRow}>
                   <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
-                    {editingRoutineId ? '수정 저장' : '추가'}
+                    추가
                   </PrimaryButton>
-                  {editingRoutineId ? (
-                    <GhostButton
-                      style={styles.cancelButton}
-                      onClick={() => {
-                        setEditingRoutineId(null);
-                        setFormError('');
-                        setNewTitle('');
-                        setNewStart('09:00');
-                        setNewEnd('10:00');
-                        setIsAddFormOpen(false);
-                      }}
-                    >
-                      취소
-                    </GhostButton>
-                  ) : null}
+                  <GhostButton
+                    style={styles.cancelButton}
+                    onClick={() => {
+                      setFormError('');
+                      setNewTitle('');
+                      setNewStart('09:00');
+                      setNewEnd('10:00');
+                      setIsAddFormOpen(false);
+                    }}
+                  >
+                    취소
+                  </GhostButton>
                 </div>
               </div>
             ) : null}
@@ -1326,6 +1383,21 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
   },
   itemBody: {
+    width: '100%',
+  },
+  inlineEditWrap: {
+    display: 'grid',
+    gap: 8,
+  },
+  inlineEditActions: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+  },
+  inlineSaveButton: {
+    width: '100%',
+  },
+  inlineCancelButton: {
     width: '100%',
   },
   itemTitle: {
