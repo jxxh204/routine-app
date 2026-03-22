@@ -35,9 +35,23 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+
+  const availableMonths = useMemo(() => {
+    const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
+    return keys.map((key) => {
+      const [year, monthText] = key.split('-').map(Number);
+      return new Date(year, (monthText ?? 1) - 1, 1);
+    });
+  }, [history]);
 
   const days = useMemo(() => getMonthMatrix(month), [month]);
   const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
+  const monthIndex = availableMonths.findIndex(
+    (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
+  );
+  const canGoPrevMonth = monthIndex > 0;
+  const canGoNextMonth = monthIndex >= 0 && monthIndex < availableMonths.length - 1;
   const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
   const selectedProofCount = useMemo(
     () =>
@@ -87,6 +101,31 @@ export default function CalendarPage() {
     };
   }, [selectedDate, selectedItems]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const update = () => {
+      setIsCompactLayout(window.innerWidth < 1024);
+    };
+
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
+    if (availableMonths.length === 0) return;
+
+    const hasCurrent = availableMonths.some(
+      (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
+    );
+
+    if (!hasCurrent) {
+      setMonth(availableMonths[availableMonths.length - 1]);
+      setSelectedDate(null);
+    }
+  }, [availableMonths, month]);
+
   return (
     <AuthRequired>
       <PageShell>
@@ -98,20 +137,36 @@ export default function CalendarPage() {
             </Link>
           </div>
 
-          <div style={styles.summaryGrid}>
+          <div style={{ ...styles.summaryGrid, ...(isCompactLayout ? styles.summaryGridCompact : {}) }}>
             <StatCard label="이번 달 완료" value={`${monthDoneCount}`} />
             <StatCard label="기록된 날짜" value={`${history.length}`} />
           </div>
 
-          <div style={styles.layoutGrid}>
+          <div style={{ ...styles.layoutGrid, ...(isCompactLayout ? styles.layoutGridCompact : {}) }}>
             <AppCard>
               <section>
                 <div style={styles.monthHeader}>
-                  <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
+                  <GhostButton
+                    style={styles.navButton}
+                    onClick={() => {
+                      if (!canGoPrevMonth) return;
+                      setSelectedDate(null);
+                      setMonth(availableMonths[monthIndex - 1]);
+                    }}
+                    disabled={!canGoPrevMonth}
+                  >
                     이전달
                   </GhostButton>
                   <strong style={{ fontSize: 24 }}>{monthTitle}</strong>
-                  <GhostButton style={styles.navButton} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
+                  <GhostButton
+                    style={styles.navButton}
+                    onClick={() => {
+                      if (!canGoNextMonth) return;
+                      setSelectedDate(null);
+                      setMonth(availableMonths[monthIndex + 1]);
+                    }}
+                    disabled={!canGoNextMonth}
+                  >
                     다음달
                   </GhostButton>
                 </div>
@@ -128,15 +183,26 @@ export default function CalendarPage() {
                     const count = byDate.get(key)?.length ?? 0;
                     const inMonth = date.getMonth() === month.getMonth();
                     const isSelected = selectedDate === key;
+                    const isEnabled = inMonth && count > 0;
 
                     return (
                       <button
                         key={key}
-                        style={{ ...styles.dayCell, opacity: inMonth ? 1 : 0.35, ...(isSelected ? styles.dayCellSelected : {}) }}
-                        onClick={() => setSelectedDate(key)}
+                        style={{
+                          ...styles.dayCell,
+                          ...(inMonth ? {} : styles.dayCellOutMonth),
+                          ...(!isEnabled ? styles.dayCellDisabled : {}),
+                          ...(isEnabled ? styles.dayCellEnabled : {}),
+                          ...(isSelected ? styles.dayCellSelected : {}),
+                        }}
+                        onClick={() => {
+                          if (!isEnabled) return;
+                          setSelectedDate(key);
+                        }}
+                        disabled={!isEnabled}
                       >
-                        <div style={{ fontSize: 18, fontWeight: 700 }}>{date.getDate()}</div>
-                        <div style={styles.doneCount}>{count > 0 ? `완료 ${count}` : '기록 없음'}</div>
+                        <div style={{ fontSize: 18, fontWeight: 700 }}>{inMonth ? date.getDate() : ''}</div>
+                        <div style={styles.doneCount}>{count > 0 ? `완료 ${count}` : ''}</div>
                       </button>
                     );
                   })}
@@ -145,7 +211,7 @@ export default function CalendarPage() {
             </AppCard>
 
             <AppCard>
-              <section style={styles.detailPanel}>
+              <section style={{ ...styles.detailPanel, ...(isCompactLayout ? styles.detailPanelCompact : {}) }}>
                 <strong style={{ fontSize: 20 }}>{selectedDate ?? '날짜를 선택해 주세요'}</strong>
                 {selectedDate ? (
                   <div style={styles.detailStats}>
@@ -194,7 +260,9 @@ const styles: Record<string, CSSProperties> = {
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 },
   todayLink: { color: '#ffd7bd', fontSize: 14 },
   summaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 },
+  summaryGridCompact: { gridTemplateColumns: '1fr' },
   layoutGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 },
+  layoutGridCompact: { gridTemplateColumns: '1fr' },
   monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 },
   navButton: { padding: '8px 12px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 },
@@ -211,11 +279,23 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     boxShadow: 'var(--ds-shadow-soft)',
   },
+  dayCellOutMonth: {
+    opacity: 0.3,
+  },
+  dayCellDisabled: {
+    cursor: 'default',
+    opacity: 0.42,
+  },
+  dayCellEnabled: {
+    border: '1px solid #3b4454',
+    boxShadow: '0 0 0 1px rgba(255,255,255,0.03) inset',
+  },
   dayCellSelected: {
     border: '1px solid #8a4f1e',
     boxShadow: '0 0 0 1px rgba(255, 143, 63, 0.45) inset',
   },
   detailPanel: { display: 'grid', gap: 10, minHeight: 520, alignContent: 'flex-start' },
+  detailPanelCompact: { minHeight: 'auto' },
   detailStats: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 },
   emptyText: { color: 'var(--text-muted)', marginTop: 8 },
   itemGrid: { display: 'grid', gap: 8, marginTop: 4 },

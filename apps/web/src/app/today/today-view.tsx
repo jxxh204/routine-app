@@ -318,6 +318,7 @@ export function TodayView() {
     if (typeof window === 'undefined') return false;
     return window.sessionStorage.getItem(AUTH_ENTRY_FEEDBACK_KEY) === '1';
   });
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
@@ -438,6 +439,18 @@ export function TodayView() {
     }, 30_000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const update = () => {
+      setIsCompactLayout(window.innerWidth < 940);
+    };
+
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
   useEffect(() => {
@@ -749,7 +762,7 @@ export function TodayView() {
           </AppCard>
         ) : null}
 
-        <section style={styles.kpiGrid}>
+        <section style={{ ...styles.kpiGrid, ...(isCompactLayout ? styles.kpiGridCompact : {}) }}>
           <AppCard>
             <section style={styles.progressCard}>
               <p style={styles.sectionLabel}>진행률</p>
@@ -781,7 +794,7 @@ export function TodayView() {
         </section>
 
         <section style={styles.boardSection}>
-          <div style={styles.boardHeader}>
+          <div style={{ ...styles.boardHeader, ...(isCompactLayout ? styles.boardHeaderCompact : {}) }}>
             <h2 style={styles.boardTitle}>오늘 할 일</h2>
             <p style={styles.boardMeta}>지금 가능한 루틴부터 위에서 처리</p>
           </div>
@@ -1004,6 +1017,9 @@ const styles: Record<string, CSSProperties> = {
     gridTemplateColumns: '1.2fr 1fr',
     gap: 12,
   },
+  kpiGridCompact: {
+    gridTemplateColumns: '1fr',
+  },
   sectionLabel: {
     margin: '0 0 8px',
     fontSize: 12,
@@ -1032,6 +1048,11 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'baseline',
+    gap: 8,
+  },
+  boardHeaderCompact: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   boardTitle: {
     margin: 0,
