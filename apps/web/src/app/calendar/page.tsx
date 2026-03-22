@@ -38,7 +38,7 @@ export default function CalendarPage() {
   const [isCompactLayout, setIsCompactLayout] = useState(false);
 
   const availableMonths = useMemo(() => {
-    const keys = Array.from(new Set(history.map((entry) => entry.date.slice(0, 7)))).sort();
+    const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
     return keys.map((key) => {
       const [year, monthText] = key.split('-').map(Number);
       return new Date(year, (monthText ?? 1) - 1, 1);
@@ -183,8 +183,7 @@ export default function CalendarPage() {
                     const count = byDate.get(key)?.length ?? 0;
                     const inMonth = date.getMonth() === month.getMonth();
                     const isSelected = selectedDate === key;
-                    const hasSavedRecord = byDate.has(key);
-                    const isEnabled = inMonth && hasSavedRecord;
+                    const isEnabled = inMonth && count > 0;
 
                     return (
                       <button
