@@ -22,7 +22,7 @@ import {
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
-import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader, StatCard } from '@/components/ui';
+import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader } from '@/components/ui';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -303,7 +303,7 @@ function getInitialRoutines() {
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
-  const [syncMessage, setSyncMessage] = useState('로컬 저장 모드');
+  const [, setSyncMessage] = useState('로컬 저장 모드');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -505,8 +505,6 @@ export function TodayView() {
     () => routines.filter((routine) => routine.doneByMe).length,
     [routines],
   );
-
-  const progress = Math.round((doneCount / routines.length) * 100);
 
   const orderedRoutines = useMemo(() => {
     return [...routines].sort((a, b) => {
@@ -773,19 +771,7 @@ export function TodayView() {
 
         <section style={{ ...styles.kpiGrid, ...(isCompactLayout ? styles.kpiGridCompact : {}) }}>
           <section style={styles.progressCard}>
-            <p style={styles.sectionLabel}>진행률</p>
-            <div style={styles.progressTop}>
-              <strong>{doneCount}/{routines.length} 완료</strong>
-              <span>{progress}%</span>
-            </div>
-            <div style={styles.progressTrack}>
-              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-            </div>
-            <div style={styles.statRow}>
-              <StatCard label="총 루틴" value={`${routines.length}`} />
-              <StatCard label="완료" value={`${doneCount}`} />
-            </div>
-            <p style={styles.syncText}>{syncMessage}</p>
+            <p style={styles.sectionLabel}>프로그레스 {doneCount}/{routines.length}</p>
           </section>
         </section>
 
