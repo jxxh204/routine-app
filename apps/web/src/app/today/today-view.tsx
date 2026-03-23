@@ -506,6 +506,8 @@ export function TodayView() {
     [routines],
   );
 
+  const progress = routines.length > 0 ? Math.round((doneCount / routines.length) * 100) : 0;
+
   const orderedRoutines = useMemo(() => {
     return [...routines].sort((a, b) => {
       const aInWindow = isInTimeWindow(nowMinute, a.startMinute, a.endMinute);
@@ -772,6 +774,9 @@ export function TodayView() {
         <section style={{ ...styles.kpiGrid, ...(isCompactLayout ? styles.kpiGridCompact : {}) }}>
           <section style={styles.progressCard}>
             <p style={styles.sectionLabel}>프로그레스 {doneCount}/{routines.length}</p>
+            <div style={styles.progressTrack}>
+              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+            </div>
           </section>
         </section>
 
