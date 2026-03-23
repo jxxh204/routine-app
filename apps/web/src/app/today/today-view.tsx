@@ -22,7 +22,7 @@ import {
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
-import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader, StatCard } from '@/components/ui';
+import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader } from '@/components/ui';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -303,7 +303,7 @@ function getInitialRoutines() {
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
-  const [syncMessage, setSyncMessage] = useState('로컬 저장 모드');
+  const [, setSyncMessage] = useState('로컬 저장 모드');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -506,8 +506,6 @@ export function TodayView() {
     [routines],
   );
 
-  const progress = Math.round((doneCount / routines.length) * 100);
-
   const orderedRoutines = useMemo(() => {
     return [...routines].sort((a, b) => {
       const aInWindow = isInTimeWindow(nowMinute, a.startMinute, a.endMinute);
@@ -696,11 +694,20 @@ export function TodayView() {
     if (!target) return;
 
     setEditingRoutineId(id);
+    setIsAddFormOpen(false);
     setFormError('');
     setNewTitle(target.title);
     setNewStart(minuteToHHMM(target.startMinute));
     setNewEnd(minuteToHHMM(target.endMinute));
-    setIsAddFormOpen(true);
+    setSwipedRoutineId(null);
+  };
+
+  const cancelInlineEdit = () => {
+    setEditingRoutineId(null);
+    setFormError('');
+    setNewTitle('');
+    setNewStart('09:00');
+    setNewEnd('10:00');
   };
 
   const removeRoutine = (id: string) => {
@@ -763,34 +770,9 @@ export function TodayView() {
         ) : null}
 
         <section style={{ ...styles.kpiGrid, ...(isCompactLayout ? styles.kpiGridCompact : {}) }}>
-          <AppCard>
-            <section style={styles.progressCard}>
-              <p style={styles.sectionLabel}>진행률</p>
-              <div style={styles.progressTop}>
-                <strong>{doneCount}/{routines.length} 완료</strong>
-                <span>{progress}%</span>
-              </div>
-              <div style={styles.progressTrack}>
-                <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-              </div>
-              <div style={styles.statRow}>
-                <StatCard label="총 루틴" value={`${routines.length}`} />
-                <StatCard label="완료" value={`${doneCount}`} />
-              </div>
-              <p style={styles.syncText}>{syncMessage}</p>
-            </section>
-          </AppCard>
-
-          <AppCard>
-            <section style={styles.quickGuideCard}>
-              <p style={styles.sectionLabel}>인증 가이드</p>
-              <ul style={styles.guideList}>
-                <li>가능 시간에 카드 탭 → 카메라 인증</li>
-                <li>완료 썸네일 길게 누르면 다시찍기</li>
-                <li>루틴 카드 우측 스와이프 → 수정/삭제</li>
-              </ul>
-            </section>
-          </AppCard>
+          <section style={styles.progressCard}>
+            <p style={styles.sectionLabel}>프로그레스 {doneCount}/{routines.length}</p>
+          </section>
         </section>
 
         <section style={styles.boardSection}>
@@ -802,7 +784,8 @@ export function TodayView() {
           <section style={styles.list}>
             {orderedRoutines.map((routine) => {
               const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
-              const canCertify = inWindow && !routine.doneByMe;
+              const isEditing = editingRoutineId === routine.id;
+              const canCertify = inWindow && !routine.doneByMe && !isEditing;
 
               const card = (
                 <article
@@ -832,34 +815,83 @@ export function TodayView() {
                   </div>
 
                   <div style={styles.itemBody}>
-                    <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
-                    <p style={styles.meta}>
-                      친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
-                    </p>
-                    {routine.proofImage ? (
-                      <div
-                        style={styles.thumbWrap}
-                        onContextMenu={(event) => event.preventDefault()}
-                        onTouchStart={() => startThumbLongPress(routine.id)}
-                        onTouchEnd={cancelThumbLongPress}
-                        onTouchCancel={cancelThumbLongPress}
-                        onMouseDown={() => startThumbLongPress(routine.id)}
-                        onMouseUp={cancelThumbLongPress}
-                        onMouseLeave={cancelThumbLongPress}
-                        onClick={() => {
-                          if (thumbMenuRoutineId === routine.id) return;
-                          setPreviewImage(routine.proofImage ?? null);
-                        }}
-                      >
-                        <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
-                        {thumbMenuRoutineId === routine.id ? (
-                          <div style={styles.thumbMenu}>
-                            <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
-                            <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                    {isEditing ? (
+                      <div style={styles.inlineEditWrap} onClick={(event) => event.stopPropagation()}>
+                        <input
+                          className="routine-title-input"
+                          style={styles.input}
+                          value={newTitle}
+                          onChange={(e) => {
+                            setFormError('');
+                            setNewTitle(e.target.value);
+                          }}
+                        />
+                        <div style={styles.timeRow}>
+                          <div style={styles.timeFieldWrap}>
+                            <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>시작</span>
+                            <input
+                              style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
+                              type="time"
+                              value={newStart}
+                              onChange={(e) => {
+                                const nextStart = e.target.value;
+                                setFormError('');
+                                setNewStart(nextStart);
+                                setNewEnd(addOneHourHHMM(nextStart));
+                              }}
+                            />
+                          </div>
+                          <div style={styles.timeFieldWrap}>
+                            <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>종료</span>
+                            <input
+                              style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
+                              type="time"
+                              value={newEnd}
+                              onChange={(e) => {
+                                setFormError('');
+                                setNewEnd(e.target.value);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        {formError ? <p style={styles.formError}>{formError}</p> : null}
+                        <div style={styles.inlineEditActions}>
+                          <GhostButton style={styles.inlineCancelButton} onClick={cancelInlineEdit}>취소</GhostButton>
+                          <PrimaryButton style={styles.inlineSaveButton} onClick={submitRoutineForm}>저장</PrimaryButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
+                        <p style={styles.meta}>
+                          친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
+                        </p>
+                        {routine.proofImage ? (
+                          <div
+                            style={styles.thumbWrap}
+                            onContextMenu={(event) => event.preventDefault()}
+                            onTouchStart={() => startThumbLongPress(routine.id)}
+                            onTouchEnd={cancelThumbLongPress}
+                            onTouchCancel={cancelThumbLongPress}
+                            onMouseDown={() => startThumbLongPress(routine.id)}
+                            onMouseUp={cancelThumbLongPress}
+                            onMouseLeave={cancelThumbLongPress}
+                            onClick={() => {
+                              if (thumbMenuRoutineId === routine.id) return;
+                              setPreviewImage(routine.proofImage ?? null);
+                            }}
+                          >
+                            <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
+                            {thumbMenuRoutineId === routine.id ? (
+                              <div style={styles.thumbMenu}>
+                                <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
+                                <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
-                      </div>
-                    ) : null}
+                      </>
+                    )}
                   </div>
                 </article>
               );
@@ -896,11 +928,12 @@ export function TodayView() {
                 style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
                 onClick={() => {
                   if (isAddFormOpen) {
-                    setEditingRoutineId(null);
                     setFormError('');
                     setNewTitle('');
                     setNewStart('09:00');
                     setNewEnd('10:00');
+                  } else {
+                    cancelInlineEdit();
                   }
                   setIsAddFormOpen((prev) => !prev);
                 }}
@@ -923,9 +956,9 @@ export function TodayView() {
                 />
                 <div style={styles.timeRow}>
                   <div style={styles.timeFieldWrap}>
-                    <span style={styles.timeFieldLabel}>시작</span>
+                    <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>시작</span>
                     <input
-                      style={styles.inputTime}
+                      style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
                       type="time"
                       value={newStart}
                       onChange={(e) => {
@@ -937,9 +970,9 @@ export function TodayView() {
                     />
                   </div>
                   <div style={styles.timeFieldWrap}>
-                    <span style={styles.timeFieldLabel}>종료</span>
+                    <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>종료</span>
                     <input
-                      style={styles.inputTime}
+                      style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
                       type="time"
                       value={newEnd}
                       onChange={(e) => {
@@ -952,23 +985,20 @@ export function TodayView() {
                 {formError ? <p style={styles.formError}>{formError}</p> : null}
                 <div style={styles.addActionRow}>
                   <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
-                    {editingRoutineId ? '수정 저장' : '추가'}
+                    추가
                   </PrimaryButton>
-                  {editingRoutineId ? (
-                    <GhostButton
-                      style={styles.cancelButton}
-                      onClick={() => {
-                        setEditingRoutineId(null);
-                        setFormError('');
-                        setNewTitle('');
-                        setNewStart('09:00');
-                        setNewEnd('10:00');
-                        setIsAddFormOpen(false);
-                      }}
-                    >
-                      취소
-                    </GhostButton>
-                  ) : null}
+                  <GhostButton
+                    style={styles.cancelButton}
+                    onClick={() => {
+                      setFormError('');
+                      setNewTitle('');
+                      setNewStart('09:00');
+                      setNewEnd('10:00');
+                      setIsAddFormOpen(false);
+                    }}
+                  >
+                    취소
+                  </GhostButton>
                 </div>
               </div>
             ) : null}
@@ -1161,7 +1191,7 @@ const styles: Record<string, CSSProperties> = {
   timeRow: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: 8,
+    gap: 6,
     alignItems: 'center',
   },
   timeFieldWrap: {
@@ -1176,6 +1206,9 @@ const styles: Record<string, CSSProperties> = {
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
+  timeFieldLabelCompact: {
+    fontSize: 11,
+  },
   inputTime: {
     width: '100%',
     background: 'var(--background)',
@@ -1185,6 +1218,11 @@ const styles: Record<string, CSSProperties> = {
     padding: '8px 10px',
     fontSize: 16,
     boxSizing: 'border-box',
+    minWidth: 0,
+  },
+  inputTimeCompact: {
+    padding: '6px 8px',
+    fontSize: 14,
   },
   addActionRow: {
     display: 'flex',
@@ -1326,6 +1364,22 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
   },
   itemBody: {
+    width: '100%',
+  },
+  inlineEditWrap: {
+    display: 'grid',
+    gap: 8,
+  },
+  inlineEditActions: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+    marginTop: 14,
+  },
+  inlineSaveButton: {
+    width: '100%',
+  },
+  inlineCancelButton: {
     width: '100%',
   },
   itemTitle: {
