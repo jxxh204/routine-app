@@ -834,7 +834,7 @@ export function TodayView() {
                             : styles.checkTagWaiting),
                       }}
                     >
-                      {routine.doneByMe ? '✅ 완료' : canCertify ? '🟢 지금 인증' : '⏳ 대기'}
+                      {routine.doneByMe ? '완료' : canCertify ? '지금 인증' : '대기'}
                     </span>
                   </div>
 
