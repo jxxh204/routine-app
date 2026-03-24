@@ -787,22 +787,15 @@ export function TodayView() {
           </section>
         </section>
 
-        <section style={styles.quickActionCard}>
-          {nextAvailableRoutine ? (
-            <>
-              <p style={styles.quickActionTitle}>지금 인증 가능한 루틴 {availableNowRoutines.length}개</p>
-              <p style={styles.quickActionDesc}>{nextAvailableRoutine.title}부터 바로 인증하세요.</p>
-              <PrimaryButton style={styles.quickActionButton} onClick={() => void openCameraForRoutine(nextAvailableRoutine.id)}>
-                지금 인증하기
-              </PrimaryButton>
-            </>
-          ) : (
-            <>
-              <p style={styles.quickActionTitle}>지금 인증 가능한 루틴이 없어요</p>
-              <p style={styles.quickActionDesc}>다음 인증 시간에 맞춰 자동으로 상단에 올라옵니다.</p>
-            </>
-          )}
-        </section>
+        {nextAvailableRoutine ? (
+          <section style={styles.quickActionCard}>
+            <p style={styles.quickActionTitle}>지금 인증 가능한 루틴 {availableNowRoutines.length}개</p>
+            <p style={styles.quickActionDesc}>{nextAvailableRoutine.title}부터 바로 인증하세요.</p>
+            <PrimaryButton style={styles.quickActionButton} onClick={() => void openCameraForRoutine(nextAvailableRoutine.id)}>
+              지금 인증하기
+            </PrimaryButton>
+          </section>
+        ) : null}
 
         <section style={styles.boardSection}>
           <div style={{ ...styles.boardHeader, ...(isCompactLayout ? styles.boardHeaderCompact : {}) }}>
