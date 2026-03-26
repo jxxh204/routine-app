@@ -522,6 +522,13 @@ export function TodayView() {
     });
   }, [routines, nowMinute]);
 
+  const availableNowRoutines = useMemo(
+    () => orderedRoutines.filter((routine) => !routine.doneByMe && isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute)),
+    [orderedRoutines, nowMinute],
+  );
+
+  const nextAvailableRoutine = availableNowRoutines[0] ?? null;
+
   const finalizePhotoCertification = async (routineId: string, imageDataUrl: string) => {
     const now = new Date();
     const doneAtText = formatKoreanTime(now);
@@ -780,10 +787,22 @@ export function TodayView() {
           </section>
         </section>
 
+        {nextAvailableRoutine ? (
+          <section style={styles.quickActionCard}>
+            <p style={styles.quickActionTitle}>지금 인증 가능한 루틴 {availableNowRoutines.length}개</p>
+            <p style={styles.quickActionDesc}>{nextAvailableRoutine.title}부터 바로 인증하세요.</p>
+            <PrimaryButton style={styles.quickActionButton} onClick={() => void openCameraForRoutine(nextAvailableRoutine.id)}>
+              지금 인증하기
+            </PrimaryButton>
+          </section>
+        ) : null}
+
         <section style={styles.boardSection}>
           <div style={{ ...styles.boardHeader, ...(isCompactLayout ? styles.boardHeaderCompact : {}) }}>
             <h2 style={styles.boardTitle}>오늘 할 일</h2>
-            <p style={styles.boardMeta}>지금 가능한 루틴부터 위에서 처리</p>
+            <p style={styles.boardMeta}>
+              {availableNowRoutines.length > 0 ? `지금 인증 가능 ${availableNowRoutines.length}개` : '지금 가능한 루틴부터 위에서 처리'}
+            </p>
           </div>
 
           <section style={styles.list}>
@@ -868,9 +887,7 @@ export function TodayView() {
                     ) : (
                       <>
                         <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
-                        <p style={styles.meta}>
-                          친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
-                        </p>
+                        {/* 친구 상태 노출은 후속 피처에서 재도입 */}
                         {routine.proofImage ? (
                           <div
                             style={styles.thumbWrap}
@@ -1097,6 +1114,30 @@ const styles: Record<string, CSSProperties> = {
     margin: 0,
     color: 'var(--text-muted)',
     fontSize: 12,
+  },
+  quickActionCard: {
+    background: 'var(--surface-1)',
+    border: '1px solid #2e664d',
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 2,
+    boxShadow: 'var(--ds-shadow-soft)',
+  },
+  quickActionTitle: {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#d8ffe8',
+  },
+  quickActionDesc: {
+    margin: '4px 0 10px',
+    fontSize: 12,
+    color: 'var(--text-muted)',
+  },
+  quickActionButton: {
+    width: '100%',
+    borderRadius: 10,
+    padding: '10px 12px',
   },
   progressCard: {
     background: 'var(--surface-1)',
