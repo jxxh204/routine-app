@@ -6,3 +6,5 @@ export {
   SectionHeader,
   StatCard,
 } from './design-system';
+
+export { BottomTabBar } from './BottomTabBar';
