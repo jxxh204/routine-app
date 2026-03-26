@@ -3,9 +3,27 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { AuthRequired } from '@/components/auth-required';
+import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader } from '@/components/ui';
 import { isValidFriendCode, normalizeFriendCode } from '@/lib/friend-code';
 import { acceptFriendRequest, listMyFriendRequests, sendFriendRequestByCode, splitFriendRequests, type FriendRequestRow } from '@/lib/friends';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
+import { supabase } from '@/lib/supabase';
+
+type NicknameMap = Record<string, string>;
+
+async function fetchNicknames(userIds: string[]): Promise<NicknameMap> {
+  if (!supabase || userIds.length === 0) return {};
+  const unique = [...new Set(userIds)];
+  const { data } = await supabase
+    .from('profiles')
+    .select('user_id, nickname, friend_code')
+    .in('user_id', unique);
+  const map: NicknameMap = {};
+  for (const row of data ?? []) {
+    map[row.user_id] = row.nickname || row.friend_code?.slice(0, 4) || '알 수 없음';
+  }
+  return map;
+}
 
 export default function FriendsPage() {
   const [friendCode, setFriendCode] = useState('');
@@ -14,10 +32,13 @@ export default function FriendsPage() {
   const [myFriendCode, setMyFriendCode] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [nicknames, setNicknames] = useState<NicknameMap>({});
 
   const normalized = useMemo(() => normalizeFriendCode(friendCode), [friendCode]);
   const canSubmit = isValidFriendCode(normalized);
   const split = useMemo(() => splitFriendRequests(rows, myUserId), [rows, myUserId]);
+
+  const displayName = (userId: string) => nicknames[userId] || userId.slice(0, 4);
 
   const refresh = async () => {
     const profile = await ensureMyProfile();
@@ -33,6 +54,10 @@ export default function FriendsPage() {
 
     setMyUserId(res.me);
     setRows(res.data);
+
+    const allIds = res.data.flatMap((r) => [r.requester_id, r.addressee_id]);
+    const names = await fetchNicknames(allIds);
+    setNicknames(names);
   };
 
   useEffect(() => {
@@ -80,13 +105,11 @@ export default function FriendsPage() {
 
   return (
     <AuthRequired>
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '30px 20px 48px', color: 'var(--foreground)' }}>
-      <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12, letterSpacing: 0.8 }}>SOCIAL</p>
-      <h1 style={{ margin: '8px 0 0', fontSize: 30 }}>친구 관리</h1>
-      <p style={{ color: 'var(--text-muted)', marginTop: 8 }}>친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요.</p>
+    <PageShell>
+      <SectionHeader eyebrow="Social" title="친구 관리" description="친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요." />
 
-      <section style={{ marginTop: 18, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
-        <p style={{ marginTop: 0 }}>친구 코드로 요청 보내기</p>
+      <AppCard>
+        <p style={{ marginTop: 0, fontWeight: 600 }}>친구 코드로 요청 보내기</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={friendCode}
@@ -96,96 +119,89 @@ export default function FriendsPage() {
               flex: 1,
               height: 42,
               borderRadius: 8,
-              border: '1px solid #2b3138',
-              background: '#11151a',
-              color: '#f5f7fa',
+              border: '1px solid var(--outline)',
+              background: 'var(--surface-2)',
+              color: 'var(--foreground)',
               padding: '0 12px',
             }}
           />
-          <button
+          <PrimaryButton
             onClick={() => void onSend()}
             disabled={!canSubmit || loading}
-            style={{
-              width: 120,
-              borderRadius: 8,
-              border: '1px solid #2e664d',
-              background: '#1f3a2d',
-              color: '#7cffb2',
-              fontWeight: 700,
-            }}
+            style={{ width: 120 }}
           >
             요청 보내기
-          </button>
+          </PrimaryButton>
         </div>
-      </section>
+      </AppCard>
 
-      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
-        <p style={{ marginTop: 0 }}>내 친구 코드</p>
-        <strong style={{ letterSpacing: 1 }}>{myFriendCode || '생성 중...'}</strong>
-      </section>
+      <AppCard>
+        <p style={{ marginTop: 0, fontWeight: 600 }}>내 친구 코드</p>
+        <strong style={{ letterSpacing: 1, fontSize: 18 }}>{myFriendCode || '생성 중...'}</strong>
+      </AppCard>
 
-      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
-        <p style={{ marginTop: 0 }}>받은 요청</p>
+      <AppCard>
+        <p style={{ marginTop: 0, fontWeight: 600 }}>받은 요청</p>
         <div style={{ display: 'grid', gap: 8 }}>
           {split.incomingPending.length === 0 ? (
-            <p style={{ color: '#9aa4af' }}>받은 요청이 없어요.</p>
+            <p style={{ color: 'var(--text-muted)' }}>받은 요청이 없어요.</p>
           ) : (
-            split.incomingPending.map((row) => (
-              <article key={row.id} style={{ border: '1px solid #303844', borderRadius: 8, padding: 10 }}>
-                <div style={{ fontSize: 12, color: '#9aa4af' }}>요청자: {row.requester_id}</div>
-                <button
+            split.incomingPending.map((row, idx) => (
+              <article key={row.id} style={{ border: '1px solid var(--outline)', borderRadius: 8, padding: 10 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  친구 요청 #{idx + 1} · <strong style={{ color: 'var(--foreground)' }}>{displayName(row.requester_id)}</strong>
+                </div>
+                <GhostButton
                   onClick={() => void onAccept(row.id)}
-                  style={{
-                    marginTop: 8,
-                    borderRadius: 8,
-                    border: '1px solid #334050',
-                    background: '#1f2a36',
-                    color: '#9ed0ff',
-                    padding: '6px 10px',
-                  }}
+                  style={{ marginTop: 8 }}
                 >
                   수락
-                </button>
+                </GhostButton>
               </article>
             ))
           )}
         </div>
-      </section>
+      </AppCard>
 
-      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
-        <p style={{ marginTop: 0 }}>보낸 요청</p>
+      <AppCard>
+        <p style={{ marginTop: 0, fontWeight: 600 }}>보낸 요청</p>
         <div style={{ display: 'grid', gap: 8 }}>
           {split.outgoingPending.length === 0 ? (
-            <p style={{ color: '#9aa4af' }}>보낸 요청이 없어요.</p>
+            <p style={{ color: 'var(--text-muted)' }}>보낸 요청이 없어요.</p>
           ) : (
             split.outgoingPending.map((row) => (
-              <article key={row.id} style={{ border: '1px solid #303844', borderRadius: 8, padding: 10 }}>
-                <div style={{ fontSize: 12, color: '#9aa4af' }}>대상: {row.addressee_id}</div>
-              </article>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section style={{ marginTop: 16, border: '1px solid var(--outline)', borderRadius: 14, padding: 14, background: 'var(--surface-1)' }}>
-        <p style={{ marginTop: 0 }}>친구 목록</p>
-        <div style={{ display: 'grid', gap: 8 }}>
-          {split.accepted.length === 0 ? (
-            <p style={{ color: '#9aa4af' }}>아직 친구가 없어요.</p>
-          ) : (
-            split.accepted.map((row) => (
-              <article key={row.id} style={{ border: '1px solid #303844', borderRadius: 8, padding: 10 }}>
-                <div style={{ fontSize: 12, color: '#9aa4af' }}>
-                  친구: {row.requester_id === myUserId ? row.addressee_id : row.requester_id}
+              <article key={row.id} style={{ border: '1px solid var(--outline)', borderRadius: 8, padding: 10 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  <strong style={{ color: 'var(--foreground)' }}>{displayName(row.addressee_id)}</strong> · 대기중
                 </div>
               </article>
             ))
           )}
         </div>
-      </section>
+      </AppCard>
 
-      {message ? <p style={{ marginTop: 12, color: '#c4cfda' }}>{message}</p> : null}
-    </main>
+      <AppCard>
+        <p style={{ marginTop: 0, fontWeight: 600 }}>친구 목록</p>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {split.accepted.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>아직 친구가 없어요.</p>
+          ) : (
+            split.accepted.map((row) => {
+              const friendId = row.requester_id === myUserId ? row.addressee_id : row.requester_id;
+              return (
+                <article key={row.id} style={{ border: '1px solid var(--outline)', borderRadius: 8, padding: 10 }}>
+                  <div style={{ fontSize: 13 }}>
+                    {displayName(friendId)}
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+      </AppCard>
+
+      {message ? <p style={{ marginTop: 12, color: 'var(--text-muted)' }}>{message}</p> : null}
+    </PageShell>
     </AuthRequired>
   );
 }
