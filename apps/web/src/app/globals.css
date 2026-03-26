@@ -10,6 +10,8 @@
   --text-muted: var(--ds-color-text-muted);
   --brand: var(--ds-color-accent);
   --brand-soft: var(--ds-color-accent-soft);
+  --brand-green: var(--ds-color-success);
+  --brand-green-soft: var(--ds-color-success-soft);
 }
 
 html,
@@ -21,7 +23,6 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

@@ -15,6 +15,10 @@
   --ds-color-accent-strong: #ff9a4f;
   --ds-color-accent-soft: #2f1e11;
 
+  --ds-color-success: #7cffb2;
+  --ds-color-success-soft: #1f3a2d;
+  --ds-color-success-border: #2e664d;
+
   --ds-radius-xl: 24px;
   --ds-radius-lg: 18px;
   --ds-radius-md: 14px;
