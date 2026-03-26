@@ -1,0 +1,107 @@
+
+> web@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3018
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://127.0.0.1:3018
+- Network:       http://127.0.0.1:3018
+
+✓ Starting...
+✓ Ready in 1657ms
+ GET /today 200 in 771ms (compile: 529ms, render: 242ms)
+ GET /today 200 in 521ms (compile: 352ms, render: 168ms)
+ GET /auth?next=%2Ftoday 200 in 462ms (compile: 241ms, render: 221ms)
+ GET /today 200 in 69ms (compile: 6ms, render: 64ms)
+ GET /calendar 200 in 239ms (compile: 109ms, render: 130ms)
+✓ Compiled in 182ms
+ GET /auth?next=%2Ftoday 200 in 361ms (compile: 181ms, render: 180ms)
+ GET /today 200 in 183ms (compile: 66ms, render: 117ms)
+ GET /calendar 200 in 283ms (compile: 71ms, render: 212ms)
+✓ Compiled in 62ms
+ GET /auth?next=%2Ftoday 200 in 508ms (compile: 286ms, render: 222ms)
+ GET /today 200 in 81ms (compile: 7ms, render: 74ms)
+ GET /calendar 200 in 77ms (compile: 6ms, render: 71ms)
+✓ Compiled in 90ms
+✓ Compiled in 35ms
+✓ Compiled in 30ms
+✓ Compiled in 42ms
+ GET /today 200 in 475ms (compile: 200ms, render: 275ms)
+ GET /calendar 200 in 241ms (compile: 96ms, render: 146ms)
+ GET /auth 200 in 499ms (compile: 241ms, render: 258ms)
+✓ Compiled in 36ms
+✓ Compiled in 24ms
+✓ Compiled in 18ms
+✓ Compiled in 16ms
+✓ Compiled in 18ms
+✓ Compiled in 24ms
+✓ Compiled in 14ms
+ GET /today 200 in 432ms (compile: 207ms, render: 225ms)
+ GET /calendar 200 in 281ms (compile: 75ms, render: 207ms)
+✓ Compiled in 61ms
+✓ Compiled in 42ms
+✓ Compiled in 25ms
+✓ Compiled in 35ms
+✓ Compiled in 105ms
+✓ Compiled in 24ms
+ GET /calendar 200 in 394ms (compile: 163ms, render: 232ms)
+✓ Compiled in 52ms
+✓ Compiled in 23ms
+✓ Compiled in 66ms
+✓ Compiled in 148ms
+✓ Compiled in 42ms
+ GET /auth?next=%2Ftoday 200 in 1956ms (compile: 1572ms, render: 385ms)
+ GET /today 200 in 67ms (compile: 8ms, render: 59ms)
+ GET /calendar 200 in 212ms (compile: 74ms, render: 138ms)
+✓ Compiled in 112ms
+✓ Compiled in 28ms
+✓ Compiled in 37ms
+ GET /today 200 in 367ms (compile: 159ms, render: 209ms)
+ GET /today 200 in 87ms (compile: 9ms, render: 78ms)
+✓ Compiled in 153ms
+✓ Compiled in 48ms
+✓ Compiled in 38ms
+ GET /today 200 in 686ms (compile: 257ms, render: 428ms)
+✓ Compiled in 188ms
+✓ Compiled in 74ms
+✓ Compiled in 48ms
+✓ Compiled in 42ms
+✓ Compiled in 44ms
+✓ Compiled in 46ms
+✓ Compiled in 73ms
+✓ Compiled in 48ms
+✓ Compiled in 41ms
+✓ Compiled in 35ms
+✓ Compiled in 46ms
+✓ Compiled in 41ms
+✓ Compiled in 47ms
+ GET /today 200 in 238ms (compile: 81ms, render: 157ms)
+✓ Compiled in 104ms
+✓ Compiled in 51ms
+ GET /today 200 in 415ms (compile: 134ms, render: 281ms)
+✓ Compiled in 113ms
+ GET /today 200 in 312ms (compile: 128ms, render: 184ms)
+ GET /today 200 in 349ms (compile: 166ms, render: 183ms)
+ GET /auth 200 in 250ms (compile: 118ms, render: 132ms)
+ GET /today 200 in 149ms (compile: 96ms, render: 52ms)
+ GET /auth 200 in 88ms (compile: 6ms, render: 82ms)
+ GET /today 200 in 29ms (compile: 4ms, render: 25ms)
+✓ Compiled in 95ms
+ GET /auth 200 in 64ms (compile: 6ms, render: 59ms)
+ GET /today 200 in 102ms (compile: 76ms, render: 26ms)
+✓ Compiled in 65ms
+✓ Compiled in 71ms
+✓ Compiled in 63ms
+ GET /auth 200 in 51ms (compile: 6ms, render: 46ms)
+ GET /today 200 in 109ms (compile: 78ms, render: 31ms)
+✓ Compiled in 111ms
+ GET /today 200 in 577ms (compile: 352ms, render: 225ms)
+ GET /today 200 in 39ms (compile: 2ms, render: 36ms)
+✓ Compiled in 147ms
+✓ Compiled in 71ms
+ GET /today 200 in 193ms (compile: 73ms, render: 120ms)
+✓ Compiled in 43ms
+ GET /today 200 in 862ms (compile: 631ms, render: 231ms)
+ GET /auth?next=%2Ftoday 200 in 52ms (compile: 9ms, render: 43ms)
+ GET /today 200 in 57ms (compile: 11ms, render: 45ms)
+✓ Compiled in 237ms
+✓ Compiled in 35ms
