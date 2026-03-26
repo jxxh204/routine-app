@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, type CSSProperties } from 'react';
 
 import { AuthRequired } from '@/components/auth-required';
+import { AppCard, GhostButton, PageShell, SectionHeader } from '@/components/ui/design-system';
 
 type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -41,42 +42,39 @@ export default function SettingsPage() {
 
   return (
     <AuthRequired>
-    <main style={{ minHeight: '100dvh', background: 'var(--background)', color: 'var(--foreground)', padding: '28px 16px 40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12, letterSpacing: 0.8 }}>SYSTEM</p>
-          <h1 style={{ margin: '6px 0 0', fontSize: 28 }}>설정</h1>
-        </div>
-        <Link href="/today" style={{ color: '#9ed0ff', textDecoration: 'none' }}>
+    <PageShell>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <SectionHeader eyebrow="System" title="설정" />
+        <Link href="/today" style={{ color: '#9ed0ff', textDecoration: 'none', marginTop: 8 }}>
           오늘으로
         </Link>
       </div>
 
-      <section style={cardStyle}>
+      <AppCard>
         <strong>알림 권한 상태</strong>
         <p style={metaStyle}>현재 웹 알림 권한: {permissionLabel(permission)}</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button style={buttonStyle} onClick={() => void requestPermission()}>알림 권한 요청</button>
-          <button style={buttonStyle} onClick={() => { void sendNativeAction('toggle-notification', true); }}>알림 켜기</button>
-          <button style={buttonStyle} onClick={() => { void sendNativeAction('toggle-notification', false); }}>알림 끄기</button>
-          <button style={buttonStyle} onClick={() => { void sendNativeAction('open-settings'); }}>시스템 설정 열기</button>
+          <GhostButton onClick={() => void requestPermission()}>알림 권한 요청</GhostButton>
+          <GhostButton onClick={() => { void sendNativeAction('toggle-notification', true); }}>알림 켜기</GhostButton>
+          <GhostButton onClick={() => { void sendNativeAction('toggle-notification', false); }}>알림 끄기</GhostButton>
+          <GhostButton onClick={() => { void sendNativeAction('open-settings'); }}>시스템 설정 열기</GhostButton>
         </div>
-      </section>
+      </AppCard>
 
-      <section style={cardStyle}>
+      <AppCard>
         <strong>운영 정책</strong>
         <ul style={{ margin: '8px 0 0', paddingLeft: 18, color: '#c4cfda' }}>
           <li>기본 3루틴 + 커스텀 루틴 유지</li>
           <li>루틴 인증 정책: 시간대 기반</li>
           <li>친구 연동 권한: 방장만 루틴 편집</li>
         </ul>
-      </section>
+      </AppCard>
 
-      <section style={cardStyle}>
+      <AppCard>
         <strong>권한/시스템 이동</strong>
         <p style={metaStyle}>iOS WebView 환경에서는 시스템 설정에서 알림 권한을 최종 확인해 주세요.</p>
-      </section>
-    </main>
+      </AppCard>
+    </PageShell>
     </AuthRequired>
   );
 }
@@ -88,24 +86,7 @@ function permissionLabel(state: PermissionState) {
   return '미결정';
 }
 
-const cardStyle: CSSProperties = {
-  border: '1px solid var(--outline)',
-  borderRadius: 14,
-  background: 'var(--surface-1)',
-  padding: 14,
-  marginBottom: 12,
-};
-
 const metaStyle: CSSProperties = {
   margin: '8px 0',
   color: 'var(--text-muted)',
-};
-
-const buttonStyle: CSSProperties = {
-  border: '1px solid var(--outline)',
-  background: 'var(--surface-2)',
-  color: '#d0d8e0',
-  borderRadius: 8,
-  padding: '8px 10px',
-  cursor: 'pointer',
 };
