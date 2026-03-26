@@ -282,8 +282,8 @@ export function TodayView() {
           <section style={{ ...styles.addSection }}>
             <div style={styles.addHeaderRow}>
               <div>
-                <p style={styles.sectionLabel}>루틴 편집</p>
-                <p style={{ ...styles.meta, margin: 0 }}>오늘 필요한 루틴을 추가/수정하세요.</p>
+                <p style={styles.sectionLabel}>루틴 추가</p>
+                <p style={{ ...styles.meta, margin: 0 }}>새로운 루틴을 추가하세요.</p>
               </div>
               <GhostButton
                 style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
