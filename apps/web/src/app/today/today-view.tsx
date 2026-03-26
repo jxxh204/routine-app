@@ -235,13 +235,6 @@ export function TodayView() {
           <ProgressBar doneCount={doneCount} totalCount={routines.length} progress={progress} />
         </section>
 
-        {nextAvailableRoutine ? (
-          <QuickActionCard
-            availableNowRoutines={availableNowRoutines}
-            nextAvailableRoutine={nextAvailableRoutine}
-            onCertify={proof.openCameraForRoutine}
-          />
-        ) : null}
 
         <section style={styles.boardSection}>
           <div style={{ ...styles.boardHeader, ...(isCompactLayout ? styles.boardHeaderCompact : {}) }}>
