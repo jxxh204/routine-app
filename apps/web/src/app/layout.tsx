@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClientShell } from "@/components/ClientShell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <ClientShell>{children}</ClientShell>
       </body>
     </html>
   );
