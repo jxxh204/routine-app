@@ -416,8 +416,7 @@ function AppContent() {
   }, []);
 
   // Sync activeTab when the ACTIVE WebView navigates to a different section
-  // (e.g. user taps "오늘으로" link inside settings page)
-  // Only react to cross-section navigation within the active tab.
+  // (e.g. user taps "오늘으로" link inside settings/calendar page)
   const prevWebPathRef = useRef(currentWebPath);
   useEffect(() => {
     const prev = prevWebPathRef.current;
@@ -429,9 +428,7 @@ function AppContent() {
     else if (currentWebPath.startsWith('/settings')) targetTab = 'settings';
     else if (currentWebPath.startsWith('/today') || isAuthScreen) targetTab = 'today';
 
-    // Only switch tab if:
-    // 1. The target tab differs from current active tab
-    // 2. The path actually changed (not just a re-render)
+    // Only switch if path actually changed AND targets a different tab
     if (targetTab && targetTab !== activeTabRef.current && currentWebPath !== prev) {
       setActiveTab(targetTab);
     }
