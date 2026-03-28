@@ -13,7 +13,9 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@ant-design/cssinjs": "^2.1.2",
     "@supabase/supabase-js": "^2.99.1",
+    "antd": "^6.3.4",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
