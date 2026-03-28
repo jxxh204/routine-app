@@ -415,11 +415,23 @@ function AppContent() {
     if (parsed) setCurrentWebPath(parsed.pathname || '/');
   }, []);
 
-  // Sync activeTab with web path
+  // Sync activeTab when the ACTIVE WebView navigates to a different section
+  // (e.g. user taps "오늘으로" link inside settings/calendar page)
+  const prevWebPathRef = useRef(currentWebPath);
   useEffect(() => {
-    if (currentWebPath.startsWith('/calendar')) setActiveTab('calendar');
-    else if (currentWebPath.startsWith('/settings')) setActiveTab('settings');
-    else if (currentWebPath.startsWith('/today') || isAuthScreen) setActiveTab('today');
+    const prev = prevWebPathRef.current;
+    prevWebPathRef.current = currentWebPath;
+
+    // Determine which tab the new path belongs to
+    let targetTab: TabKey | null = null;
+    if (currentWebPath.startsWith('/calendar')) targetTab = 'calendar';
+    else if (currentWebPath.startsWith('/settings')) targetTab = 'settings';
+    else if (currentWebPath.startsWith('/today') || isAuthScreen) targetTab = 'today';
+
+    // Only switch if path actually changed AND targets a different tab
+    if (targetTab && targetTab !== activeTabRef.current && currentWebPath !== prev) {
+      setActiveTab(targetTab);
+    }
   }, [currentWebPath, isAuthScreen]);
 
   // Bootstrap
@@ -568,7 +580,8 @@ function AppContent() {
               source={{ uri: `${parsedUrl?.origin ?? ''}${tab.path}` }}
               injectedJavaScript={getWebviewCompletionSyncScript(tab.key)}
               onNavigationStateChange={(navState) => {
-                if (activeTab === tab.key) handleWebviewPathUpdate(navState.url);
+                // Use ref to avoid stale closure — only process active tab's navigation
+                if (activeTabRef.current === tab.key) handleWebviewPathUpdate(navState.url);
               }}
               {...sharedWebviewProps}
             />
