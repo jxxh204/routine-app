@@ -220,7 +220,7 @@ function getDurationMinute(startMinute: number, endMinute: number) {
 
 async function scheduleDefaultNotifications(settings: NotificationSettings, routines: Routine[]) {
   try {
-    const existing = await Notifications?.getAllScheduledNotificationsAsync();
+    const existing = await Notifications?.getAllScheduledNotificationsAsync() ?? [];
     for (const item of existing) {
       if (item.content.data?.source === 'default-routine') {
         await Notifications?.cancelScheduledNotificationAsync(item.identifier);
@@ -385,10 +385,11 @@ function Onboarding({ onDone }: { onDone: () => void }) {
     setBusy(true);
     try {
       const current = await Notifications?.getPermissionsAsync();
+      if (!current) { setMessage('알림 모듈을 불러올 수 없어요.'); return; }
       const permission =
         current.granted ? current : await Notifications?.requestPermissionsAsync();
 
-      if (!permission.granted) {
+      if (!permission?.granted) {
         setMessage('알림 권한이 꺼져 있어요. [설정]에서 알림을 켜주세요.');
         return;
       }
@@ -509,7 +510,7 @@ function AppContent() {
     const ensureNotificationSchedules = async () => {
       try {
         const permission = await Notifications?.getPermissionsAsync();
-        if (!permission.granted) return;
+        if (!permission?.granted) return;
 
         await scheduleDefaultNotifications(settings, routines);
         didRestoreNotificationsRef.current = true;
