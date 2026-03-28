@@ -737,13 +737,9 @@ class ErrorBoundary extends Component<
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <PaperProvider theme={appTheme}>
-          <AppContent />
-        </PaperProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <PaperProvider theme={appTheme}>
+      <AppContent />
+    </PaperProvider>
   );
 }
 
