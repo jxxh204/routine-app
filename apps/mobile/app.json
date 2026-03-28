@@ -32,8 +32,10 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
+        "CAMERA",
         "CAMERA"
-      ]
+      ],
+      "package": "com.jxxh204.routinechallenge"
     },
     "web": {
       "favicon": "./assets/favicon.png"
