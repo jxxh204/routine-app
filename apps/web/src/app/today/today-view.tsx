@@ -760,7 +760,10 @@ export function TodayView() {
   return (
     <PageShell>
       <section style={styles.pageSection}>
-        <SectionHeader eyebrow="Today" title="루틴 실행 대시보드" description={today} />
+        <div style={styles.headerWrap}>
+          <h1 style={styles.headerTitle}>{today}</h1>
+          <p style={styles.headerSub}>{doneCount}/{routines.length} 완료</p>
+        </div>
 
         {showWelcomeFeedback ? (
           <AppCard>
@@ -771,18 +774,11 @@ export function TodayView() {
           </AppCard>
         ) : null}
 
-        <section style={styles.progressCard}>
-          <p style={styles.sectionLabel}>프로그레스 {doneCount}/{routines.length}</p>
-          <div style={styles.progressTrack}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-          </div>
-        </section>
+        <div style={styles.progressTrack}>
+          <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+        </div>
 
         <section style={styles.boardSection}>
-          <div style={{ ...styles.boardHeader, ...(isCompactLayout ? styles.boardHeaderCompact : {}) }}>
-            <h2 style={styles.boardTitle}>오늘 할 일</h2>
-            <p style={styles.boardMeta}>지금 가능한 루틴부터 위에서 처리</p>
-          </div>
 
           <section style={styles.list}>
             {orderedRoutines.map((routine) => {
@@ -866,9 +862,7 @@ export function TodayView() {
                     ) : (
                       <>
                         <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
-                        <p style={styles.meta}>
-                          친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
-                        </p>
+                        {/* 친구 상태는 후속 피처에서 재도입 */}
                         {routine.proofImage ? (
                           <div
                             style={styles.thumbWrap}
@@ -1027,7 +1021,7 @@ export function TodayView() {
       ) : null}
 
       <style>{`
-        .routine-title-input::placeholder { color: #2b3138; }
+        .routine-title-input::placeholder { color: var(--ds-color-placeholder); }
         .routine-card-surface,
         .routine-card-surface * {
           -webkit-user-select: none;
@@ -1043,114 +1037,71 @@ export function TodayView() {
 const styles: Record<string, CSSProperties> = {
   pageSection: {
     display: 'grid',
-    gap: 18,
+    gap: 16,
   },
-  kpiGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1.2fr 1fr',
-    gap: 12,
-  },
-  kpiGridCompact: {
-    gridTemplateColumns: '1fr',
-  },
-  sectionLabel: {
-    margin: '0 0 8px',
-    fontSize: 12,
-    color: 'var(--text-muted)',
-    letterSpacing: '0.02em',
-  },
-  quickGuideCard: {
-    display: 'grid',
-    gap: 6,
-    minHeight: 132,
-  },
-  guideList: {
-    margin: 0,
-    paddingLeft: 18,
-    display: 'grid',
-    gap: 6,
-    color: 'var(--text-muted)',
-    fontSize: 13,
-    lineHeight: 1.45,
-  },
-  boardSection: {
-    display: 'grid',
-    gap: 10,
-  },
-  boardHeader: {
+  /* Amie-style header: date as title, completion as subtitle */
+  headerWrap: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    gap: 8,
   },
-  boardHeaderCompact: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  },
-  boardTitle: {
+  headerTitle: {
     margin: 0,
     fontSize: 22,
+    fontWeight: 600,
+    letterSpacing: '-0.02em',
+    color: 'var(--ds-color-text)',
   },
-  boardMeta: {
+  headerSub: {
     margin: 0,
-    color: 'var(--text-muted)',
-    fontSize: 12,
+    fontSize: 13,
+    color: 'var(--ds-color-text-muted)',
+    fontWeight: 400,
   },
-  progressCard: {
-    background: 'var(--surface-1)',
-    border: '1px solid var(--outline)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 0,
-    boxShadow: 'var(--ds-shadow-soft)',
+  sectionLabel: {
+    margin: 0,
+    fontSize: 11,
+    color: 'var(--ds-color-text-faint)',
+    fontWeight: 500,
   },
-  welcomeCard: {
-    background: '#18222e',
-    border: '1px solid #334050',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 0,
-    boxShadow: 'var(--ds-shadow-soft)',
-  },
-  welcomeTitle: {
-    display: 'block',
-    color: '#cfe7ff',
-    fontSize: 14,
-  },
-  welcomeDesc: {
-    margin: '6px 0 0',
-    color: '#9fb3c8',
-    fontSize: 12,
-  },
-  addSection: {
-    marginTop: 2,
-  },
-  progressTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    fontSize: 14,
-  },
+  /* Progress bar — Amie thin strip, no card */
   progressTrack: {
-    height: 8,
-    background: '#2b3138',
-    borderRadius: 999,
+    height: 3,
+    background: 'var(--ds-color-surface-strong)',
+    borderRadius: 'var(--ds-radius-pill)',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    background: 'linear-gradient(90deg, var(--ds-color-accent), var(--ds-color-accent-strong))',
+    background: 'var(--ds-color-accent)',
+    borderRadius: 'var(--ds-radius-pill)',
+    transition: 'width 0.5s var(--ds-ease)',
   },
-  statRow: {
-    marginTop: 10,
+  boardSection: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 8,
+    gap: 6,
   },
-  syncText: {
-    margin: '8px 0 0',
+  welcomeCard: {
+    background: 'var(--ds-color-accent-soft)',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: 14,
+  },
+  welcomeTitle: {
+    display: 'block',
+    color: 'var(--ds-color-accent-strong)',
+    fontSize: 13,
+    fontWeight: 500,
+  },
+  welcomeDesc: {
+    margin: '2px 0 0',
+    color: 'var(--ds-color-text-muted)',
     fontSize: 12,
-    color: '#7f8b98',
+  },
+  addSection: {},
+  syncText: {
+    margin: '4px 0 0',
+    fontSize: 11,
+    color: 'var(--ds-color-text-faint)',
   },
   addHeaderRow: {
     display: 'flex',
@@ -1158,111 +1109,110 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'center',
   },
   addToggleButton: {
-    background: 'var(--brand-soft)',
-    color: 'var(--brand)',
-    border: '1px solid #2e664d',
-    borderRadius: 999,
-    padding: '6px 12px',
+    background: 'var(--ds-color-accent-soft)',
+    color: 'var(--ds-color-accent)',
+    border: 'none',
+    borderRadius: 'var(--ds-radius-pill)',
+    padding: '5px 12px',
     cursor: 'pointer',
     fontSize: 12,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   addToggleButtonNeutral: {
-    background: '#2a3038',
-    color: '#c8d0da',
-    border: '1px solid #3b4552',
+    background: 'var(--ds-color-surface-strong)',
+    color: 'var(--ds-color-text-muted)',
+    border: 'none',
   },
   addRow: {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
     marginTop: 8,
-    alignItems: 'stretch',
   },
   input: {
     width: '100%',
-    height: 48,
-    background: 'var(--background)',
-    color: '#f5f7fa',
-    border: '1px solid var(--outline)',
-    borderRadius: 8,
+    height: 40,
+    background: 'var(--ds-color-bg)',
+    color: 'var(--ds-color-text)',
+    border: '1px solid var(--ds-color-border-strong)',
+    borderRadius: 'var(--ds-radius-sm)',
     padding: '0 12px',
-    fontSize: 16,
-    lineHeight: '48px',
+    fontSize: 14,
+    lineHeight: '40px',
     boxSizing: 'border-box',
+    transition: 'border-color var(--ds-duration) var(--ds-ease)',
   },
   timeRow: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: 6,
-    alignItems: 'center',
+    gap: 8,
   },
   timeFieldWrap: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     minWidth: 0,
   },
   timeFieldLabel: {
-    color: 'var(--text-muted)',
-    fontSize: 12,
+    color: 'var(--ds-color-text-faint)',
+    fontSize: 11,
     whiteSpace: 'nowrap',
     flexShrink: 0,
+    fontWeight: 500,
   },
-  timeFieldLabelCompact: {
-    fontSize: 11,
-  },
+  timeFieldLabelCompact: { fontSize: 10 },
   inputTime: {
     width: '100%',
-    background: 'var(--background)',
-    color: '#f5f7fa',
-    border: '1px solid var(--outline)',
-    borderRadius: 8,
-    padding: '8px 10px',
-    fontSize: 16,
+    background: 'var(--ds-color-bg)',
+    color: 'var(--ds-color-text)',
+    border: '1px solid var(--ds-color-border-strong)',
+    borderRadius: 'var(--ds-radius-sm)',
+    padding: '7px 10px',
+    fontSize: 14,
     boxSizing: 'border-box',
     minWidth: 0,
   },
-  inputTimeCompact: {
-    padding: '6px 8px',
-    fontSize: 14,
-  },
+  inputTimeCompact: { padding: '5px 8px', fontSize: 13 },
   addActionRow: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 6,
   },
   formError: {
     margin: 0,
-    color: '#ffb7b2',
+    color: 'var(--ds-color-pink)',
     fontSize: 12,
   },
   addButtonFull: {
     width: '100%',
-    background: 'var(--brand-soft)',
-    color: 'var(--brand)',
-    border: '1px solid #2e664d',
-    borderRadius: 8,
-    padding: '10px 12px',
+    background: 'var(--ds-color-accent)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 'var(--ds-radius-sm)',
+    padding: '9px 12px',
     cursor: 'pointer',
+    fontWeight: 500,
+    fontSize: 13,
   },
   cancelButton: {
-    background: '#2a3038',
-    color: '#d0d8e0',
-    border: '1px solid #3b4552',
-    borderRadius: 8,
+    background: 'var(--ds-color-surface-strong)',
+    color: 'var(--ds-color-text-muted)',
+    border: 'none',
+    borderRadius: 'var(--ds-radius-sm)',
     padding: '8px 12px',
     cursor: 'pointer',
+    fontSize: 13,
   },
+  /* Routine list */
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
+    gap: 2,
   },
   swipeWrap: {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 16,
+    borderRadius: 'var(--ds-radius-lg)',
     touchAction: 'pan-y',
   },
   actionWrap: {
@@ -1270,94 +1220,87 @@ const styles: Record<string, CSSProperties> = {
     right: 0,
     top: 0,
     bottom: 0,
-    width: 152,
+    width: 130,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    background: '#21262d',
-    border: '1px solid #303844',
-    borderRadius: 16,
+    gap: 6,
+    background: 'var(--ds-color-surface-strong)',
+    borderRadius: 'var(--ds-radius-lg)',
+    zIndex: 0,
   },
+  /* Routine card — Amie event block style */
   item: {
     position: 'relative',
     zIndex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
-    alignItems: 'flex-start',
-    background: 'var(--surface-1)',
-    border: '1px solid var(--outline)',
-    borderRadius: 16,
-    padding: 14,
-    transition: 'all 0.2s ease',
-    boxShadow: 'var(--ds-shadow-soft)',
+    gap: 4,
+    background: 'var(--ds-color-surface)',
+    border: 'none',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: '12px 14px',
+    transition: 'all var(--ds-duration) var(--ds-ease)',
   },
   itemSwiped: {
-    transform: 'translateX(-152px)',
+    transform: 'translateX(-130px)',
   },
+  /* Active — Amie uses colored left border or tinted bg */
   itemActive: {
-    border: '1px solid #2e664d',
-    boxShadow: '0 0 0 1px rgba(124,255,178,0.15) inset',
-    opacity: 1,
+    background: 'var(--ds-color-blue-soft)',
+    borderLeft: '3px solid var(--ds-color-blue)',
   },
   itemInactive: {
-    border: '1px solid #252a31',
-    background: '#171b20',
-    opacity: 1,
-    filter: 'grayscale(0.12)',
+    background: 'var(--ds-color-surface)',
   },
   itemClickable: {
     cursor: 'pointer',
   },
+  /* Status pills */
   checkTag: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 64,
-    height: 26,
-    borderRadius: 999,
-    border: '1px solid #3c4652',
-    background: '#242b33',
-    color: '#e6edf3',
-    padding: '0 10px',
-    fontSize: 12,
-    fontWeight: 600,
+    height: 22,
+    borderRadius: 'var(--ds-radius-pill)',
+    border: 'none',
+    background: 'var(--ds-color-surface-strong)',
+    color: 'var(--ds-color-text-muted)',
+    padding: '0 8px',
+    fontSize: 11,
+    fontWeight: 500,
   },
   checkTagReady: {
-    background: 'var(--brand-soft)',
-    color: 'var(--brand)',
-    border: '1px solid #2e664d',
-    boxShadow: '0 0 0 1px rgba(124,255,178,0.2) inset',
+    background: 'var(--ds-color-blue-soft)',
+    color: 'var(--ds-color-blue)',
   },
   checkTagWaiting: {
-    background: '#212834',
-    color: '#b3c0d0',
-    border: '1px solid #314156',
-    opacity: 0.9,
+    background: 'var(--ds-color-gray-soft)',
+    color: 'var(--ds-color-gray)',
   },
   checkTagDone: {
-    background: '#1a1f26',
-    color: '#6f7b89',
-    border: '1px solid #2c3440',
-    opacity: 0.7,
-    filter: 'grayscale(0.2)',
+    background: 'var(--ds-color-green-soft)',
+    color: 'var(--ds-color-green)',
   },
   editButton: {
-    border: '1px solid #334050',
-    background: '#1f2a36',
-    color: '#9ed0ff',
-    borderRadius: 8,
-    padding: '6px 10px',
+    border: 'none',
+    background: 'var(--ds-color-accent-soft)',
+    color: 'var(--ds-color-accent)',
+    borderRadius: 'var(--ds-radius-sm)',
+    padding: '5px 10px',
     cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 500,
   },
   deleteButton: {
-    border: '1px solid #4a2f35',
-    background: '#2b1d21',
-    color: '#ff9ba8',
-    borderRadius: 8,
-    padding: '6px 10px',
+    border: 'none',
+    background: 'var(--ds-color-pink-soft)',
+    color: 'var(--ds-color-pink)',
+    borderRadius: 'var(--ds-radius-sm)',
+    padding: '5px 10px',
     cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 500,
   },
   itemHead: {
     width: '100%',
@@ -1366,42 +1309,34 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'center',
     gap: 8,
   },
-  itemBody: {
-    width: '100%',
-  },
-  inlineEditWrap: {
-    display: 'grid',
-    gap: 8,
-  },
+  itemBody: { width: '100%' },
+  inlineEditWrap: { display: 'grid', gap: 8 },
   inlineEditActions: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: 8,
-    marginTop: 14,
+    marginTop: 10,
   },
-  inlineSaveButton: {
-    width: '100%',
-  },
-  inlineCancelButton: {
-    width: '100%',
-  },
+  inlineSaveButton: { width: '100%' },
+  inlineCancelButton: { width: '100%' },
   itemTitle: {
     margin: 0,
-    fontSize: 15,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--ds-color-text)',
   },
   meta: {
-    margin: '6px 0 0',
-    fontSize: 13,
-    color: 'var(--text-muted)',
+    margin: '2px 0 0',
+    fontSize: 12,
+    color: 'var(--ds-color-text-faint)',
   },
+  /* Proof thumbnail */
   thumbWrap: {
-    marginTop: 10,
-    width: 72,
-    height: 72,
-    borderRadius: 10,
+    marginTop: 6,
+    width: 56,
+    height: 56,
+    borderRadius: 'var(--ds-radius-sm)',
     overflow: 'hidden',
-    border: '1px solid #2f3a46',
     position: 'relative',
     WebkitTouchCallout: 'none',
     userSelect: 'none',
@@ -1415,64 +1350,72 @@ const styles: Record<string, CSSProperties> = {
   thumbMenu: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(8,10,14,0.8)',
+    background: 'var(--ds-color-overlay-thumb)',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: 6,
-    padding: 6,
+    gap: 4,
+    padding: 4,
   },
   thumbMenuButton: {
-    border: '1px solid #2e664d',
-    background: 'var(--brand-soft)',
-    color: 'var(--brand)',
-    borderRadius: 6,
-    padding: '4px 6px',
-    fontSize: 11,
+    border: 'none',
+    background: 'var(--ds-color-accent-soft)',
+    color: 'var(--ds-color-accent)',
+    borderRadius: 4,
+    padding: '3px 6px',
+    fontSize: 10,
     cursor: 'pointer',
+    fontWeight: 500,
   },
   thumbMenuCancel: {
-    border: '1px solid #3b4552',
-    background: '#2a3038',
-    color: '#d0d8e0',
-    borderRadius: 6,
-    padding: '4px 6px',
-    fontSize: 11,
+    border: 'none',
+    background: 'var(--ds-color-surface-strong)',
+    color: 'var(--ds-color-text-muted)',
+    borderRadius: 4,
+    padding: '3px 6px',
+    fontSize: 10,
     cursor: 'pointer',
   },
   previewOverlay: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(8, 10, 14, 0.78)',
+    background: 'var(--ds-color-overlay-heavy)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
     zIndex: 30,
+    backdropFilter: 'blur(12px)',
   },
   previewCard: {
     width: '100%',
-    maxWidth: 560,
-    borderRadius: 14,
-    border: '1px solid #2f3a46',
-    background: '#11151a',
+    maxWidth: 420,
+    borderRadius: 'var(--ds-radius-lg)',
+    background: 'var(--ds-color-surface)',
     padding: 10,
   },
   previewImage: {
     width: '100%',
     maxHeight: '70vh',
-    borderRadius: 10,
+    borderRadius: 'var(--ds-radius-md)',
     objectFit: 'contain',
-    background: '#000',
+    background: 'var(--ds-color-image-bg)',
   },
   previewCloseButton: {
-    marginTop: 10,
+    marginTop: 8,
     width: '100%',
-    border: '1px solid #3b4552',
-    background: '#2a3038',
-    color: '#d0d8e0',
-    borderRadius: 8,
+    border: 'none',
+    background: 'var(--ds-color-surface-strong)',
+    color: 'var(--ds-color-text-muted)',
+    borderRadius: 'var(--ds-radius-sm)',
     padding: '8px 12px',
     cursor: 'pointer',
+    fontWeight: 500,
+  },
+  /* Add section — Amie minimal */
+  progressCard: {
+    background: 'var(--ds-color-surface)',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: 14,
   },
 };
