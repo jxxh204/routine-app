@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { Button, Card, Progress } from 'antd';
 
 import {
   addOneHourHHMM,
@@ -22,7 +23,7 @@ import {
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
-import { AppCard, GhostButton, PageShell, PrimaryButton } from '@/components/ui';
+import { PageShell } from '@/components/ui';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -759,28 +760,45 @@ export function TodayView() {
 
   return (
     <PageShell>
-      <section style={styles.pageSection}>
-        <div style={styles.headerWrap}>
-          <h1 style={styles.headerTitle}>{today}</h1>
-          <p style={styles.headerSub}>{doneCount}/{routines.length} 완료</p>
+      <section className="grid gap-4">
+        {/* Header */}
+        <div className="flex justify-between items-baseline">
+          <h1 className="m-0 text-[22px] font-semibold tracking-tight text-ds-text">
+            {today}
+          </h1>
+          <p className="m-0 text-[13px] text-ds-text-muted font-normal">
+            {doneCount}/{routines.length} 완료
+          </p>
         </div>
 
+        {/* Welcome Feedback */}
         {showWelcomeFeedback ? (
-          <AppCard>
-            <section style={styles.welcomeCard}>
-              <strong style={styles.welcomeTitle}>로그인 완료! 오늘 해야 할 루틴부터 시작하세요.</strong>
-              <p style={styles.welcomeDesc}>지금 가능한 루틴을 상단에서 바로 인증할 수 있어요.</p>
-            </section>
-          </AppCard>
+          <Card variant="borderless" styles={{ body: { padding: '14px', background: 'var(--ds-color-accent-soft)' } }}>
+            <strong className="block text-ds-accent-strong text-[13px] font-medium">
+              로그인 완료! 오늘 해야 할 루틴부터 시작하세요.
+            </strong>
+            <p className="mt-[2px] mb-0 text-ds-text-muted text-[12px]">
+              지금 가능한 루틴을 상단에서 바로 인증할 수 있어요.
+            </p>
+          </Card>
         ) : null}
 
-        <div style={styles.progressTrack}>
-          <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-        </div>
+        {/* Progress Bar */}
+        <Progress
+          percent={progress}
+          strokeColor="var(--ds-color-accent)"
+          showInfo={false}
+          strokeLinecap="round"
+          size="small"
+          className="mb-0"
+          styles={{
+            rail: { background: 'var(--ds-color-surface-strong)' }
+          }}
+        />
 
-        <section style={styles.boardSection}>
-
-          <section style={styles.list}>
+        {/* Routine List */}
+        <section className="grid gap-[6px]">
+          <div className="flex flex-col gap-[2px]">
             {orderedRoutines.map((routine) => {
               const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
               const isEditing = editingRoutineId === routine.id;
@@ -788,48 +806,59 @@ export function TodayView() {
 
               const card = (
                 <article
-                  className="routine-card-surface"
+                  className={`
+                    routine-card-surface relative z-[1] w-full flex flex-col gap-1
+                    border-0 rounded-ds-lg p-[12px_14px] box-border
+                    transition-all duration-300 ease-[var(--ds-ease)]
+                    ${inWindow 
+                      ? 'bg-ds-blue-soft border-l-[3px] border-l-ds-blue' 
+                      : 'bg-ds-surface'
+                    }
+                    ${canCertify ? 'cursor-pointer' : ''}
+                    ${swipedRoutineId === routine.id ? '-translate-x-[130px]' : ''}
+                  `}
                   onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
-                  style={{
-                    ...styles.item,
-                    ...(inWindow ? styles.itemActive : styles.itemInactive),
-                    ...(canCertify ? styles.itemClickable : {}),
-                    ...(swipedRoutineId === routine.id ? styles.itemSwiped : {}),
-                  }}
                 >
-                  <div style={styles.itemHead}>
-                    <p style={styles.itemTitle}>{routine.title}</p>
+                  <div className="w-full flex justify-between items-center gap-2">
+                    <p className="m-0 text-[14px] font-medium text-ds-text">
+                      {routine.title}
+                    </p>
                     <span
-                      style={{
-                        ...styles.checkTag,
-                        ...(canCertify
-                          ? styles.checkTagReady
+                      className={`
+                        inline-flex items-center justify-center h-[22px] rounded-ds-pill
+                        border-0 px-2 text-[11px] font-medium
+                        ${canCertify 
+                          ? 'bg-ds-blue-soft text-ds-blue'
                           : routine.doneByMe
-                            ? styles.checkTagDone
-                            : styles.checkTagWaiting),
-                      }}
+                            ? 'bg-ds-green-soft text-ds-green'
+                            : 'bg-ds-gray-soft text-ds-gray'
+                        }
+                      `}
                     >
                       {routine.doneByMe ? '완료' : canCertify ? '지금 인증' : '대기'}
                     </span>
                   </div>
 
-                  <div style={styles.itemBody}>
+                  <div className="w-full">
                     {isEditing ? (
-                      <div style={styles.inlineEditWrap} onClick={(event) => event.stopPropagation()}>
+                      <div className="grid gap-2" onClick={(event) => event.stopPropagation()}>
                         <input
-                          className="routine-title-input"
-                          style={styles.input}
+                          className="routine-title-input w-full h-10 bg-ds-bg text-ds-text
+                            border border-ds-border-strong rounded-ds-sm px-3 text-[14px]
+                            leading-10 box-border transition-[border-color] duration-300"
                           value={newTitle}
                           onChange={(e) => {
                             setFormError('');
                             setNewTitle(e.target.value);
                           }}
                         />
-                        <div style={styles.timeRow}>
-                          <div style={styles.timeFieldWrap}>
-                            <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>시작</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex items-center gap-[6px] min-w-0">
+                            <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
+                              시작
+                            </span>
                             <input
-                              style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
+                              className={`w-full bg-ds-bg text-ds-text border border-ds-border-strong rounded-ds-sm px-[10px] py-[7px] text-[14px] box-border min-w-0 ${isCompactLayout ? '!px-2 !py-[5px] !text-[13px]' : ''}`}
                               type="time"
                               value={newStart}
                               onChange={(e) => {
@@ -840,10 +869,12 @@ export function TodayView() {
                               }}
                             />
                           </div>
-                          <div style={styles.timeFieldWrap}>
-                            <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>종료</span>
+                          <div className="flex items-center gap-[6px] min-w-0">
+                            <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
+                              종료
+                            </span>
                             <input
-                              style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
+                              className={`w-full bg-ds-bg text-ds-text border border-ds-border-strong rounded-ds-sm px-[10px] py-[7px] text-[14px] box-border min-w-0 ${isCompactLayout ? '!px-2 !py-[5px] !text-[13px]' : ''}`}
                               type="time"
                               value={newEnd}
                               onChange={(e) => {
@@ -853,19 +884,27 @@ export function TodayView() {
                             />
                           </div>
                         </div>
-                        {formError ? <p style={styles.formError}>{formError}</p> : null}
-                        <div style={styles.inlineEditActions}>
-                          <GhostButton style={styles.inlineCancelButton} onClick={cancelInlineEdit}>취소</GhostButton>
-                          <PrimaryButton style={styles.inlineSaveButton} onClick={submitRoutineForm}>저장</PrimaryButton>
+                        {formError ? (
+                          <p className="m-0 text-ds-pink text-[12px]">{formError}</p>
+                        ) : null}
+                        <div className="grid grid-cols-2 gap-2 mt-[10px]">
+                          <Button onClick={cancelInlineEdit} className="w-full">
+                            취소
+                          </Button>
+                          <Button type="primary" onClick={submitRoutineForm} className="w-full">
+                            저장
+                          </Button>
                         </div>
                       </div>
                     ) : (
                       <>
-                        <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
-                        {/* 친구 상태는 후속 피처에서 재도입 */}
+                        <p className="mt-[2px] mb-0 text-[12px] text-ds-text-faint">
+                          인증 시간: {routine.timeRangeLabel}
+                        </p>
                         {routine.proofImage ? (
                           <div
-                            style={styles.thumbWrap}
+                            className="mt-[6px] w-14 h-14 rounded-ds-sm overflow-hidden relative"
+                            style={{ WebkitTouchCallout: 'none', userSelect: 'none' }}
                             onContextMenu={(event) => event.preventDefault()}
                             onTouchStart={() => startThumbLongPress(routine.id)}
                             onTouchEnd={cancelThumbLongPress}
@@ -879,11 +918,28 @@ export function TodayView() {
                             }}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element -- base64 proof image, next/image incompatible */}
-                            <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
+                            <img
+                              src={routine.proofImage}
+                              alt={`${routine.title} 인증 사진`}
+                              className="w-full h-full object-cover pointer-events-none"
+                            />
                             {thumbMenuRoutineId === routine.id ? (
-                              <div style={styles.thumbMenu}>
-                                <PrimaryButton style={styles.thumbMenuButton} onClick={() => retakeRoutinePhoto(routine.id)}>다시찍기</PrimaryButton>
-                                <GhostButton style={styles.thumbMenuCancel} onClick={() => setThumbMenuRoutineId(null)}>닫기</GhostButton>
+                              <div className="absolute inset-0 bg-[var(--ds-color-overlay-thumb)] flex flex-col justify-center gap-1 p-1">
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  onClick={() => retakeRoutinePhoto(routine.id)}
+                                  className="!text-[10px] !h-auto !py-[3px] !px-[6px]"
+                                >
+                                  다시찍기
+                                </Button>
+                                <Button
+                                  size="small"
+                                  onClick={() => setThumbMenuRoutineId(null)}
+                                  className="!text-[10px] !h-auto !py-[3px] !px-[6px]"
+                                >
+                                  닫기
+                                </Button>
                               </div>
                             ) : null}
                           </div>
@@ -897,54 +953,72 @@ export function TodayView() {
               return (
                 <div
                   key={routine.id}
-                  className="routine-card-surface"
-                  style={styles.swipeWrap}
+                  className="routine-card-surface relative overflow-hidden rounded-ds-lg touch-pan-y"
                   onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
                   onTouchEnd={handleRoutineTouchEnd}
                 >
-                  <div className="routine-card-surface" style={styles.actionWrap}>
-                    <GhostButton style={styles.editButton} onClick={() => startEditRoutine(routine.id)}>수정</GhostButton>
+                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-[6px] bg-ds-surface-strong rounded-ds-lg z-0">
+                    <Button
+                      onClick={() => startEditRoutine(routine.id)}
+                      className="!border-0 !bg-ds-accent-soft !text-ds-accent !text-[12px] !font-medium"
+                    >
+                      수정
+                    </Button>
                     {!routine.isDefault ? (
-                      <GhostButton style={styles.deleteButton} onClick={() => removeRoutine(routine.id)}>삭제</GhostButton>
+                      <Button
+                        onClick={() => removeRoutine(routine.id)}
+                        className="!border-0 !bg-ds-pink-soft !text-ds-pink !text-[12px] !font-medium"
+                      >
+                        삭제
+                      </Button>
                     ) : null}
                   </div>
                   {card}
                 </div>
               );
             })}
-          </section>
+          </div>
         </section>
 
-        <AppCard>
-          <section style={{ ...styles.progressCard, ...styles.addSection }}>
-            <div style={styles.addHeaderRow}>
-              <div>
-                <p style={styles.sectionLabel}>루틴 추가</p>
-                <p style={{ ...styles.meta, margin: 0 }}>새로운 루틴을 추가하세요.</p>
-              </div>
-              <GhostButton
-                style={{ ...(isAddFormOpen ? styles.addToggleButtonNeutral : styles.addToggleButton) }}
-                onClick={() => {
-                  if (isAddFormOpen) {
-                    setFormError('');
-                    setNewTitle('');
-                    setNewStart('09:00');
-                    setNewEnd('10:00');
-                  } else {
-                    cancelInlineEdit();
-                  }
-                  setIsAddFormOpen((prev) => !prev);
-                }}
-              >
-                {isAddFormOpen ? '닫기' : '+ 추가'}
-              </GhostButton>
+        {/* Add Routine Section */}
+        <Card variant="borderless" styles={{ body: { padding: '14px' } }}>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="m-0 text-[11px] text-ds-text-faint font-medium">
+                루틴 추가
+              </p>
+              <p className="m-0 text-[12px] text-ds-text-muted">
+                새로운 루틴을 추가하세요.
+              </p>
             </div>
+            <Button
+              className={`!border-0 !rounded-ds-pill !px-3 !py-[5px] !text-[12px] !font-medium !h-auto ${
+                isAddFormOpen
+                  ? '!bg-ds-surface-strong !text-ds-text-muted'
+                  : '!bg-ds-accent-soft !text-ds-accent'
+              }`}
+              onClick={() => {
+                if (isAddFormOpen) {
+                  setFormError('');
+                  setNewTitle('');
+                  setNewStart('09:00');
+                  setNewEnd('10:00');
+                } else {
+                  cancelInlineEdit();
+                }
+                setIsAddFormOpen((prev) => !prev);
+              }}
+            >
+              {isAddFormOpen ? '닫기' : '+ 추가'}
+            </Button>
+          </div>
 
-            {isAddFormOpen ? (
-              <div style={styles.addRow}>
+          {isAddFormOpen ? (
+            <div className="flex flex-col gap-2 mt-2">
                 <input
-                  className="routine-title-input"
-                  style={styles.input}
+                  className="routine-title-input w-full h-10 bg-ds-bg text-ds-text
+                    border border-ds-border-strong rounded-ds-sm px-3 text-[14px]
+                    leading-10 box-border transition-[border-color] duration-300"
                   placeholder="예: 독서 인증"
                   value={newTitle}
                   onChange={(e) => {
@@ -952,11 +1026,13 @@ export function TodayView() {
                     setNewTitle(e.target.value);
                   }}
                 />
-                <div style={styles.timeRow}>
-                  <div style={styles.timeFieldWrap}>
-                    <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>시작</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-[6px] min-w-0">
+                    <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
+                      시작
+                    </span>
                     <input
-                      style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
+                      className={`w-full bg-ds-bg text-ds-text border border-ds-border-strong rounded-ds-sm px-[10px] py-[7px] text-[14px] box-border min-w-0 ${isCompactLayout ? '!px-2 !py-[5px] !text-[13px]' : ''}`}
                       type="time"
                       value={newStart}
                       onChange={(e) => {
@@ -967,10 +1043,12 @@ export function TodayView() {
                       }}
                     />
                   </div>
-                  <div style={styles.timeFieldWrap}>
-                    <span style={{ ...styles.timeFieldLabel, ...(isCompactLayout ? styles.timeFieldLabelCompact : {}) }}>종료</span>
+                  <div className="flex items-center gap-[6px] min-w-0">
+                    <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
+                      종료
+                    </span>
                     <input
-                      style={{ ...styles.inputTime, ...(isCompactLayout ? styles.inputTimeCompact : {}) }}
+                      className={`w-full bg-ds-bg text-ds-text border border-ds-border-strong rounded-ds-sm px-[10px] py-[7px] text-[14px] box-border min-w-0 ${isCompactLayout ? '!px-2 !py-[5px] !text-[13px]' : ''}`}
                       type="time"
                       value={newEnd}
                       onChange={(e) => {
@@ -980,13 +1058,18 @@ export function TodayView() {
                     />
                   </div>
                 </div>
-                {formError ? <p style={styles.formError}>{formError}</p> : null}
-                <div style={styles.addActionRow}>
-                  <PrimaryButton style={styles.addButtonFull} onClick={submitRoutineForm}>
+                {formError ? (
+                  <p className="m-0 text-ds-pink text-[12px]">{formError}</p>
+                ) : null}
+                <div className="flex flex-col gap-[6px]">
+                  <Button
+                    type="primary"
+                    onClick={submitRoutineForm}
+                    className="w-full !text-[13px] !font-medium"
+                  >
                     추가
-                  </PrimaryButton>
-                  <GhostButton
-                    style={styles.cancelButton}
+                  </Button>
+                  <Button
                     onClick={() => {
                       setFormError('');
                       setNewTitle('');
@@ -994,14 +1077,14 @@ export function TodayView() {
                       setNewEnd('10:00');
                       setIsAddFormOpen(false);
                     }}
+                    className="w-full !bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[13px]"
                   >
                     취소
-                  </GhostButton>
+                  </Button>
                 </div>
               </div>
             ) : null}
-          </section>
-        </AppCard>
+        </Card>
 
       <input
         ref={fileInputRef}
@@ -1013,11 +1096,26 @@ export function TodayView() {
       />
 
       {previewImage ? (
-        <section style={styles.previewOverlay} onClick={() => setPreviewImage(null)}>
-          <div style={styles.previewCard} onClick={(event) => event.stopPropagation()}>
+        <section
+          className="fixed inset-0 bg-[var(--ds-color-overlay-heavy)] flex items-center justify-center p-4 z-30 backdrop-blur-[12px]"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="w-full max-w-[420px] rounded-ds-lg bg-ds-surface p-[10px]"
+            onClick={(event) => event.stopPropagation()}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element -- base64 proof image, next/image incompatible */}
-            <img src={previewImage} alt="인증 사진 확대" style={styles.previewImage} />
-            <GhostButton style={styles.previewCloseButton} onClick={() => setPreviewImage(null)}>닫기</GhostButton>
+            <img
+              src={previewImage}
+              alt="인증 사진 확대"
+              className="w-full max-h-[70vh] rounded-ds-md object-contain bg-[var(--ds-color-image-bg)]"
+            />
+            <Button
+              onClick={() => setPreviewImage(null)}
+              className="mt-2 w-full !border-0 !bg-ds-surface-strong !text-ds-text-muted !font-medium"
+            >
+              닫기
+            </Button>
           </div>
         </section>
       ) : null}
@@ -1035,391 +1133,3 @@ export function TodayView() {
     </PageShell>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  pageSection: {
-    display: 'grid',
-    gap: 16,
-  },
-  /* Amie-style header: date as title, completion as subtitle */
-  headerWrap: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  headerTitle: {
-    margin: 0,
-    fontSize: 22,
-    fontWeight: 600,
-    letterSpacing: '-0.02em',
-    color: 'var(--ds-color-text)',
-  },
-  headerSub: {
-    margin: 0,
-    fontSize: 13,
-    color: 'var(--ds-color-text-muted)',
-    fontWeight: 400,
-  },
-  sectionLabel: {
-    margin: 0,
-    fontSize: 11,
-    color: 'var(--ds-color-text-faint)',
-    fontWeight: 500,
-  },
-  /* Progress bar — Amie thin strip, no card */
-  progressTrack: {
-    height: 3,
-    background: 'var(--ds-color-surface-strong)',
-    borderRadius: 'var(--ds-radius-pill)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    background: 'var(--ds-color-accent)',
-    borderRadius: 'var(--ds-radius-pill)',
-    transition: 'width 0.5s var(--ds-ease)',
-  },
-  boardSection: {
-    display: 'grid',
-    gap: 6,
-  },
-  welcomeCard: {
-    background: 'var(--ds-color-accent-soft)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: 14,
-  },
-  welcomeTitle: {
-    display: 'block',
-    color: 'var(--ds-color-accent-strong)',
-    fontSize: 13,
-    fontWeight: 500,
-  },
-  welcomeDesc: {
-    margin: '2px 0 0',
-    color: 'var(--ds-color-text-muted)',
-    fontSize: 12,
-  },
-  addSection: {},
-  syncText: {
-    margin: '4px 0 0',
-    fontSize: 11,
-    color: 'var(--ds-color-text-faint)',
-  },
-  addHeaderRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  addToggleButton: {
-    background: 'var(--ds-color-accent-soft)',
-    color: 'var(--ds-color-accent)',
-    border: 'none',
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '5px 12px',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 500,
-  },
-  addToggleButtonNeutral: {
-    background: 'var(--ds-color-surface-strong)',
-    color: 'var(--ds-color-text-muted)',
-    border: 'none',
-  },
-  addRow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-    marginTop: 8,
-  },
-  input: {
-    width: '100%',
-    height: 40,
-    background: 'var(--ds-color-bg)',
-    color: 'var(--ds-color-text)',
-    border: '1px solid var(--ds-color-border-strong)',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '0 12px',
-    fontSize: 14,
-    lineHeight: '40px',
-    boxSizing: 'border-box',
-    transition: 'border-color var(--ds-duration) var(--ds-ease)',
-  },
-  timeRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 8,
-  },
-  timeFieldWrap: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    minWidth: 0,
-  },
-  timeFieldLabel: {
-    color: 'var(--ds-color-text-faint)',
-    fontSize: 11,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-    fontWeight: 500,
-  },
-  timeFieldLabelCompact: { fontSize: 10 },
-  inputTime: {
-    width: '100%',
-    background: 'var(--ds-color-bg)',
-    color: 'var(--ds-color-text)',
-    border: '1px solid var(--ds-color-border-strong)',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '7px 10px',
-    fontSize: 14,
-    boxSizing: 'border-box',
-    minWidth: 0,
-  },
-  inputTimeCompact: { padding: '5px 8px', fontSize: 13 },
-  addActionRow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-  },
-  formError: {
-    margin: 0,
-    color: 'var(--ds-color-pink)',
-    fontSize: 12,
-  },
-  addButtonFull: {
-    width: '100%',
-    background: 'var(--ds-color-accent)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '9px 12px',
-    cursor: 'pointer',
-    fontWeight: 500,
-    fontSize: 13,
-  },
-  cancelButton: {
-    background: 'var(--ds-color-surface-strong)',
-    color: 'var(--ds-color-text-muted)',
-    border: 'none',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '8px 12px',
-    cursor: 'pointer',
-    fontSize: 13,
-  },
-  /* Routine list */
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  },
-  swipeWrap: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: 'var(--ds-radius-lg)',
-    touchAction: 'pan-y',
-  },
-  actionWrap: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 130,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    background: 'var(--ds-color-surface-strong)',
-    borderRadius: 'var(--ds-radius-lg)',
-    zIndex: 0,
-  },
-  /* Routine card — Amie event block style */
-  item: {
-    position: 'relative',
-    zIndex: 1,
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-    background: 'var(--ds-color-surface)',
-    border: 'none',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: '12px 14px',
-    boxSizing: 'border-box',
-    transition: 'all var(--ds-duration) var(--ds-ease)',
-  },
-  itemSwiped: {
-    transform: 'translateX(-130px)',
-  },
-  /* Active — Amie uses colored left border or tinted bg */
-  itemActive: {
-    background: 'var(--ds-color-blue-soft)',
-    borderLeft: '3px solid var(--ds-color-blue)',
-  },
-  itemInactive: {
-    background: 'var(--ds-color-surface)',
-  },
-  itemClickable: {
-    cursor: 'pointer',
-  },
-  /* Status pills */
-  checkTag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 22,
-    borderRadius: 'var(--ds-radius-pill)',
-    border: 'none',
-    background: 'var(--ds-color-surface-strong)',
-    color: 'var(--ds-color-text-muted)',
-    padding: '0 8px',
-    fontSize: 11,
-    fontWeight: 500,
-  },
-  checkTagReady: {
-    background: 'var(--ds-color-blue-soft)',
-    color: 'var(--ds-color-blue)',
-  },
-  checkTagWaiting: {
-    background: 'var(--ds-color-gray-soft)',
-    color: 'var(--ds-color-gray)',
-  },
-  checkTagDone: {
-    background: 'var(--ds-color-green-soft)',
-    color: 'var(--ds-color-green)',
-  },
-  editButton: {
-    border: 'none',
-    background: 'var(--ds-color-accent-soft)',
-    color: 'var(--ds-color-accent)',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '5px 10px',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 500,
-  },
-  deleteButton: {
-    border: 'none',
-    background: 'var(--ds-color-pink-soft)',
-    color: 'var(--ds-color-pink)',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '5px 10px',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 500,
-  },
-  itemHead: {
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
-  itemBody: { width: '100%' },
-  inlineEditWrap: { display: 'grid', gap: 8 },
-  inlineEditActions: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 8,
-    marginTop: 10,
-  },
-  inlineSaveButton: { width: '100%' },
-  inlineCancelButton: { width: '100%' },
-  itemTitle: {
-    margin: 0,
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--ds-color-text)',
-  },
-  meta: {
-    margin: '2px 0 0',
-    fontSize: 12,
-    color: 'var(--ds-color-text-faint)',
-  },
-  /* Proof thumbnail */
-  thumbWrap: {
-    marginTop: 6,
-    width: 56,
-    height: 56,
-    borderRadius: 'var(--ds-radius-sm)',
-    overflow: 'hidden',
-    position: 'relative',
-    WebkitTouchCallout: 'none',
-    userSelect: 'none',
-  },
-  thumbImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    pointerEvents: 'none',
-  },
-  thumbMenu: {
-    position: 'absolute',
-    inset: 0,
-    background: 'var(--ds-color-overlay-thumb)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: 4,
-    padding: 4,
-  },
-  thumbMenuButton: {
-    border: 'none',
-    background: 'var(--ds-color-accent-soft)',
-    color: 'var(--ds-color-accent)',
-    borderRadius: 4,
-    padding: '3px 6px',
-    fontSize: 10,
-    cursor: 'pointer',
-    fontWeight: 500,
-  },
-  thumbMenuCancel: {
-    border: 'none',
-    background: 'var(--ds-color-surface-strong)',
-    color: 'var(--ds-color-text-muted)',
-    borderRadius: 4,
-    padding: '3px 6px',
-    fontSize: 10,
-    cursor: 'pointer',
-  },
-  previewOverlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'var(--ds-color-overlay-heavy)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    zIndex: 30,
-    backdropFilter: 'blur(12px)',
-  },
-  previewCard: {
-    width: '100%',
-    maxWidth: 420,
-    borderRadius: 'var(--ds-radius-lg)',
-    background: 'var(--ds-color-surface)',
-    padding: 10,
-  },
-  previewImage: {
-    width: '100%',
-    maxHeight: '70vh',
-    borderRadius: 'var(--ds-radius-md)',
-    objectFit: 'contain',
-    background: 'var(--ds-color-image-bg)',
-  },
-  previewCloseButton: {
-    marginTop: 8,
-    width: '100%',
-    border: 'none',
-    background: 'var(--ds-color-surface-strong)',
-    color: 'var(--ds-color-text-muted)',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '8px 12px',
-    cursor: 'pointer',
-    fontWeight: 500,
-  },
-  /* Add section — Amie minimal */
-  progressCard: {
-    background: 'var(--ds-color-surface)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: 14,
-  },
-};
