@@ -62,16 +62,16 @@ const appTheme: MD3Theme = {
   roundness: CARD_RADIUS,
   colors: {
     ...MD3DarkTheme.colors,
-    primary: '#7cffb2',
-    onPrimary: '#0f1115',
-    secondary: '#c4cfda',
-    background: '#0f1115',
-    surface: '#161b21',
-    surfaceVariant: '#1f2730',
-    outline: '#334050',
-    onSurface: '#f5f7fa',
-    onSurfaceVariant: '#9aa4af',
-    error: '#ff9ba8',
+    primary: '#0EA5E9',
+    onPrimary: '#ffffff',
+    secondary: '#98989D',
+    background: '#141414',
+    surface: '#1C1C1E',
+    surfaceVariant: '#2C2C2E',
+    outline: 'rgba(255,255,255,0.08)',
+    onSurface: '#F5F5F7',
+    onSurfaceVariant: '#98989D',
+    error: '#F472B6',
   },
 };
 
@@ -400,11 +400,11 @@ function Onboarding({ onDone }: { onDone: () => void }) {
           </Card.Content>
         </Card>
 
-        <Button mode="contained" buttonColor="#1f3a2d" textColor="#7cffb2" onPress={requestPermission} loading={busy} disabled={busy}>
+        <Button mode="contained" buttonColor="#0EA5E9" textColor="#ffffff" onPress={requestPermission} loading={busy} disabled={busy}>
           {busy ? '처리 중...' : '알림 권한 허용하고 시작'}
         </Button>
 
-        <Button mode="outlined" textColor="#c4cfda" onPress={() => void Linking.openSettings()}>
+        <Button mode="outlined" textColor="#98989D" onPress={() => void Linking.openSettings()}>
           설정 열기
         </Button>
       </ScrollView>
@@ -516,7 +516,7 @@ function AppContent() {
     return (
       <SafeAreaView edges={['top']} style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#7cffb2" />
+          <ActivityIndicator size="large" color="#0EA5E9" />
         </View>
       </SafeAreaView>
     );
@@ -557,7 +557,7 @@ function AppContent() {
         }}
         renderLoading={() => (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#7cffb2" />
+            <ActivityIndicator size="large" color="#0EA5E9" />
           </View>
         )}
         injectedJavaScript={getWebviewCompletionSyncScript()}
@@ -609,20 +609,11 @@ function AppContent() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
-      {!isAuthScreen ? (
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Routine Challenge</Text>
-          <Text style={styles.headerSub}>
-            {activeTab === 'today' ? '오늘 인증' : activeTab === 'calendar' ? '캘린더' : '알림/권한 설정'}
-          </Text>
-        </View>
-      ) : null}
-
       <View style={[styles.body, !isAuthScreen ? styles.bodyWithTabBarInset : undefined]}>
         {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
       </View>
 
-      {!isAuthScreen ? <View style={[styles.tabBar, { bottom: 16 + Math.max(insets.bottom, 0) }]}>
+      {!isAuthScreen ? <View style={[styles.tabBar, { bottom: 8 + Math.max(insets.bottom, 0) }]}>
         {[
           { key: 'today' as const, label: '오늘', icon: 'check-circle' },
           { key: 'calendar' as const, label: '캘린더', icon: 'calendar' },
@@ -637,9 +628,9 @@ function AppContent() {
             >
               <IconButton
                 icon={tab.icon}
-                size={18}
+                size={20}
                 style={styles.tabIconBtn}
-                iconColor={active ? '#ffb278' : '#a6afbb'}
+                iconColor={active ? '#0EA5E9' : '#636366'}
               />
               <Text style={[styles.tabLabel, active ? styles.tabLabelActive : undefined]}>{tab.label}</Text>
             </TouchableOpacity>
@@ -675,7 +666,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1115',
+    backgroundColor: '#141414',
   },
   center: {
     flex: 1,
@@ -683,30 +674,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  header: {
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2a3240',
-    backgroundColor: '#10141d',
-  },
-  headerTitle: {
-    color: '#f4f7ff',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  headerSub: {
-    marginTop: 4,
-    color: '#9ba5b5',
-    fontSize: 12,
-  },
+  /* header removed — web pages have their own headers */
   body: {
     flex: 1,
   },
   bodyWithTabBarInset: {
-    paddingBottom: 84,
+    paddingBottom: 72,
   },
   bodyScroll: {
     padding: 16,
@@ -715,15 +688,15 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#0f1115',
+    backgroundColor: '#141414',
   },
   card: {
-    backgroundColor: '#161b21',
+    backgroundColor: '#1C1C1E',
     borderRadius: CARD_RADIUS,
     overflow: 'hidden',
   },
   sectionTitle: {
-    color: '#f5f7fa',
+    color: '#F5F5F7',
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 10,
@@ -735,11 +708,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   separator: {
-    color: '#93a0af',
+    color: '#636366',
     fontSize: 16,
   },
   routineCard: {
-    backgroundColor: '#161b21',
+    backgroundColor: '#1C1C1E',
     borderRadius: CARD_RADIUS,
     overflow: 'hidden',
   },
@@ -748,12 +721,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   routineTitle: {
-    color: '#f5f7fa',
+    color: '#F5F5F7',
     fontSize: 15,
     fontWeight: '700',
   },
   routineMeta: {
-    color: '#9aa4af',
+    color: '#98989D',
     fontSize: 12,
     marginTop: 4,
   },
@@ -781,7 +754,7 @@ const styles = StyleSheet.create({
   calendarWeekLabel: {
     width: '13.5%',
     textAlign: 'center',
-    color: '#8e99a7',
+    color: '#636366',
     fontSize: 12,
   },
   calendarGrid: {
@@ -794,8 +767,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2b3138',
-    backgroundColor: '#11151a',
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#141414',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
@@ -804,37 +777,37 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   calendarCellDone: {
-    borderColor: '#2e664d',
-    backgroundColor: '#1b2a22',
+    borderColor: 'rgba(14,165,233,0.3)',
+    backgroundColor: 'rgba(14,165,233,0.08)',
   },
   calendarCellToday: {
-    borderColor: '#7cffb2',
+    borderColor: '#0EA5E9',
     borderWidth: 2,
   },
   calendarDateText: {
-    color: '#e7edf4',
+    color: '#F5F5F7',
     fontSize: 13,
     fontWeight: '600',
   },
   calendarDoneDot: {
     marginTop: 2,
-    color: '#7cffb2',
+    color: '#0EA5E9',
     fontSize: 10,
   },
   calendarModalWrap: {
     marginHorizontal: 20,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: '#2b3138',
-    backgroundColor: '#161b21',
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#1C1C1E',
     padding: 16,
     gap: 10,
   },
   calendarDoneItem: {
     borderWidth: 1,
-    borderColor: '#2b3138',
+    borderColor: 'rgba(255,255,255,0.08)',
     borderRadius: 10,
-    backgroundColor: '#11151a',
+    backgroundColor: '#141414',
     padding: 10,
     marginBottom: 6,
   },
@@ -848,48 +821,52 @@ const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     alignSelf: 'center',
-    width: '92%',
-    maxWidth: 400,
-    height: 50,
-    borderRadius: 999,
-    backgroundColor: '#10141d',
+    width: '88%',
+    maxWidth: 380,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#1C1C1E',
     borderWidth: 1,
-    borderColor: '#2a3240',
-    padding: 4,
+    borderColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   tabItem: {
     flex: 1,
-    height: '100%',
-    borderRadius: 40,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
   },
   tabItemActive: {
-    backgroundColor: '#2f1e11',
-    borderWidth: 1,
-    borderColor: '#6b421f',
+    backgroundColor: 'rgba(14, 165, 233, 0.12)',
   },
   tabIconBtn: {
     margin: 0,
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
   },
   tabLabel: {
     marginTop: 1,
-    fontSize: 11,
-    color: '#a6afbb',
+    fontSize: 10,
+    color: '#636366',
+    fontWeight: '500',
     lineHeight: 12,
   },
   tabLabelActive: {
-    color: '#ffb278',
-    fontWeight: '700',
+    color: '#0EA5E9',
+    fontWeight: '600',
   },
   toast: {
-    backgroundColor: '#1f2730',
+    backgroundColor: '#2C2C2E',
     borderRadius: CARD_RADIUS,
   },
   toastText: {
@@ -900,11 +877,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 8,
     textAlign: 'center',
-    color: '#f5f7fa',
+    color: '#F5F5F7',
   },
   errorText: {
     fontSize: 14,
-    color: '#9aa4af',
+    color: '#98989D',
     textAlign: 'center',
   },
   onboardingWrap: {
@@ -916,26 +893,26 @@ const styles = StyleSheet.create({
   onboardingTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#f5f7fa',
+    color: '#F5F5F7',
   },
   onboardingDesc: {
-    color: '#9aa4af',
+    color: '#98989D',
     fontSize: 14,
     lineHeight: 20,
   },
   bullet: {
-    color: '#d3dbe4',
+    color: '#F5F5F7',
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 6,
   },
   paperInput: {
     marginBottom: 10,
-    backgroundColor: '#11151a',
+    backgroundColor: '#141414',
   },
   paperInputTime: {
     flex: 1,
-    backgroundColor: '#11151a',
+    backgroundColor: '#141414',
   },
   settingsButton: {
     marginHorizontal: 8,
