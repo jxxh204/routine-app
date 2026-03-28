@@ -270,9 +270,10 @@ async function scheduleDefaultNotifications(settings: NotificationSettings, rout
 // ---------------------------------------------------------------------------
 // WebView bridge script
 // ---------------------------------------------------------------------------
-function getWebviewCompletionSyncScript() {
+function getWebviewCompletionSyncScript(tabKey: string) {
   return `
     (function() {
+      var TAB_KEY = '${tabKey}';
       var PREFIX = 'routine-challenge-v1:';
       var DATE_RE = /^\\d{4}-\\d{2}-\\d{2}$/;
       function post(p) { try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(p)); } catch(e) {} }
@@ -295,7 +296,7 @@ function getWebviewCompletionSyncScript() {
         return r;
       }
       function sendHistory() { post({source:'routine-webview',type:'completion-history',history:toHistory()}); }
-      function sendRoute() { post({source:'routine-webview',type:'route-path',path:window.location.pathname||'/'}); }
+      function sendRoute() { post({source:'routine-webview',type:'route-path',tab:TAB_KEY,path:window.location.pathname||'/'}); }
       var oPS = history.pushState; history.pushState = function(){ oPS.apply(history,arguments); sendRoute(); };
       var oRS = history.replaceState; history.replaceState = function(){ oRS.apply(history,arguments); sendRoute(); };
       window.addEventListener('popstate', sendRoute);
@@ -467,11 +468,17 @@ function AppContent() {
     }
   }, [settings, routines]);
 
+  // Track active tab in a ref so handleWebMessage doesn't need activeTab in deps
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+
   const handleWebMessage = useCallback((event: { nativeEvent: { data: string } }) => {
     try {
       const p = JSON.parse(event.nativeEvent.data ?? '{}') as Record<string, unknown>;
 
       if (p.source === 'routine-webview' && p.type === 'route-path' && typeof p.path === 'string') {
+        // Only update currentWebPath from the ACTIVE tab's WebView to prevent flicker
+        if (typeof p.tab === 'string' && p.tab !== activeTabRef.current) return;
         setCurrentWebPath(p.path);
         return;
       }
@@ -503,10 +510,9 @@ function AppContent() {
     return false;
   }, [isAuthScreen]);
 
-  const webviewProps = useMemo(() => ({
+  const sharedWebviewProps = useMemo(() => ({
     originWhitelist: ['https://*'] as string[],
     startInLoadingState: true,
-    injectedJavaScript: getWebviewCompletionSyncScript(),
     onMessage: handleWebMessage,
     onShouldStartLoadWithRequest: handleShouldStartLoad,
     renderLoading: () => (
@@ -560,10 +566,11 @@ function AppContent() {
             <WebView
               style={styles.webview}
               source={{ uri: `${parsedUrl?.origin ?? ''}${tab.path}` }}
+              injectedJavaScript={getWebviewCompletionSyncScript(tab.key)}
               onNavigationStateChange={(navState) => {
                 if (activeTab === tab.key) handleWebviewPathUpdate(navState.url);
               }}
-              {...webviewProps}
+              {...sharedWebviewProps}
             />
           </View>
         ))}
