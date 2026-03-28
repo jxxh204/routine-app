@@ -36,12 +36,9 @@ export default function FriendsPage() {
     setRows(res.data);
   };
 
+  // ✅ Simplified: useEffect already runs after paint, setTimeout(0) was redundant
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void refresh();
-    }, 0);
-
-    return () => window.clearTimeout(timer);
+    void refresh();
   }, []);
 
   const onSend = async () => {

@@ -29,7 +29,8 @@ function readHistory() {
 }
 
 export default function CalendarPage() {
-  const history = useMemo(() => readHistory(), []);
+  // ✅ useState initializer runs once — correct for localStorage reads
+  const [history] = useState(() => readHistory());
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row.items])), [history]);
 
   const [month, setMonth] = useState(new Date());

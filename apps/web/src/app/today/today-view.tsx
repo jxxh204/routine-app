@@ -371,10 +371,12 @@ export function TodayView() {
     saveDefaultRoutines(routines);
   }, [routines]);
 
-  const refreshFromSupabase = useCallback(async () => {
-    setRoutines((prev) => prev);
+  // ✅ Use ref to access latest routines without re-creating callback
+  const routinesRef = useRef(routines);
+  routinesRef.current = routines;
 
-    const synced = await syncTodayFromSupabase(routines);
+  const refreshFromSupabase = useCallback(async () => {
+    const synced = await syncTodayFromSupabase(routinesRef.current);
 
     if (!synced) {
       setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
@@ -383,7 +385,7 @@ export function TodayView() {
 
     setRoutines(synced);
     setSyncMessage('Supabase 동기화됨');
-  }, [routines]);
+  }, []);
 
   useEffect(() => {
     const kickoff = setTimeout(() => {
@@ -493,19 +495,15 @@ export function TodayView() {
     void hydrateProofImages();
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (thumbLongPressTimerRef.current) {
-        window.clearTimeout(thumbLongPressTimerRef.current);
-      }
-    };
+  // ✅ Cleanup on unmount — combined into single ref cleanup
+  // thumbLongPressTimerRef is cleaned up by cancelThumbLongPress handlers;
+  // unmount cleanup kept inline for safety
+  useEffect(() => () => {
+    if (thumbLongPressTimerRef.current) window.clearTimeout(thumbLongPressTimerRef.current);
   }, []);
 
-  const doneCount = useMemo(
-    () => routines.filter((routine) => routine.doneByMe).length,
-    [routines],
-  );
-
+  // ✅ Derived values: calculated during rendering (no state/effect needed)
+  const doneCount = routines.filter((routine) => routine.doneByMe).length;
   const progress = routines.length > 0 ? Math.round((doneCount / routines.length) * 100) : 0;
 
   const orderedRoutines = useMemo(() => {
@@ -751,11 +749,12 @@ export function TodayView() {
     setSwipedRoutineId(null);
   };
 
-  const today = new Date().toLocaleDateString('ko-KR', {
+  // ✅ Stable within session — memoized to avoid locale formatting on every render
+  const today = useMemo(() => new Date().toLocaleDateString('ko-KR', {
     month: 'long',
     day: 'numeric',
     weekday: 'short',
-  });
+  }), []);
 
   return (
     <PageShell>
