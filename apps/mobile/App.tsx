@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import React, { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, LogBox, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
   Card,
@@ -730,9 +730,11 @@ class ErrorBoundary extends Component<
 export default function App() {
   return (
     <ErrorBoundary>
-      <PaperProvider theme={appTheme}>
-        <AppContent />
-      </PaperProvider>
+      <SafeAreaProvider>
+        <PaperProvider theme={appTheme}>
+          <AppContent />
+        </PaperProvider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }
