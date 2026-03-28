@@ -22,7 +22,7 @@ import {
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
-import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader } from '@/components/ui';
+import { AppCard, GhostButton, PageShell, PrimaryButton } from '@/components/ui';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -371,10 +371,12 @@ export function TodayView() {
     saveDefaultRoutines(routines);
   }, [routines]);
 
-  const refreshFromSupabase = useCallback(async () => {
-    setRoutines((prev) => prev);
+  // ✅ Use ref to access latest routines without re-creating callback
+  const routinesRef = useRef(routines);
+  useEffect(() => { routinesRef.current = routines; }, [routines]);
 
-    const synced = await syncTodayFromSupabase(routines);
+  const refreshFromSupabase = useCallback(async () => {
+    const synced = await syncTodayFromSupabase(routinesRef.current);
 
     if (!synced) {
       setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
@@ -383,7 +385,7 @@ export function TodayView() {
 
     setRoutines(synced);
     setSyncMessage('Supabase 동기화됨');
-  }, [routines]);
+  }, []);
 
   useEffect(() => {
     const kickoff = setTimeout(() => {
@@ -491,21 +493,18 @@ export function TodayView() {
     };
 
     void hydrateProofImages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; routines read via closure at mount time
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (thumbLongPressTimerRef.current) {
-        window.clearTimeout(thumbLongPressTimerRef.current);
-      }
-    };
+  // ✅ Cleanup on unmount — combined into single ref cleanup
+  // thumbLongPressTimerRef is cleaned up by cancelThumbLongPress handlers;
+  // unmount cleanup kept inline for safety
+  useEffect(() => () => {
+    if (thumbLongPressTimerRef.current) window.clearTimeout(thumbLongPressTimerRef.current);
   }, []);
 
-  const doneCount = useMemo(
-    () => routines.filter((routine) => routine.doneByMe).length,
-    [routines],
-  );
-
+  // ✅ Derived values: calculated during rendering (no state/effect needed)
+  const doneCount = routines.filter((routine) => routine.doneByMe).length;
   const progress = routines.length > 0 ? Math.round((doneCount / routines.length) * 100) : 0;
 
   const orderedRoutines = useMemo(() => {
@@ -751,11 +750,12 @@ export function TodayView() {
     setSwipedRoutineId(null);
   };
 
-  const today = new Date().toLocaleDateString('ko-KR', {
+  // ✅ Stable within session — memoized to avoid locale formatting on every render
+  const today = useMemo(() => new Date().toLocaleDateString('ko-KR', {
     month: 'long',
     day: 'numeric',
     weekday: 'short',
-  });
+  }), []);
 
   return (
     <PageShell>
@@ -878,6 +878,7 @@ export function TodayView() {
                               setPreviewImage(routine.proofImage ?? null);
                             }}
                           >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- base64 proof image, next/image incompatible */}
                             <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
                             {thumbMenuRoutineId === routine.id ? (
                               <div style={styles.thumbMenu}>
@@ -1014,6 +1015,7 @@ export function TodayView() {
       {previewImage ? (
         <section style={styles.previewOverlay} onClick={() => setPreviewImage(null)}>
           <div style={styles.previewCard} onClick={(event) => event.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- base64 proof image, next/image incompatible */}
             <img src={previewImage} alt="인증 사진 확대" style={styles.previewImage} />
             <GhostButton style={styles.previewCloseButton} onClick={() => setPreviewImage(null)}>닫기</GhostButton>
           </div>

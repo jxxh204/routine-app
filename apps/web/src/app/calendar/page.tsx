@@ -29,7 +29,8 @@ function readHistory() {
 }
 
 export default function CalendarPage() {
-  const history = useMemo(() => readHistory(), []);
+  // ✅ useState initializer runs once — correct for localStorage reads
+  const [history] = useState(() => readHistory());
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row.items])), [history]);
 
   const [month, setMonth] = useState(new Date());
@@ -53,7 +54,10 @@ export default function CalendarPage() {
   const monthTitle = `${effectiveMonth.getFullYear()}년 ${effectiveMonth.getMonth() + 1}월`;
   const canGoPrevMonth = effectiveMonthIndex > 0;
   const canGoNextMonth = effectiveMonthIndex >= 0 && effectiveMonthIndex < availableMonths.length - 1;
-  const selectedItems = selectedDate ? byDate.get(selectedDate) ?? [] : [];
+  const selectedItems = useMemo(
+    () => (selectedDate ? byDate.get(selectedDate) ?? [] : []),
+    [selectedDate, byDate],
+  );
   const selectedProofCount = useMemo(
     () =>
       selectedItems.filter((item) => {
@@ -217,6 +221,7 @@ export default function CalendarPage() {
                           <span style={styles.typeChip}>{getRoutineTypeLabel(item.id)}</span>
                         </div>
                         {image ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- base64 proof image
                           <img src={image} alt="인증" style={styles.thumb} />
                         ) : null}
                       </article>

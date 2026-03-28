@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useState, type CSSProperties } from 'reac
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AppleOfficialButton } from '@/app/auth/apple-official-button';
-import { AppCard, GhostButton, PageShell, PrimaryButton, StatCard } from '@/components/ui';
+import { GhostButton, PageShell } from '@/components/ui';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 import { applyMockLogin, resolveAuthEntryMode } from '@/lib/auth-entry-mode';
@@ -126,12 +126,6 @@ function AuthPageContent() {
       setPending(null);
     }
   };
-
-  const statusText = isRedirecting
-    ? '로그인 완료 · 이동 중'
-    : isResolvingSession
-      ? '로그인 상태 확인 중...'
-      : '로그인 대기';
 
   return (
     <PageShell narrow>

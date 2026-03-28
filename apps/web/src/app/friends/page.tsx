@@ -36,12 +36,25 @@ export default function FriendsPage() {
     setRows(res.data);
   };
 
+  // Fetch on mount — refresh calls setState in a callback (async), lint-safe
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void refresh();
-    }, 0);
+    let cancelled = false;
+    const doRefresh = async () => {
+      const profile = await ensureMyProfile();
+      if (cancelled) return;
+      if (profile.ok) setMyFriendCode(profile.friendCode);
 
-    return () => window.clearTimeout(timer);
+      const res = await listMyFriendRequests();
+      if (cancelled) return;
+      if (!res.ok) {
+        setMessage('친구 목록을 불러오지 못했어요.');
+        return;
+      }
+      setMyUserId(res.me);
+      setRows(res.data);
+    };
+    void doRefresh();
+    return () => { cancelled = true; };
   }, []);
 
   const onSend = async () => {
