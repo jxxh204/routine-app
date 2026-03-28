@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 import { AuthRequired } from '@/components/auth-required';
-import { AppCard, GhostButton, PageShell, SectionHeader, StatCard } from '@/components/ui';
+import { GhostButton, PageShell } from '@/components/ui';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
 
 const STORAGE_PREFIX = 'routine-challenge-v1:';
 
 function getRoutineTypeLabel(id: string) {
-  if (id === 'wake' || id === 'lunch' || id === 'sleep') return '기본 루틴';
+  if (id === 'wake' || id === 'lunch' || id === 'sleep') return '기본';
   return '커스텀';
 }
 
@@ -35,7 +35,6 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
-  const [isCompactLayout, setIsCompactLayout] = useState(false);
 
   const availableMonths = useMemo(() => {
     const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
@@ -103,141 +102,132 @@ export default function CalendarPage() {
     };
   }, [selectedDate, selectedItems]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const update = () => {
-      setIsCompactLayout(window.innerWidth < 1024);
-    };
-
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
   return (
     <AuthRequired>
       <PageShell>
-        <section style={styles.pageSection}>
-          <div style={styles.headerRow}>
-            <SectionHeader eyebrow="History" title="캘린더" description="월별 완료 흐름과 날짜별 내역을 함께 확인해요." />
-            <Link href="/today" style={styles.todayLink}>
-              오늘으로
-            </Link>
+        <section style={styles.page}>
+          {/* Header */}
+          <div style={styles.header}>
+            <div>
+              <p style={styles.eyebrow}>HISTORY</p>
+              <h1 style={styles.title}>캘린더</h1>
+            </div>
+            <Link href="/today" style={styles.backLink}>오늘으로</Link>
           </div>
 
-          <div style={{ ...styles.summaryGrid, ...(isCompactLayout ? styles.summaryGridCompact : {}) }}>
-            <StatCard label="이번 달 완료" value={`${monthDoneCount}`} />
-            <StatCard label="기록된 날짜" value={`${history.length}`} />
+          {/* Summary stats */}
+          <div style={styles.statRow}>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{monthDoneCount}</span>
+              <span style={styles.statLabel}>이번 달 완료</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{history.length}</span>
+              <span style={styles.statLabel}>기록된 날짜</span>
+            </div>
           </div>
 
-          <div style={{ ...styles.layoutGrid, ...(isCompactLayout ? styles.layoutGridCompact : {}) }}>
-            <AppCard>
-              <section>
-                <div style={styles.monthHeader}>
-                  <GhostButton
-                    style={styles.navButton}
-                    onClick={() => {
-                      if (!canGoPrevMonth) return;
-                      setSelectedDate(null);
-                      setMonth(availableMonths[effectiveMonthIndex - 1]);
+          {/* Month nav */}
+          <div style={styles.monthNav}>
+            <GhostButton
+              style={styles.navBtn}
+              onClick={() => {
+                if (!canGoPrevMonth) return;
+                setSelectedDate(null);
+                setMonth(availableMonths[effectiveMonthIndex - 1]);
+              }}
+              disabled={!canGoPrevMonth}
+            >
+              ←
+            </GhostButton>
+            <span style={styles.monthTitle}>{monthTitle}</span>
+            <GhostButton
+              style={styles.navBtn}
+              onClick={() => {
+                if (!canGoNextMonth) return;
+                setSelectedDate(null);
+                setMonth(availableMonths[effectiveMonthIndex + 1]);
+              }}
+              disabled={!canGoNextMonth}
+            >
+              →
+            </GhostButton>
+          </div>
+
+          {/* Calendar grid */}
+          <div style={styles.calendarCard}>
+            <div style={styles.grid}>
+              {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
+                <div key={w} style={styles.weekday}>{w}</div>
+              ))}
+
+              {days.map((date) => {
+                const key = toDateKey(date);
+                const count = byDate.get(key)?.length ?? 0;
+                const inMonth = date.getMonth() === effectiveMonth.getMonth();
+                const isSelected = selectedDate === key;
+                const isEnabled = inMonth && count > 0;
+
+                return (
+                  <button
+                    key={key}
+                    style={{
+                      ...styles.dayCell,
+                      ...(!inMonth ? styles.dayCellOut : {}),
+                      ...(isEnabled ? styles.dayCellActive : {}),
+                      ...(isSelected ? styles.dayCellSelected : {}),
+                      ...(!isEnabled ? styles.dayCellDisabled : {}),
                     }}
-                    disabled={!canGoPrevMonth}
+                    onClick={() => isEnabled && setSelectedDate(key)}
+                    disabled={!isEnabled}
                   >
-                    이전달
-                  </GhostButton>
-                  <strong style={{ fontSize: 24 }}>{monthTitle}</strong>
-                  <GhostButton
-                    style={styles.navButton}
-                    onClick={() => {
-                      if (!canGoNextMonth) return;
-                      setSelectedDate(null);
-                      setMonth(availableMonths[effectiveMonthIndex + 1]);
-                    }}
-                    disabled={!canGoNextMonth}
-                  >
-                    다음달
-                  </GhostButton>
+                    <span style={styles.dayNum}>{inMonth ? date.getDate() : ''}</span>
+                    {count > 0 && inMonth ? <span style={styles.dayDot} /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Detail */}
+          {selectedDate ? (
+            <div style={styles.detailCard}>
+              <div style={styles.detailHeader}>
+                <span style={styles.detailDate}>{selectedDate}</span>
+                <div style={styles.detailBadges}>
+                  <span style={styles.badge}>{selectedItems.length}개 완료</span>
+                  {selectedProofCount > 0 ? <span style={styles.badgeAccent}>{selectedProofCount}장 인증</span> : null}
                 </div>
+              </div>
 
-                <div style={styles.grid}>
-                  {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
-                    <div key={w} style={styles.weekday}>
-                      {w}
-                    </div>
-                  ))}
-
-                  {days.map((date) => {
-                    const key = toDateKey(date);
-                    const count = byDate.get(key)?.length ?? 0;
-                    const inMonth = date.getMonth() === effectiveMonth.getMonth();
-                    const isSelected = selectedDate === key;
-                    const isEnabled = inMonth && count > 0;
+              {selectedItems.length === 0 ? (
+                <p style={styles.emptyText}>완료 내역이 없습니다.</p>
+              ) : (
+                <div style={styles.itemList}>
+                  {selectedItems.map((item) => {
+                    const image = selectedDate ? proofByItemKey[`${selectedDate}:${item.id}`] ?? item.proofImage : item.proofImage;
 
                     return (
-                      <button
-                        key={key}
-                        style={{
-                          ...styles.dayCell,
-                          ...(inMonth ? {} : styles.dayCellOutMonth),
-                          ...(!isEnabled ? styles.dayCellDisabled : {}),
-                          ...(isEnabled ? styles.dayCellEnabled : {}),
-                          ...(isSelected ? styles.dayCellSelected : {}),
-                        }}
-                        onClick={() => {
-                          if (!isEnabled) return;
-                          setSelectedDate(key);
-                        }}
-                        disabled={!isEnabled}
-                      >
-                        <div style={{ fontSize: 18, fontWeight: 700 }}>{inMonth ? date.getDate() : ''}</div>
-                        <div style={styles.doneCount}>{count > 0 ? `완료 ${count}` : ''}</div>
-                      </button>
+                      <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={styles.itemCard}>
+                        <div style={styles.itemRow}>
+                          <div>
+                            <p style={styles.itemTitle}>{item.title ?? item.id}</p>
+                            <p style={styles.itemMeta}>{item.doneAt ?? '시간 미기록'}</p>
+                          </div>
+                          <span style={styles.typeChip}>{getRoutineTypeLabel(item.id)}</span>
+                        </div>
+                        {image ? (
+                          <img src={image} alt="인증" style={styles.thumb} />
+                        ) : null}
+                      </article>
                     );
                   })}
                 </div>
-              </section>
-            </AppCard>
-
-            <AppCard>
-              <section style={{ ...styles.detailPanel, ...(isCompactLayout ? styles.detailPanelCompact : {}) }}>
-                <strong style={{ fontSize: 20 }}>{selectedDate ?? '날짜를 선택해 주세요'}</strong>
-                {selectedDate ? (
-                  <div style={styles.detailStats}>
-                    <StatCard label="완료 루틴" value={`${selectedItems.length}`} />
-                    <StatCard label="인증 이미지" value={`${selectedProofCount}`} />
-                  </div>
-                ) : null}
-
-                {!selectedDate ? (
-                  <p style={styles.emptyText}>좌측 캘린더에서 날짜를 고르면 완료 루틴이 표시됩니다.</p>
-                ) : selectedItems.length === 0 ? (
-                  <p style={styles.emptyText}>해당일 완료 내역이 없습니다.</p>
-                ) : (
-                  <div style={styles.itemGrid}>
-                    {selectedItems.map((item) => {
-                      const image = selectedDate ? proofByItemKey[`${selectedDate}:${item.id}`] ?? item.proofImage : item.proofImage;
-
-                      return (
-                        <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={styles.itemCard}>
-                          <div style={styles.itemTopRow}>
-                            <div style={styles.itemTitle}>{item.title ?? item.id}</div>
-                            <span style={styles.typeChip}>{getRoutineTypeLabel(item.id)}</span>
-                          </div>
-                          <div style={styles.itemTime}>완료 시간: {item.doneAt ?? '미기록'}</div>
-                          {image ? (
-                            <img src={image} alt="인증 썸네일" style={styles.thumb} />
-                          ) : (
-                            <div style={styles.emptyThumb}>인증 이미지 없음</div>
-                          )}
-                        </article>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            </AppCard>
-          </div>
+              )}
+            </div>
+          ) : (
+            <p style={styles.hintText}>캘린더에서 날짜를 선택하면 완료 루틴을 확인할 수 있어요.</p>
+          )}
         </section>
       </PageShell>
     </AuthRequired>
@@ -245,71 +235,228 @@ export default function CalendarPage() {
 }
 
 const styles: Record<string, CSSProperties> = {
-  pageSection: { display: 'grid', gap: 18 },
-  headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 },
-  todayLink: { color: '#ffd7bd', fontSize: 14 },
-  summaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 },
-  summaryGridCompact: { gridTemplateColumns: '1fr' },
-  layoutGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 },
-  layoutGridCompact: { gridTemplateColumns: '1fr' },
-  monthHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 },
-  navButton: { padding: '8px 12px' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 },
-  weekday: { textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, marginBottom: 4 },
-  doneCount: { fontSize: 11, color: 'var(--text-muted)', marginTop: 2 },
-  dayCell: {
-    border: '1px solid var(--outline)',
-    background: 'var(--surface-1)',
-    color: '#f5f7fa',
-    borderRadius: 12,
-    minHeight: 72,
-    padding: 8,
-    textAlign: 'center',
-    cursor: 'pointer',
-    boxShadow: 'var(--ds-shadow-soft)',
+  page: {
+    display: 'grid',
+    gap: 16,
   },
-  dayCellOutMonth: {
-    opacity: 0.3,
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  eyebrow: {
+    margin: 0,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    color: 'var(--ds-color-text-faint)',
+    textTransform: 'uppercase' as const,
+  },
+  title: {
+    margin: '2px 0 0',
+    fontSize: 22,
+    fontWeight: 600,
+    letterSpacing: '-0.02em',
+    color: 'var(--ds-color-text)',
+  },
+  backLink: {
+    color: 'var(--ds-color-accent)',
+    textDecoration: 'none',
+    fontSize: 13,
+    fontWeight: 500,
+  },
+  statRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+  },
+  statItem: {
+    background: 'var(--ds-color-surface)',
+    borderRadius: 'var(--ds-radius-md)',
+    padding: '10px 12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: 'var(--ds-color-text)',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: 'var(--ds-color-text-faint)',
+    fontWeight: 500,
+  },
+  monthNav: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  navBtn: {
+    padding: '6px 10px',
+    fontSize: 14,
+  },
+  monthTitle: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: 'var(--ds-color-text)',
+  },
+  calendarCard: {
+    background: 'var(--ds-color-surface)',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: 12,
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, 1fr)',
+    gap: 4,
+  },
+  weekday: {
+    textAlign: 'center',
+    color: 'var(--ds-color-text-faint)',
+    fontSize: 11,
+    fontWeight: 500,
+    paddingBottom: 4,
+  },
+  dayCell: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    minHeight: 44,
+    border: 'none',
+    background: 'transparent',
+    borderRadius: 'var(--ds-radius-sm)',
+    cursor: 'pointer',
+    padding: 4,
+    transition: 'background 0.15s ease',
+  },
+  dayCellOut: {
+    opacity: 0.2,
+  },
+  dayCellActive: {
+    background: 'var(--ds-color-surface-strong)',
+  },
+  dayCellSelected: {
+    background: 'var(--ds-color-accent-soft)',
+    outline: '2px solid var(--ds-color-accent)',
+    outlineOffset: -2,
   },
   dayCellDisabled: {
     cursor: 'default',
-    opacity: 0.42,
+    opacity: 0.4,
   },
-  dayCellEnabled: {
-    border: '1px solid #3b4454',
-    boxShadow: '0 0 0 1px rgba(255,255,255,0.03) inset',
+  dayNum: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--ds-color-text)',
   },
-  dayCellSelected: {
-    border: '1px solid #8a4f1e',
-    boxShadow: '0 0 0 1px rgba(255, 143, 63, 0.45) inset',
+  dayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 'var(--ds-radius-pill)',
+    background: 'var(--ds-color-accent)',
   },
-  detailPanel: { display: 'grid', gap: 10, minHeight: 520, alignContent: 'flex-start' },
-  detailPanelCompact: { minHeight: 'auto' },
-  detailStats: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 },
-  emptyText: { color: 'var(--text-muted)', marginTop: 8 },
-  itemGrid: { display: 'grid', gap: 8, marginTop: 4 },
-  itemCard: { border: '1px solid var(--outline)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)' },
-  itemTopRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  itemTitle: { fontWeight: 600 },
-  typeChip: {
-    borderRadius: 999,
-    border: '1px solid #5a3822',
-    background: '#24170e',
-    color: '#f2bd93',
-    padding: '2px 8px',
-    fontSize: 11,
-  },
-  itemTime: { color: 'var(--text-muted)', fontSize: 12, marginTop: 6 },
-  thumb: { marginTop: 8, width: 96, height: 96, borderRadius: 8, objectFit: 'cover' },
-  emptyThumb: {
-    marginTop: 8,
-    width: 96,
-    height: 96,
-    borderRadius: 8,
-    border: '1px dashed var(--outline)',
+  detailCard: {
+    background: 'var(--ds-color-surface)',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: '14px 16px',
     display: 'grid',
-    placeItems: 'center',
-    color: 'var(--text-muted)',
+    gap: 10,
+  },
+  detailHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailDate: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: 'var(--ds-color-text)',
+  },
+  detailBadges: {
+    display: 'flex',
+    gap: 6,
+  },
+  badge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: 22,
+    borderRadius: 'var(--ds-radius-pill)',
+    padding: '0 8px',
     fontSize: 11,
+    fontWeight: 500,
+    background: 'var(--ds-color-green-soft)',
+    color: 'var(--ds-color-green)',
+  },
+  badgeAccent: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: 22,
+    borderRadius: 'var(--ds-radius-pill)',
+    padding: '0 8px',
+    fontSize: 11,
+    fontWeight: 500,
+    background: 'var(--ds-color-blue-soft)',
+    color: 'var(--ds-color-blue)',
+  },
+  emptyText: {
+    margin: 0,
+    color: 'var(--ds-color-text-faint)',
+    fontSize: 13,
+  },
+  hintText: {
+    margin: 0,
+    color: 'var(--ds-color-text-faint)',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  itemList: {
+    display: 'grid',
+    gap: 6,
+  },
+  itemCard: {
+    background: 'var(--ds-color-surface-strong)',
+    borderRadius: 'var(--ds-radius-md)',
+    padding: '10px 12px',
+    display: 'grid',
+    gap: 6,
+  },
+  itemRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  itemTitle: {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--ds-color-text)',
+  },
+  itemMeta: {
+    margin: '2px 0 0',
+    fontSize: 12,
+    color: 'var(--ds-color-text-faint)',
+  },
+  typeChip: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: 20,
+    borderRadius: 'var(--ds-radius-pill)',
+    padding: '0 7px',
+    fontSize: 10,
+    fontWeight: 500,
+    background: 'var(--ds-color-accent-soft)',
+    color: 'var(--ds-color-accent)',
+    flexShrink: 0,
+  },
+  thumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 'var(--ds-radius-sm)',
+    objectFit: 'cover',
   },
 };
