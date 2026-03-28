@@ -1,139 +1,178 @@
 :root {
-  --ds-color-bg: #07090d;
-  --ds-color-bg-glow: #2a1409;
-  --ds-color-surface: #10141d;
-  --ds-color-surface-strong: #171d29;
-  --ds-color-surface-soft: #0c1119;
-  --ds-color-border: #2a3240;
-  --ds-color-border-strong: #3b4454;
+  /* Amie-inspired palette — warm dark with pastel accents */
+  --ds-color-bg: #0e0e14;
+  --ds-color-bg-glow: #1a1428;
+  --ds-color-surface: #16161f;
+  --ds-color-surface-strong: #1e1e2a;
+  --ds-color-surface-soft: #121218;
+  --ds-color-border: rgba(255, 255, 255, 0.06);
+  --ds-color-border-strong: rgba(255, 255, 255, 0.10);
 
-  --ds-color-text: #f4f7ff;
-  --ds-color-text-muted: #9ba5b5;
-  --ds-color-text-faint: #697588;
+  --ds-color-text: #f0f0f5;
+  --ds-color-text-muted: #8b8b9e;
+  --ds-color-text-faint: #5c5c72;
 
-  --ds-color-accent: #ff7a1a;
-  --ds-color-accent-strong: #ff9a4f;
-  --ds-color-accent-soft: #2f1e11;
+  /* Primary accent: soft lavender */
+  --ds-color-accent: #a78bfa;
+  --ds-color-accent-strong: #c4b5fd;
+  --ds-color-accent-soft: rgba(167, 139, 250, 0.10);
 
-  --ds-radius-xl: 24px;
-  --ds-radius-lg: 18px;
-  --ds-radius-md: 14px;
-  --ds-radius-sm: 10px;
+  /* Semantic colors */
+  --ds-color-success: #6ee7b7;
+  --ds-color-success-soft: rgba(110, 231, 183, 0.10);
+  --ds-color-success-border: rgba(110, 231, 183, 0.20);
+
+  --ds-color-warning: #fbbf24;
+  --ds-color-warning-soft: rgba(251, 191, 36, 0.08);
+
+  --ds-color-done: #6b7280;
+  --ds-color-done-soft: rgba(107, 114, 128, 0.08);
+
+  --ds-radius-xl: 20px;
+  --ds-radius-lg: 16px;
+  --ds-radius-md: 12px;
+  --ds-radius-sm: 8px;
   --ds-radius-pill: 999px;
 
-  --ds-shadow-page: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --ds-shadow-card: 0 22px 44px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  --ds-shadow-soft: 0 12px 28px rgba(0, 0, 0, 0.32);
+  --ds-shadow-page: none;
+  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ds-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.12);
 
-  --ds-space-1: 6px;
-  --ds-space-2: 10px;
-  --ds-space-3: 14px;
-  --ds-space-4: 20px;
-  --ds-space-5: 28px;
-  --ds-space-6: 36px;
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 24px;
+  --ds-space-6: 32px;
+
+  /* Transition */
+  --ds-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ds-duration: 0.2s;
 }
 
 .ds-page-shell {
   min-height: 100dvh;
-  background:
-    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--ds-color-bg-glow) 88%, transparent) 0%, transparent 44%),
-    linear-gradient(180deg, #090c12 0%, var(--ds-color-bg) 55%);
+  background: var(--ds-color-bg);
   color: var(--ds-color-text);
-  padding: 28px 20px 48px;
-  box-shadow: var(--ds-shadow-page);
+  padding: 24px 16px 48px;
 }
 
 .ds-page-shell__inner {
   width: 100%;
-  max-width: 980px;
+  max-width: 480px;
   margin: 0 auto;
 }
 
 .ds-page-shell--narrow .ds-page-shell__inner {
-  max-width: 440px;
+  max-width: 400px;
 }
 
 .ds-section-header {
   display: grid;
-  gap: var(--ds-space-1);
+  gap: 2px;
 }
 
 .ds-section-header__eyebrow {
   margin: 0;
-  color: var(--ds-color-text-muted);
-  font-size: 12px;
+  color: var(--ds-color-accent);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .ds-section-header__title {
   margin: 0;
-  font-size: clamp(32px, 4.2vw, 52px);
-  line-height: 1.06;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .ds-section-header__description {
   margin: 0;
   color: var(--ds-color-text-muted);
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .ds-app-card {
-  border-radius: var(--ds-radius-xl);
+  border-radius: var(--ds-radius-lg);
   border: 1px solid var(--ds-color-border);
-  background: linear-gradient(180deg, var(--ds-color-surface-strong) 0%, var(--ds-color-surface) 100%);
-  box-shadow: var(--ds-shadow-card);
-  padding: var(--ds-space-5);
+  background: var(--ds-color-surface);
+  padding: var(--ds-space-4);
+  transition: background var(--ds-duration) var(--ds-ease);
 }
 
 .ds-btn {
-  border-radius: var(--ds-radius-pill);
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: var(--ds-radius-sm);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  border: none;
+  transition: all var(--ds-duration) var(--ds-ease);
 }
 
 .ds-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+  opacity: 0.85;
+}
+
+.ds-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .ds-btn:disabled {
-  opacity: 0.58;
+  opacity: 0.4;
   cursor: default;
 }
 
 .ds-btn--primary {
-  color: #2f1808;
-  background: linear-gradient(180deg, var(--ds-color-accent-strong), var(--ds-color-accent));
-  border-color: #cf6616;
-  box-shadow: 0 8px 18px rgba(255, 122, 24, 0.34);
+  color: #0e0e14;
+  background: var(--ds-color-accent);
 }
 
 .ds-btn--ghost {
-  color: #ffd8be;
-  background: color-mix(in oklab, var(--ds-color-accent-soft) 88%, #111);
-  border-color: #61442d;
+  color: var(--ds-color-text-muted);
+  background: var(--ds-color-surface-strong);
+  border: 1px solid var(--ds-color-border);
 }
 
 .ds-stat-card {
   border-radius: var(--ds-radius-md);
-  border: 1px solid #5a3822;
-  background: #24170e;
-  color: #ffd6b8;
-  font-size: 13px;
+  background: var(--ds-color-surface-strong);
+  color: var(--ds-color-text-muted);
+  font-size: 12px;
   padding: 10px 12px;
 }
 
 .ds-stat-card__label {
-  color: #f2bd93;
+  color: var(--ds-color-text-faint);
 }
 
 .ds-stat-card__value {
   font-weight: 700;
+  color: var(--ds-color-text);
+}
+
+/* Routine card animations */
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.routine-card-surface {
+  transition: transform var(--ds-duration) var(--ds-ease),
+              background var(--ds-duration) var(--ds-ease);
+}
+
+.routine-card-surface:active {
+  transform: scale(0.98);
+}
+
+/* Input focus style */
+.routine-title-input:focus {
+  outline: none;
+  border-color: var(--ds-color-accent) !important;
+  box-shadow: 0 0 0 2px var(--ds-color-accent-soft);
 }
