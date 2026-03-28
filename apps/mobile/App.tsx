@@ -522,34 +522,9 @@ function AppContent() {
     void ensureNotificationSchedules();
   }, [booting, onboardingDone, settings]);
 
-  if (!WEB_APP_URL) {
-    return <AppError title="환경변수 누락" detail="MOBILE_WEB_APP_URL 또는 EXPO_PUBLIC_WEB_APP_URL 을 설정해 주세요." />;
-  }
+  // --- All hooks must be above this line (React rules of hooks) ---
 
-  if (!isAllowedUrl(WEB_APP_URL)) {
-    return (
-      <AppError
-        title="보안 설정 오류"
-        detail="HTTPS URL 및 허용 도메인(MOBILE_WEB_APP_ALLOWED_HOSTS 또는 EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS)을 확인해 주세요."
-      />
-    );
-  }
-
-  if (booting) {
-    return (
-      <SafeAreaView edges={['top']} style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0EA5E9" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!onboardingDone) {
-    return <Onboarding onDone={() => setOnboardingDone(true)} />;
-  }
-
-  const toggleNotifications = async (enabled: boolean) => {
+  const toggleNotifications = useCallback(async (enabled: boolean) => {
     try {
       const next = { ...settings, enabled };
       setSettings(next);
@@ -560,7 +535,7 @@ function AppContent() {
       console.warn('[toggleNotifications] failed:', err);
       setStatusMsg('알림 설정 변경 중 오류가 발생했어요.');
     }
-  };
+  }, [settings, routines]);
 
   const handleWebMessage = useCallback((event: { nativeEvent: { data: string } }) => {
     try {
@@ -591,10 +566,10 @@ function AppContent() {
 
         if (payload.action === 'request-notification-permission') {
           void Notifications?.requestPermissionsAsync()
-            .then((perm) => {
+            ?.then((perm) => {
               setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
             })
-            .catch(() => {
+            ?.catch(() => {
               setStatusMsg('알림 권한 요청 중 오류가 발생했어요.');
             });
           return;
@@ -607,7 +582,7 @@ function AppContent() {
     } catch {
       // no-op
     }
-  }, []);
+  }, [toggleNotifications]);
 
   const handleShouldStartLoad = useCallback((request: { url: string }) => {
     if (isAllowedUrl(request.url)) return true;
@@ -628,6 +603,35 @@ function AppContent() {
       </View>
     ),
   }), [handleWebMessage, handleShouldStartLoad]);
+
+  // --- Early returns (no hooks below) ---
+
+  if (!WEB_APP_URL) {
+    return <AppError title="환경변수 누락" detail="MOBILE_WEB_APP_URL 또는 EXPO_PUBLIC_WEB_APP_URL 을 설정해 주세요." />;
+  }
+
+  if (!isAllowedUrl(WEB_APP_URL)) {
+    return (
+      <AppError
+        title="보안 설정 오류"
+        detail="HTTPS URL 및 허용 도메인(MOBILE_WEB_APP_ALLOWED_HOSTS 또는 EXPO_PUBLIC_WEB_APP_ALLOWED_HOSTS)을 확인해 주세요."
+      />
+    );
+  }
+
+  if (booting) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#0EA5E9" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!onboardingDone) {
+    return <Onboarding onDone={() => setOnboardingDone(true)} />;
+  }
 
   const tabs: Array<{ key: TabKey; path: string }> = [
     { key: 'today', path: '/today' },
