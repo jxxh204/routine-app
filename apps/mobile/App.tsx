@@ -470,7 +470,7 @@ function AppContent() {
 
   // Track active tab in a ref so handleWebMessage doesn't need activeTab in deps
   const activeTabRef = useRef(activeTab);
-  activeTabRef.current = activeTab;
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
 
   const handleWebMessage = useCallback((event: { nativeEvent: { data: string } }) => {
     try {
