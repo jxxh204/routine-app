@@ -7,9 +7,8 @@ import { ActivityIndicator, Alert, Linking, LogBox, ScrollView, StyleSheet, Touc
 let Notifications: typeof import('expo-notifications') | null = null;
 try {
   Notifications = require('expo-notifications');
-} catch (err) {
-  // Alert for diagnosis — will show on device what went wrong
-  Alert.alert('[NOTIFICATION MODULE ERROR]', String((err as Error)?.message ?? err));
+} catch {
+  // expo-notifications unavailable — notification features will be disabled
 }
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -738,9 +737,13 @@ class ErrorBoundary extends Component<
 
 export default function App() {
   return (
-    <PaperProvider theme={appTheme}>
-      <AppContent />
-    </PaperProvider>
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <PaperProvider theme={appTheme}>
+          <AppContent />
+        </PaperProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
 
