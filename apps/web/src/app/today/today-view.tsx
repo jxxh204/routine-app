@@ -1233,6 +1233,7 @@ const styles: Record<string, CSSProperties> = {
   item: {
     position: 'relative',
     zIndex: 1,
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
@@ -1240,6 +1241,7 @@ const styles: Record<string, CSSProperties> = {
     border: 'none',
     borderRadius: 'var(--ds-radius-lg)',
     padding: '12px 14px',
+    boxSizing: 'border-box',
     transition: 'all var(--ds-duration) var(--ds-ease)',
   },
   itemSwiped: {
