@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jxxh204.routinechallenge",
+      "appleTeamId": "L67FAG9382",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserNotificationUsageDescription": "루틴 인증 시간(기상/식사/취침)을 알림으로 알려드리기 위해 권한이 필요합니다.",
