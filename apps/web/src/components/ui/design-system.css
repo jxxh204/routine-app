@@ -1,34 +1,79 @@
 :root {
-  /* Amie dark mode — clean, minimal, airy */
-  --ds-color-bg: #141414;
+  /* Amie light mode — clean, minimal, airy */
+  --ds-color-bg: #FFFFFF;
   --ds-color-bg-glow: transparent;
-  --ds-color-surface: #1C1C1E;
-  --ds-color-surface-strong: #2C2C2E;
-  --ds-color-surface-soft: #1C1C1E;
-  --ds-color-border: rgba(255, 255, 255, 0.08);
-  --ds-color-border-strong: rgba(255, 255, 255, 0.14);
+  --ds-color-surface: #F5F5F7;
+  --ds-color-surface-strong: #E8E8ED;
+  --ds-color-surface-soft: #F5F5F7;
+  --ds-color-border: rgba(0, 0, 0, 0.06);
+  --ds-color-border-strong: rgba(0, 0, 0, 0.12);
 
-  --ds-color-text: #F5F5F7;
-  --ds-color-text-muted: #98989D;
-  --ds-color-text-faint: #636366;
+  --ds-color-text: #1D1D1F;
+  --ds-color-text-muted: #6E6E73;
+  --ds-color-text-faint: #AEAEB2;
 
   /* Amie brand — cyan blue */
-  --ds-color-accent: #0EA5E9;
-  --ds-color-accent-strong: #38BDF8;
-  --ds-color-accent-soft: rgba(14, 165, 233, 0.12);
+  --ds-color-accent: #0284C7;
+  --ds-color-accent-strong: #0EA5E9;
+  --ds-color-accent-soft: rgba(2, 132, 199, 0.10);
 
   /* Event colors — Amie pastel palette */
-  --ds-color-blue: #60A5FA;
-  --ds-color-blue-soft: rgba(96, 165, 250, 0.14);
-  --ds-color-green: #34D399;
-  --ds-color-green-soft: rgba(52, 211, 153, 0.14);
-  --ds-color-yellow: #FBBF24;
-  --ds-color-yellow-soft: rgba(251, 191, 36, 0.10);
-  --ds-color-pink: #F472B6;
-  --ds-color-pink-soft: rgba(244, 114, 182, 0.12);
-  --ds-color-gray: #98989D;
-  --ds-color-gray-soft: rgba(152, 152, 157, 0.10);
+  --ds-color-blue: #3B82F6;
+  --ds-color-blue-soft: rgba(59, 130, 246, 0.10);
+  --ds-color-green: #10B981;
+  --ds-color-green-soft: rgba(16, 185, 129, 0.10);
+  --ds-color-yellow: #F59E0B;
+  --ds-color-yellow-soft: rgba(245, 158, 11, 0.08);
+  --ds-color-pink: #EC4899;
+  --ds-color-pink-soft: rgba(236, 72, 153, 0.10);
+  --ds-color-gray: #9CA3AF;
+  --ds-color-gray-soft: rgba(156, 163, 175, 0.10);
 
+  /* Overlay colors for JS hardcoded values */
+  --ds-color-overlay-heavy: rgba(255, 255, 255, 0.92);
+  --ds-color-overlay-thumb: rgba(245, 245, 247, 0.92);
+  --ds-color-image-bg: #F5F5F7;
+  --ds-color-placeholder: #AEAEB2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Amie dark mode */
+    --ds-color-bg: #141414;
+    --ds-color-bg-glow: transparent;
+    --ds-color-surface: #1C1C1E;
+    --ds-color-surface-strong: #2C2C2E;
+    --ds-color-surface-soft: #1C1C1E;
+    --ds-color-border: rgba(255, 255, 255, 0.08);
+    --ds-color-border-strong: rgba(255, 255, 255, 0.14);
+
+    --ds-color-text: #F5F5F7;
+    --ds-color-text-muted: #98989D;
+    --ds-color-text-faint: #636366;
+
+    --ds-color-accent: #0EA5E9;
+    --ds-color-accent-strong: #38BDF8;
+    --ds-color-accent-soft: rgba(14, 165, 233, 0.12);
+
+    --ds-color-blue: #60A5FA;
+    --ds-color-blue-soft: rgba(96, 165, 250, 0.14);
+    --ds-color-green: #34D399;
+    --ds-color-green-soft: rgba(52, 211, 153, 0.14);
+    --ds-color-yellow: #FBBF24;
+    --ds-color-yellow-soft: rgba(251, 191, 36, 0.10);
+    --ds-color-pink: #F472B6;
+    --ds-color-pink-soft: rgba(244, 114, 182, 0.12);
+    --ds-color-gray: #98989D;
+    --ds-color-gray-soft: rgba(152, 152, 157, 0.10);
+
+    --ds-color-overlay-heavy: rgba(20, 20, 20, 0.9);
+    --ds-color-overlay-thumb: rgba(20, 20, 20, 0.88);
+    --ds-color-image-bg: #000;
+    --ds-color-placeholder: #2b3138;
+  }
+}
+
+:root {
   --ds-radius-xl: 16px;
   --ds-radius-lg: 12px;
   --ds-radius-md: 10px;

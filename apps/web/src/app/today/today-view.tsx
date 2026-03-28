@@ -1021,7 +1021,7 @@ export function TodayView() {
       ) : null}
 
       <style>{`
-        .routine-title-input::placeholder { color: #2b3138; }
+        .routine-title-input::placeholder { color: var(--ds-color-placeholder); }
         .routine-card-surface,
         .routine-card-surface * {
           -webkit-user-select: none;
@@ -1350,7 +1350,7 @@ const styles: Record<string, CSSProperties> = {
   thumbMenu: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(20, 20, 20, 0.88)',
+    background: 'var(--ds-color-overlay-thumb)',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -1379,7 +1379,7 @@ const styles: Record<string, CSSProperties> = {
   previewOverlay: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(20, 20, 20, 0.9)',
+    background: 'var(--ds-color-overlay-heavy)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1399,7 +1399,7 @@ const styles: Record<string, CSSProperties> = {
     maxHeight: '70vh',
     borderRadius: 'var(--ds-radius-md)',
     objectFit: 'contain',
-    background: '#000',
+    background: 'var(--ds-color-image-bg)',
   },
   previewCloseButton: {
     marginTop: 8,

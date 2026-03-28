@@ -38,6 +38,10 @@ a {
   text-decoration: none;
 }
 
+html {
+  color-scheme: light;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
