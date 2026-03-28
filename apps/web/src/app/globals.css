@@ -1,4 +1,73 @@
+@import "tailwindcss";
 @import '../components/ui/design-system.css';
+
+/*
+ * Tailwind v4 CSS-first theme configuration
+ * Maps design-system.css CSS variables to Tailwind utility classes.
+ *
+ * Usage: bg-ds-bg, text-ds-text, border-ds-border, etc.
+ * Responsive to light/dark mode via the underlying CSS variables.
+ */
+@theme {
+  /* Colors — referencing design-system CSS variables (auto light/dark) */
+  --color-ds-bg: var(--ds-color-bg);
+  --color-ds-bg-glow: var(--ds-color-bg-glow);
+  --color-ds-surface: var(--ds-color-surface);
+  --color-ds-surface-strong: var(--ds-color-surface-strong);
+  --color-ds-surface-soft: var(--ds-color-surface-soft);
+  --color-ds-border: var(--ds-color-border);
+  --color-ds-border-strong: var(--ds-color-border-strong);
+
+  --color-ds-text: var(--ds-color-text);
+  --color-ds-text-muted: var(--ds-color-text-muted);
+  --color-ds-text-faint: var(--ds-color-text-faint);
+
+  --color-ds-accent: var(--ds-color-accent);
+  --color-ds-accent-strong: var(--ds-color-accent-strong);
+  --color-ds-accent-soft: var(--ds-color-accent-soft);
+
+  --color-ds-blue: var(--ds-color-blue);
+  --color-ds-blue-soft: var(--ds-color-blue-soft);
+  --color-ds-green: var(--ds-color-green);
+  --color-ds-green-soft: var(--ds-color-green-soft);
+  --color-ds-yellow: var(--ds-color-yellow);
+  --color-ds-yellow-soft: var(--ds-color-yellow-soft);
+  --color-ds-pink: var(--ds-color-pink);
+  --color-ds-pink-soft: var(--ds-color-pink-soft);
+  --color-ds-gray: var(--ds-color-gray);
+  --color-ds-gray-soft: var(--ds-color-gray-soft);
+
+  --color-ds-overlay-heavy: var(--ds-color-overlay-heavy);
+  --color-ds-overlay-thumb: var(--ds-color-overlay-thumb);
+  --color-ds-image-bg: var(--ds-color-image-bg);
+  --color-ds-placeholder: var(--ds-color-placeholder);
+
+  /* Border radius */
+  --radius-ds-xl: var(--ds-radius-xl);
+  --radius-ds-lg: var(--ds-radius-lg);
+  --radius-ds-md: var(--ds-radius-md);
+  --radius-ds-sm: var(--ds-radius-sm);
+  --radius-ds-pill: var(--ds-radius-pill);
+
+  /* Spacing */
+  --spacing-ds-1: var(--ds-space-1);
+  --spacing-ds-2: var(--ds-space-2);
+  --spacing-ds-3: var(--ds-space-3);
+  --spacing-ds-4: var(--ds-space-4);
+  --spacing-ds-5: var(--ds-space-5);
+  --spacing-ds-6: var(--ds-space-6);
+
+  /* Shadows */
+  --shadow-ds-card: var(--ds-shadow-card);
+  --shadow-ds-soft: var(--ds-shadow-soft);
+  --shadow-ds-page: var(--ds-shadow-page);
+
+  /* Transition */
+  --ease-ds: var(--ds-ease);
+
+  /* Font family */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+}
 
 :root {
   --background: var(--ds-color-bg);
