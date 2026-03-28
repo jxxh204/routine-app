@@ -22,7 +22,7 @@ import {
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
-import { AppCard, GhostButton, PageShell, PrimaryButton, SectionHeader } from '@/components/ui';
+import { AppCard, GhostButton, PageShell, PrimaryButton } from '@/components/ui';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -373,7 +373,7 @@ export function TodayView() {
 
   // ✅ Use ref to access latest routines without re-creating callback
   const routinesRef = useRef(routines);
-  routinesRef.current = routines;
+  useEffect(() => { routinesRef.current = routines; }, [routines]);
 
   const refreshFromSupabase = useCallback(async () => {
     const synced = await syncTodayFromSupabase(routinesRef.current);
