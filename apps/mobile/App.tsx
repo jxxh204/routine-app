@@ -207,52 +207,56 @@ function getDurationMinute(startMinute: number, endMinute: number) {
 }
 
 async function scheduleDefaultNotifications(settings: NotificationSettings, routines: Routine[]) {
-  const existing = await Notifications.getAllScheduledNotificationsAsync();
-  for (const item of existing) {
-    if (item.content.data?.source === 'default-routine') {
-      await Notifications.cancelScheduledNotificationAsync(item.identifier);
+  try {
+    const existing = await Notifications.getAllScheduledNotificationsAsync();
+    for (const item of existing) {
+      if (item.content.data?.source === 'default-routine') {
+        await Notifications.cancelScheduledNotificationAsync(item.identifier);
+      }
     }
-  }
 
-  if (!settings.enabled) return;
+    if (!settings.enabled) return;
 
-  const list = routines.map((routine) => ({
-    key: routine.id,
-    title: `${routine.title} 인증 시간`,
-    body: `${formatRange(routine.startMinute, routine.endMinute)} 사이에 ${routine.title} 인증을 해주세요.`,
-    minute: routine.startMinute,
-    durationMinute: getDurationMinute(routine.startMinute, routine.endMinute),
-  }));
+    const list = routines.map((routine) => ({
+      key: routine.id,
+      title: `${routine.title} 인증 시간`,
+      body: `${formatRange(routine.startMinute, routine.endMinute)} 사이에 ${routine.title} 인증을 해주세요.`,
+      minute: routine.startMinute,
+      durationMinute: getDurationMinute(routine.startMinute, routine.endMinute),
+    }));
 
-  for (const item of list) {
-    const reminderMinutes = buildReminderMinutes(item.minute, item.durationMinute);
+    for (const item of list) {
+      const reminderMinutes = buildReminderMinutes(item.minute, item.durationMinute);
 
-    const scheduleAt = async (minute: number, isReminder: boolean) => {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: isReminder ? `${item.title} (리마인드)` : item.title,
-          body: isReminder
-            ? '아직 인증완료가 아니라면 지금 인증해 주세요. 30분 후 다시 알려드릴게요.'
-            : item.body,
-          data: {
-            source: 'default-routine',
-            routine: item.key,
-            kind: isReminder ? 'reminder' : 'first',
+      const scheduleAt = async (minute: number, isReminder: boolean) => {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: isReminder ? `${item.title} (리마인드)` : item.title,
+            body: isReminder
+              ? '아직 인증완료가 아니라면 지금 인증해 주세요. 30분 후 다시 알려드릴게요.'
+              : item.body,
+            data: {
+              source: 'default-routine',
+              routine: item.key,
+              kind: isReminder ? 'reminder' : 'first',
+            },
+            sound: 'default',
           },
-          sound: 'default',
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: Math.floor(minute / 60),
-          minute: minute % 60,
-        },
-      });
-    };
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: Math.floor(minute / 60),
+            minute: minute % 60,
+          },
+        });
+      };
 
-    await scheduleAt(item.minute, false);
-    for (const reminderMinute of reminderMinutes) {
-      await scheduleAt(reminderMinute, true);
+      await scheduleAt(item.minute, false);
+      for (const reminderMinute of reminderMinutes) {
+        await scheduleAt(reminderMinute, true);
+      }
     }
+  } catch (err) {
+    console.warn('[scheduleDefaultNotifications] failed:', err);
   }
 }
 
@@ -381,6 +385,9 @@ function Onboarding({ onDone }: { onDone: () => void }) {
       await scheduleDefaultNotifications(settings, routines);
       await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
       onDone();
+    } catch (err) {
+      console.warn('[requestPermission] failed:', err);
+      setMessage('알림 설정 중 오류가 발생했어요. 앱을 다시 시작해주세요.');
     } finally {
       setBusy(false);
     }
@@ -488,12 +495,16 @@ function AppContent() {
     if (booting || !onboardingDone || didRestoreNotificationsRef.current) return;
 
     const ensureNotificationSchedules = async () => {
-      const permission = await Notifications.getPermissionsAsync();
-      if (!permission.granted) return;
+      try {
+        const permission = await Notifications.getPermissionsAsync();
+        if (!permission.granted) return;
 
-      await scheduleDefaultNotifications(settings, routines);
-      didRestoreNotificationsRef.current = true;
-      setStatusMsg(settings.enabled ? '알림 스케줄을 복구했어요.' : '알림이 꺼져 있어 스케줄을 생성하지 않았어요.');
+        await scheduleDefaultNotifications(settings, routines);
+        didRestoreNotificationsRef.current = true;
+        setStatusMsg(settings.enabled ? '알림 스케줄을 복구했어요.' : '알림이 꺼져 있어 스케줄을 생성하지 않았어요.');
+      } catch (err) {
+        console.warn('[ensureNotificationSchedules] failed:', err);
+      }
     };
 
     void ensureNotificationSchedules();
@@ -527,11 +538,16 @@ function AppContent() {
   }
 
   const toggleNotifications = async (enabled: boolean) => {
-    const next = { ...settings, enabled };
-    setSettings(next);
-    await saveNotiSettings(next);
-    await scheduleDefaultNotifications(next, routines);
-    setStatusMsg(enabled ? '알림을 켰어요.' : '알림을 껐어요.');
+    try {
+      const next = { ...settings, enabled };
+      setSettings(next);
+      await saveNotiSettings(next);
+      await scheduleDefaultNotifications(next, routines);
+      setStatusMsg(enabled ? '알림을 켰어요.' : '알림을 껐어요.');
+    } catch (err) {
+      console.warn('[toggleNotifications] failed:', err);
+      setStatusMsg('알림 설정 변경 중 오류가 발생했어요.');
+    }
   };
 
   const handleWebMessage = useCallback((event: { nativeEvent: { data: string } }) => {
@@ -562,9 +578,13 @@ function AppContent() {
         }
 
         if (payload.action === 'request-notification-permission') {
-          void Notifications.requestPermissionsAsync().then((perm) => {
-            setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
-          });
+          void Notifications.requestPermissionsAsync()
+            .then((perm) => {
+              setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
+            })
+            .catch(() => {
+              setStatusMsg('알림 권한 요청 중 오류가 발생했어요.');
+            });
           return;
         }
 
