@@ -1,8 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import * as Notifications from 'expo-notifications';
 import React, { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, LogBox, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, LogBox, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+// Lazy-load expo-notifications to prevent module-level crash
+let Notifications: typeof import('expo-notifications') | null = null;
+try {
+  Notifications = require('expo-notifications');
+} catch (err) {
+  // Alert for diagnosis — will show on device what went wrong
+  Alert.alert('[NOTIFICATION MODULE ERROR]', String((err as Error)?.message ?? err));
+}
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
@@ -95,7 +103,7 @@ const defaultNotiSettings: NotificationSettings = {
 };
 
 try {
-  Notifications.setNotificationHandler({
+  Notifications?.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
       shouldShowList: true,
@@ -212,10 +220,10 @@ function getDurationMinute(startMinute: number, endMinute: number) {
 
 async function scheduleDefaultNotifications(settings: NotificationSettings, routines: Routine[]) {
   try {
-    const existing = await Notifications.getAllScheduledNotificationsAsync();
+    const existing = await Notifications?.getAllScheduledNotificationsAsync();
     for (const item of existing) {
       if (item.content.data?.source === 'default-routine') {
-        await Notifications.cancelScheduledNotificationAsync(item.identifier);
+        await Notifications?.cancelScheduledNotificationAsync(item.identifier);
       }
     }
 
@@ -233,7 +241,7 @@ async function scheduleDefaultNotifications(settings: NotificationSettings, rout
       const reminderMinutes = buildReminderMinutes(item.minute, item.durationMinute);
 
       const scheduleAt = async (minute: number, isReminder: boolean) => {
-        await Notifications.scheduleNotificationAsync({
+        await Notifications?.scheduleNotificationAsync({
           content: {
             title: isReminder ? `${item.title} (리마인드)` : item.title,
             body: isReminder
@@ -247,7 +255,7 @@ async function scheduleDefaultNotifications(settings: NotificationSettings, rout
             sound: 'default',
           },
           trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            type: Notifications?.SchedulableTriggerInputTypes.DAILY,
             hour: Math.floor(minute / 60),
             minute: minute % 60,
           },
@@ -376,9 +384,9 @@ function Onboarding({ onDone }: { onDone: () => void }) {
   const requestPermission = async () => {
     setBusy(true);
     try {
-      const current = await Notifications.getPermissionsAsync();
+      const current = await Notifications?.getPermissionsAsync();
       const permission =
-        current.granted ? current : await Notifications.requestPermissionsAsync();
+        current.granted ? current : await Notifications?.requestPermissionsAsync();
 
       if (!permission.granted) {
         setMessage('알림 권한이 꺼져 있어요. [설정]에서 알림을 켜주세요.');
@@ -500,7 +508,7 @@ function AppContent() {
 
     const ensureNotificationSchedules = async () => {
       try {
-        const permission = await Notifications.getPermissionsAsync();
+        const permission = await Notifications?.getPermissionsAsync();
         if (!permission.granted) return;
 
         await scheduleDefaultNotifications(settings, routines);
@@ -582,7 +590,7 @@ function AppContent() {
         }
 
         if (payload.action === 'request-notification-permission') {
-          void Notifications.requestPermissionsAsync()
+          void Notifications?.requestPermissionsAsync()
             .then((perm) => {
               setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
             })
