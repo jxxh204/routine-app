@@ -1276,7 +1276,6 @@ const styles: Record<string, CSSProperties> = {
   itemInactive: {
     border: '1px solid var(--ds-color-border)',
     background: 'var(--ds-color-surface-soft)',
-    opacity: 0.7,
   },
   itemClickable: {
     cursor: 'pointer',
