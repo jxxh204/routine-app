@@ -1251,6 +1251,7 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
     background: 'var(--ds-color-surface-strong)',
     borderRadius: 'var(--ds-radius-lg)',
+    zIndex: 0,
   },
   item: {
     position: 'relative',
