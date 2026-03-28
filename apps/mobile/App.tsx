@@ -218,15 +218,20 @@ function getDurationMinute(startMinute: number, endMinute: number) {
 }
 
 async function scheduleDefaultNotifications(settings: NotificationSettings, routines: Routine[]) {
+  if (!Notifications) return;
+
   try {
-    const existing = await Notifications?.getAllScheduledNotificationsAsync() ?? [];
+    const existing = await Notifications.getAllScheduledNotificationsAsync();
     for (const item of existing) {
       if (item.content.data?.source === 'default-routine') {
-        await Notifications?.cancelScheduledNotificationAsync(item.identifier);
+        await Notifications.cancelScheduledNotificationAsync(item.identifier);
       }
     }
 
     if (!settings.enabled) return;
+
+    const triggerType = Notifications.SchedulableTriggerInputTypes?.DAILY;
+    if (triggerType == null) return;
 
     const list = routines.map((routine) => ({
       key: routine.id,
@@ -240,7 +245,7 @@ async function scheduleDefaultNotifications(settings: NotificationSettings, rout
       const reminderMinutes = buildReminderMinutes(item.minute, item.durationMinute);
 
       const scheduleAt = async (minute: number, isReminder: boolean) => {
-        await Notifications?.scheduleNotificationAsync({
+        await Notifications!.scheduleNotificationAsync({
           content: {
             title: isReminder ? `${item.title} (리마인드)` : item.title,
             body: isReminder
@@ -254,7 +259,7 @@ async function scheduleDefaultNotifications(settings: NotificationSettings, rout
             sound: 'default',
           },
           trigger: {
-            type: Notifications?.SchedulableTriggerInputTypes.DAILY,
+            type: triggerType,
             hour: Math.floor(minute / 60),
             minute: minute % 60,
           },
@@ -383,12 +388,18 @@ function Onboarding({ onDone }: { onDone: () => void }) {
   const requestPermission = async () => {
     setBusy(true);
     try {
-      const current = await Notifications?.getPermissionsAsync();
-      if (!current) { setMessage('알림 모듈을 불러올 수 없어요.'); return; }
-      const permission =
-        current.granted ? current : await Notifications?.requestPermissionsAsync();
+      if (!Notifications) {
+        // Notifications module unavailable — skip permission, proceed to app
+        await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
+        onDone();
+        return;
+      }
 
-      if (!permission?.granted) {
+      const current = await Notifications.getPermissionsAsync();
+      const permission =
+        current.granted ? current : await Notifications.requestPermissionsAsync();
+
+      if (!permission.granted) {
         setMessage('알림 권한이 꺼져 있어요. [설정]에서 알림을 켜주세요.');
         return;
       }
@@ -399,7 +410,9 @@ function Onboarding({ onDone }: { onDone: () => void }) {
       onDone();
     } catch (err) {
       console.warn('[requestPermission] failed:', err);
-      setMessage('알림 설정 중 오류가 발생했어요. 앱을 다시 시작해주세요.');
+      // Don't block the user — let them proceed even if notifications fail
+      await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
+      onDone();
     } finally {
       setBusy(false);
     }
@@ -507,9 +520,10 @@ function AppContent() {
     if (booting || !onboardingDone || didRestoreNotificationsRef.current) return;
 
     const ensureNotificationSchedules = async () => {
+      if (!Notifications) return;
       try {
-        const permission = await Notifications?.getPermissionsAsync();
-        if (!permission?.granted) return;
+        const permission = await Notifications.getPermissionsAsync();
+        if (!permission.granted) return;
 
         await scheduleDefaultNotifications(settings, routines);
         didRestoreNotificationsRef.current = true;
