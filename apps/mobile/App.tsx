@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Linking, LogBox, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Button,
@@ -94,14 +94,18 @@ const defaultNotiSettings: NotificationSettings = {
   sleep: 23 * 60,
 };
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+} catch (err) {
+  console.warn('[setNotificationHandler] failed:', err);
+}
 
 function formatRange(startMinute: number, endMinute: number) {
   const start = minuteToHHMM(startMinute);
@@ -691,11 +695,45 @@ function AppContent() {
   );
 }
 
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.warn('[ErrorBoundary] caught:', error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.container}>
+          <AppError
+            title="앱 오류 발생"
+            detail={`앱을 다시 시작해주세요.\n\n${this.state.error?.message ?? '알 수 없는 오류'}`}
+          />
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <PaperProvider theme={appTheme}>
-      <AppContent />
-    </PaperProvider>
+    <ErrorBoundary>
+      <PaperProvider theme={appTheme}>
+        <AppContent />
+      </PaperProvider>
+    </ErrorBoundary>
   );
 }
 
