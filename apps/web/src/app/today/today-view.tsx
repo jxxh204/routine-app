@@ -866,9 +866,7 @@ export function TodayView() {
                     ) : (
                       <>
                         <p style={styles.meta}>인증 시간: {routine.timeRangeLabel}</p>
-                        <p style={styles.meta}>
-                          친구: {routine.isDefault ? (routine.doneByBuddy ? '완료 ✅' : '미완료 ⏳') : '커스텀 루틴(친구 미연동)'}
-                        </p>
+                        {/* 친구 상태는 후속 피처에서 재도입 */}
                         {routine.proofImage ? (
                           <div
                             style={styles.thumbWrap}
