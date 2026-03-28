@@ -493,6 +493,7 @@ export function TodayView() {
     };
 
     void hydrateProofImages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; routines read via closure at mount time
   }, []);
 
   // ✅ Cleanup on unmount — combined into single ref cleanup
@@ -877,6 +878,7 @@ export function TodayView() {
                               setPreviewImage(routine.proofImage ?? null);
                             }}
                           >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- base64 proof image, next/image incompatible */}
                             <img src={routine.proofImage} alt={`${routine.title} 인증 사진`} style={styles.thumbImage} />
                             {thumbMenuRoutineId === routine.id ? (
                               <div style={styles.thumbMenu}>
@@ -1013,6 +1015,7 @@ export function TodayView() {
       {previewImage ? (
         <section style={styles.previewOverlay} onClick={() => setPreviewImage(null)}>
           <div style={styles.previewCard} onClick={(event) => event.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- base64 proof image, next/image incompatible */}
             <img src={previewImage} alt="인증 사진 확대" style={styles.previewImage} />
             <GhostButton style={styles.previewCloseButton} onClick={() => setPreviewImage(null)}>닫기</GhostButton>
           </div>
