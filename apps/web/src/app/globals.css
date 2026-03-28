@@ -5,7 +5,7 @@
   --foreground: var(--ds-color-text);
   --surface-1: var(--ds-color-surface);
   --surface-2: var(--ds-color-surface-strong);
-  --surface-3: #282838;
+  --surface-3: #3A3A3C;
   --outline: var(--ds-color-border);
   --text-muted: var(--ds-color-text-muted);
   --brand: var(--ds-color-accent);
@@ -21,9 +21,10 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'ss02';
 }
 
 * {

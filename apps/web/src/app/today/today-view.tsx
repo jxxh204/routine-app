@@ -760,7 +760,10 @@ export function TodayView() {
   return (
     <PageShell>
       <section style={styles.pageSection}>
-        <SectionHeader eyebrow="Today" title="루틴 실행 대시보드" description={today} />
+        <div style={styles.headerWrap}>
+          <h1 style={styles.headerTitle}>{today}</h1>
+          <p style={styles.headerSub}>{doneCount}/{routines.length} 완료</p>
+        </div>
 
         {showWelcomeFeedback ? (
           <AppCard>
@@ -771,18 +774,11 @@ export function TodayView() {
           </AppCard>
         ) : null}
 
-        <section style={styles.progressCard}>
-          <p style={styles.sectionLabel}>프로그레스 {doneCount}/{routines.length}</p>
-          <div style={styles.progressTrack}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-          </div>
-        </section>
+        <div style={styles.progressTrack}>
+          <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+        </div>
 
         <section style={styles.boardSection}>
-          <div style={{ ...styles.boardHeader, ...(isCompactLayout ? styles.boardHeaderCompact : {}) }}>
-            <h2 style={styles.boardTitle}>오늘 할 일</h2>
-            <p style={styles.boardMeta}>지금 가능한 루틴부터 위에서 처리</p>
-          </div>
 
           <section style={styles.list}>
             {orderedRoutines.map((routine) => {
@@ -1041,81 +1037,69 @@ export function TodayView() {
 const styles: Record<string, CSSProperties> = {
   pageSection: {
     display: 'grid',
-    gap: 20,
+    gap: 16,
   },
-  sectionLabel: {
-    margin: '0 0 6px',
-    fontSize: 11,
-    color: 'var(--ds-color-text-faint)',
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    fontWeight: 600,
-  },
-  boardSection: {
-    display: 'grid',
-    gap: 8,
-  },
-  boardHeader: {
+  /* Amie-style header: date as title, completion as subtitle */
+  headerWrap: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    gap: 8,
   },
-  boardHeaderCompact: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  },
-  boardTitle: {
+  headerTitle: {
     margin: 0,
-    fontSize: 18,
-    fontWeight: 700,
-    letterSpacing: '-0.01em',
-  },
-  boardMeta: {
-    margin: 0,
-    color: 'var(--ds-color-text-faint)',
-    fontSize: 12,
-  },
-  progressCard: {
-    background: 'var(--ds-color-surface)',
-    border: '1px solid var(--ds-color-border)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: 16,
-  },
-  welcomeCard: {
-    background: 'var(--ds-color-accent-soft)',
-    border: '1px solid rgba(167, 139, 250, 0.12)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: 16,
-  },
-  welcomeTitle: {
-    display: 'block',
-    color: 'var(--ds-color-accent-strong)',
-    fontSize: 14,
+    fontSize: 22,
     fontWeight: 600,
+    letterSpacing: '-0.02em',
+    color: 'var(--ds-color-text)',
   },
-  welcomeDesc: {
-    margin: '4px 0 0',
+  headerSub: {
+    margin: 0,
+    fontSize: 13,
     color: 'var(--ds-color-text-muted)',
-    fontSize: 12,
+    fontWeight: 400,
   },
-  addSection: {
-    marginTop: 4,
+  sectionLabel: {
+    margin: 0,
+    fontSize: 11,
+    color: 'var(--ds-color-text-faint)',
+    fontWeight: 500,
   },
+  /* Progress bar — Amie thin strip, no card */
   progressTrack: {
-    height: 6,
+    height: 3,
     background: 'var(--ds-color-surface-strong)',
     borderRadius: 'var(--ds-radius-pill)',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    background: 'linear-gradient(90deg, var(--ds-color-accent), var(--ds-color-accent-strong))',
+    background: 'var(--ds-color-accent)',
     borderRadius: 'var(--ds-radius-pill)',
-    transition: 'width 0.4s var(--ds-ease)',
+    transition: 'width 0.5s var(--ds-ease)',
   },
+  boardSection: {
+    display: 'grid',
+    gap: 6,
+  },
+  welcomeCard: {
+    background: 'var(--ds-color-accent-soft)',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: 14,
+  },
+  welcomeTitle: {
+    display: 'block',
+    color: 'var(--ds-color-accent-strong)',
+    fontSize: 13,
+    fontWeight: 500,
+  },
+  welcomeDesc: {
+    margin: '2px 0 0',
+    color: 'var(--ds-color-text-muted)',
+    fontSize: 12,
+  },
+  addSection: {},
   syncText: {
-    margin: '6px 0 0',
+    margin: '4px 0 0',
     fontSize: 11,
     color: 'var(--ds-color-text-faint)',
   },
@@ -1128,12 +1112,11 @@ const styles: Record<string, CSSProperties> = {
     background: 'var(--ds-color-accent-soft)',
     color: 'var(--ds-color-accent)',
     border: 'none',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '6px 12px',
+    borderRadius: 'var(--ds-radius-pill)',
+    padding: '5px 12px',
     cursor: 'pointer',
     fontSize: 12,
-    fontWeight: 600,
-    transition: 'all var(--ds-duration) var(--ds-ease)',
+    fontWeight: 500,
   },
   addToggleButtonNeutral: {
     background: 'var(--ds-color-surface-strong)',
@@ -1144,19 +1127,18 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
-    marginTop: 10,
-    alignItems: 'stretch',
+    marginTop: 8,
   },
   input: {
     width: '100%',
-    height: 44,
-    background: 'var(--ds-color-surface-soft)',
+    height: 40,
+    background: 'var(--ds-color-bg)',
     color: 'var(--ds-color-text)',
-    border: '1px solid var(--ds-color-border)',
+    border: '1px solid var(--ds-color-border-strong)',
     borderRadius: 'var(--ds-radius-sm)',
     padding: '0 12px',
-    fontSize: 15,
-    lineHeight: '44px',
+    fontSize: 14,
+    lineHeight: '40px',
     boxSizing: 'border-box',
     transition: 'border-color var(--ds-duration) var(--ds-ease)',
   },
@@ -1164,7 +1146,6 @@ const styles: Record<string, CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: 8,
-    alignItems: 'center',
   },
   timeFieldWrap: {
     display: 'flex',
@@ -1179,45 +1160,39 @@ const styles: Record<string, CSSProperties> = {
     flexShrink: 0,
     fontWeight: 500,
   },
-  timeFieldLabelCompact: {
-    fontSize: 10,
-  },
+  timeFieldLabelCompact: { fontSize: 10 },
   inputTime: {
     width: '100%',
-    background: 'var(--ds-color-surface-soft)',
+    background: 'var(--ds-color-bg)',
     color: 'var(--ds-color-text)',
-    border: '1px solid var(--ds-color-border)',
+    border: '1px solid var(--ds-color-border-strong)',
     borderRadius: 'var(--ds-radius-sm)',
-    padding: '8px 10px',
-    fontSize: 15,
+    padding: '7px 10px',
+    fontSize: 14,
     boxSizing: 'border-box',
     minWidth: 0,
-    transition: 'border-color var(--ds-duration) var(--ds-ease)',
   },
-  inputTimeCompact: {
-    padding: '6px 8px',
-    fontSize: 13,
-  },
+  inputTimeCompact: { padding: '5px 8px', fontSize: 13 },
   addActionRow: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 6,
   },
   formError: {
     margin: 0,
-    color: '#f87171',
+    color: 'var(--ds-color-pink)',
     fontSize: 12,
   },
   addButtonFull: {
     width: '100%',
     background: 'var(--ds-color-accent)',
-    color: '#0e0e14',
+    color: '#fff',
     border: 'none',
     borderRadius: 'var(--ds-radius-sm)',
-    padding: '10px 12px',
+    padding: '9px 12px',
     cursor: 'pointer',
-    fontWeight: 600,
-    transition: 'all var(--ds-duration) var(--ds-ease)',
+    fontWeight: 500,
+    fontSize: 13,
   },
   cancelButton: {
     background: 'var(--ds-color-surface-strong)',
@@ -1226,12 +1201,13 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 'var(--ds-radius-sm)',
     padding: '8px 12px',
     cursor: 'pointer',
-    transition: 'all var(--ds-duration) var(--ds-ease)',
+    fontSize: 13,
   },
+  /* Routine list */
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 2,
   },
   swipeWrap: {
     position: 'relative',
@@ -1244,89 +1220,87 @@ const styles: Record<string, CSSProperties> = {
     right: 0,
     top: 0,
     bottom: 0,
-    width: 140,
+    width: 130,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     background: 'var(--ds-color-surface-strong)',
     borderRadius: 'var(--ds-radius-lg)',
     zIndex: 0,
   },
+  /* Routine card — Amie event block style */
   item: {
     position: 'relative',
     zIndex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
-    alignItems: 'flex-start',
+    gap: 4,
     background: 'var(--ds-color-surface)',
-    border: '1px solid var(--ds-color-border)',
+    border: 'none',
     borderRadius: 'var(--ds-radius-lg)',
-    padding: '14px 16px',
+    padding: '12px 14px',
     transition: 'all var(--ds-duration) var(--ds-ease)',
   },
   itemSwiped: {
-    transform: 'translateX(-140px)',
+    transform: 'translateX(-130px)',
   },
+  /* Active — Amie uses colored left border or tinted bg */
   itemActive: {
-    border: '1px solid var(--ds-color-success-border)',
-    background: 'var(--ds-color-success-soft)',
+    background: 'var(--ds-color-blue-soft)',
+    borderLeft: '3px solid var(--ds-color-blue)',
   },
   itemInactive: {
-    border: '1px solid var(--ds-color-border)',
-    background: 'var(--ds-color-surface-soft)',
+    background: 'var(--ds-color-surface)',
   },
   itemClickable: {
     cursor: 'pointer',
   },
+  /* Status pills */
   checkTag: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 56,
-    height: 24,
+    height: 22,
     borderRadius: 'var(--ds-radius-pill)',
     border: 'none',
     background: 'var(--ds-color-surface-strong)',
     color: 'var(--ds-color-text-muted)',
-    padding: '0 10px',
+    padding: '0 8px',
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   checkTagReady: {
-    background: 'var(--ds-color-success-soft)',
-    color: 'var(--ds-color-success)',
+    background: 'var(--ds-color-blue-soft)',
+    color: 'var(--ds-color-blue)',
   },
   checkTagWaiting: {
-    background: 'var(--ds-color-warning-soft)',
-    color: 'var(--ds-color-warning)',
+    background: 'var(--ds-color-gray-soft)',
+    color: 'var(--ds-color-gray)',
   },
   checkTagDone: {
-    background: 'var(--ds-color-done-soft)',
-    color: 'var(--ds-color-done)',
+    background: 'var(--ds-color-green-soft)',
+    color: 'var(--ds-color-green)',
   },
   editButton: {
     border: 'none',
-    background: 'rgba(167, 139, 250, 0.10)',
+    background: 'var(--ds-color-accent-soft)',
     color: 'var(--ds-color-accent)',
     borderRadius: 'var(--ds-radius-sm)',
-    padding: '6px 10px',
+    padding: '5px 10px',
     cursor: 'pointer',
     fontSize: 12,
     fontWeight: 500,
-    transition: 'all var(--ds-duration) var(--ds-ease)',
   },
   deleteButton: {
     border: 'none',
-    background: 'rgba(248, 113, 113, 0.10)',
-    color: '#f87171',
+    background: 'var(--ds-color-pink-soft)',
+    color: 'var(--ds-color-pink)',
     borderRadius: 'var(--ds-radius-sm)',
-    padding: '6px 10px',
+    padding: '5px 10px',
     cursor: 'pointer',
     fontSize: 12,
     fontWeight: 500,
-    transition: 'all var(--ds-duration) var(--ds-ease)',
   },
   itemHead: {
     width: '100%',
@@ -1335,43 +1309,34 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'center',
     gap: 8,
   },
-  itemBody: {
-    width: '100%',
-  },
-  inlineEditWrap: {
-    display: 'grid',
-    gap: 8,
-  },
+  itemBody: { width: '100%' },
+  inlineEditWrap: { display: 'grid', gap: 8 },
   inlineEditActions: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
-  inlineSaveButton: {
-    width: '100%',
-  },
-  inlineCancelButton: {
-    width: '100%',
-  },
+  inlineSaveButton: { width: '100%' },
+  inlineCancelButton: { width: '100%' },
   itemTitle: {
     margin: 0,
-    fontSize: 15,
-    fontWeight: 600,
-    letterSpacing: '-0.01em',
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--ds-color-text)',
   },
   meta: {
-    margin: '4px 0 0',
+    margin: '2px 0 0',
     fontSize: 12,
     color: 'var(--ds-color-text-faint)',
   },
+  /* Proof thumbnail */
   thumbWrap: {
-    marginTop: 8,
-    width: 64,
-    height: 64,
+    marginTop: 6,
+    width: 56,
+    height: 56,
     borderRadius: 'var(--ds-radius-sm)',
     overflow: 'hidden',
-    border: '1px solid var(--ds-color-border)',
     position: 'relative',
     WebkitTouchCallout: 'none',
     userSelect: 'none',
@@ -1385,7 +1350,7 @@ const styles: Record<string, CSSProperties> = {
   thumbMenu: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(14, 14, 20, 0.85)',
+    background: 'rgba(20, 20, 20, 0.88)',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -1397,38 +1362,37 @@ const styles: Record<string, CSSProperties> = {
     background: 'var(--ds-color-accent-soft)',
     color: 'var(--ds-color-accent)',
     borderRadius: 4,
-    padding: '4px 6px',
+    padding: '3px 6px',
     fontSize: 10,
     cursor: 'pointer',
-    fontWeight: 600,
+    fontWeight: 500,
   },
   thumbMenuCancel: {
     border: 'none',
     background: 'var(--ds-color-surface-strong)',
     color: 'var(--ds-color-text-muted)',
     borderRadius: 4,
-    padding: '4px 6px',
+    padding: '3px 6px',
     fontSize: 10,
     cursor: 'pointer',
   },
   previewOverlay: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(14, 14, 20, 0.85)',
+    background: 'rgba(20, 20, 20, 0.9)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
     zIndex: 30,
-    backdropFilter: 'blur(8px)',
+    backdropFilter: 'blur(12px)',
   },
   previewCard: {
     width: '100%',
-    maxWidth: 480,
+    maxWidth: 420,
     borderRadius: 'var(--ds-radius-lg)',
-    border: '1px solid var(--ds-color-border)',
     background: 'var(--ds-color-surface)',
-    padding: 12,
+    padding: 10,
   },
   previewImage: {
     width: '100%',
@@ -1447,6 +1411,11 @@ const styles: Record<string, CSSProperties> = {
     padding: '8px 12px',
     cursor: 'pointer',
     fontWeight: 500,
-    transition: 'all var(--ds-duration) var(--ds-ease)',
+  },
+  /* Add section — Amie minimal */
+  progressCard: {
+    background: 'var(--ds-color-surface)',
+    borderRadius: 'var(--ds-radius-lg)',
+    padding: 14,
   },
 };

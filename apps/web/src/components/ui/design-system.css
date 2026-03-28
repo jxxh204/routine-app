@@ -1,42 +1,43 @@
 :root {
-  /* Amie-inspired palette — warm dark with pastel accents */
-  --ds-color-bg: #0e0e14;
-  --ds-color-bg-glow: #1a1428;
-  --ds-color-surface: #16161f;
-  --ds-color-surface-strong: #1e1e2a;
-  --ds-color-surface-soft: #121218;
-  --ds-color-border: rgba(255, 255, 255, 0.06);
-  --ds-color-border-strong: rgba(255, 255, 255, 0.10);
+  /* Amie dark mode — clean, minimal, airy */
+  --ds-color-bg: #141414;
+  --ds-color-bg-glow: transparent;
+  --ds-color-surface: #1C1C1E;
+  --ds-color-surface-strong: #2C2C2E;
+  --ds-color-surface-soft: #1C1C1E;
+  --ds-color-border: rgba(255, 255, 255, 0.08);
+  --ds-color-border-strong: rgba(255, 255, 255, 0.14);
 
-  --ds-color-text: #f0f0f5;
-  --ds-color-text-muted: #8b8b9e;
-  --ds-color-text-faint: #5c5c72;
+  --ds-color-text: #F5F5F7;
+  --ds-color-text-muted: #98989D;
+  --ds-color-text-faint: #636366;
 
-  /* Primary accent: soft lavender */
-  --ds-color-accent: #a78bfa;
-  --ds-color-accent-strong: #c4b5fd;
-  --ds-color-accent-soft: rgba(167, 139, 250, 0.10);
+  /* Amie brand — cyan blue */
+  --ds-color-accent: #0EA5E9;
+  --ds-color-accent-strong: #38BDF8;
+  --ds-color-accent-soft: rgba(14, 165, 233, 0.12);
 
-  /* Semantic colors */
-  --ds-color-success: #6ee7b7;
-  --ds-color-success-soft: rgba(110, 231, 183, 0.10);
-  --ds-color-success-border: rgba(110, 231, 183, 0.20);
+  /* Event colors — Amie pastel palette */
+  --ds-color-blue: #60A5FA;
+  --ds-color-blue-soft: rgba(96, 165, 250, 0.14);
+  --ds-color-green: #34D399;
+  --ds-color-green-soft: rgba(52, 211, 153, 0.14);
+  --ds-color-yellow: #FBBF24;
+  --ds-color-yellow-soft: rgba(251, 191, 36, 0.10);
+  --ds-color-pink: #F472B6;
+  --ds-color-pink-soft: rgba(244, 114, 182, 0.12);
+  --ds-color-gray: #98989D;
+  --ds-color-gray-soft: rgba(152, 152, 157, 0.10);
 
-  --ds-color-warning: #fbbf24;
-  --ds-color-warning-soft: rgba(251, 191, 36, 0.08);
-
-  --ds-color-done: #6b7280;
-  --ds-color-done-soft: rgba(107, 114, 128, 0.08);
-
-  --ds-radius-xl: 20px;
-  --ds-radius-lg: 16px;
-  --ds-radius-md: 12px;
+  --ds-radius-xl: 16px;
+  --ds-radius-lg: 12px;
+  --ds-radius-md: 10px;
   --ds-radius-sm: 8px;
   --ds-radius-pill: 999px;
 
+  --ds-shadow-card: none;
+  --ds-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.15);
   --ds-shadow-page: none;
-  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --ds-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.12);
 
   --ds-space-1: 4px;
   --ds-space-2: 8px;
@@ -45,76 +46,76 @@
   --ds-space-5: 24px;
   --ds-space-6: 32px;
 
-  /* Transition */
-  --ds-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ds-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ds-duration: 0.2s;
 }
 
+/* Page shell — flat, clean */
 .ds-page-shell {
   min-height: 100dvh;
   background: var(--ds-color-bg);
   color: var(--ds-color-text);
-  padding: 24px 16px 48px;
+  padding: 20px 16px 48px;
 }
 
 .ds-page-shell__inner {
   width: 100%;
-  max-width: 480px;
+  max-width: 420px;
   margin: 0 auto;
 }
 
 .ds-page-shell--narrow .ds-page-shell__inner {
-  max-width: 400px;
+  max-width: 380px;
 }
 
+/* Section header — Amie style: small, understated */
 .ds-section-header {
   display: grid;
   gap: 2px;
+  margin-bottom: 4px;
 }
 
 .ds-section-header__eyebrow {
-  margin: 0;
-  color: var(--ds-color-accent);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: none; /* Amie doesn't use eyebrows */
 }
 
 .ds-section-header__title {
   margin: 0;
-  font-size: 28px;
-  line-height: 1.15;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .ds-section-header__description {
   margin: 0;
   color: var(--ds-color-text-muted);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 400;
 }
 
+/* Card — borderless, subtle bg only */
 .ds-app-card {
   border-radius: var(--ds-radius-lg);
-  border: 1px solid var(--ds-color-border);
+  border: none;
   background: var(--ds-color-surface);
   padding: var(--ds-space-4);
-  transition: background var(--ds-duration) var(--ds-ease);
 }
 
+/* Buttons — Amie: simple, rounded, clean */
 .ds-btn {
   border-radius: var(--ds-radius-sm);
-  padding: 8px 14px;
+  padding: 7px 14px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   border: none;
-  transition: all var(--ds-duration) var(--ds-ease);
+  transition: opacity var(--ds-duration) var(--ds-ease),
+              transform var(--ds-duration) var(--ds-ease);
 }
 
 .ds-btn:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.8;
 }
 
 .ds-btn:active:not(:disabled) {
@@ -122,21 +123,21 @@
 }
 
 .ds-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: default;
 }
 
 .ds-btn--primary {
-  color: #0e0e14;
+  color: #fff;
   background: var(--ds-color-accent);
 }
 
 .ds-btn--ghost {
   color: var(--ds-color-text-muted);
   background: var(--ds-color-surface-strong);
-  border: 1px solid var(--ds-color-border);
 }
 
+/* Stat card */
 .ds-stat-card {
   border-radius: var(--ds-radius-md);
   background: var(--ds-color-surface-strong);
@@ -150,29 +151,21 @@
 }
 
 .ds-stat-card__value {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ds-color-text);
 }
 
-/* Routine card animations */
-@keyframes checkPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
+/* Micro-interactions */
 .routine-card-surface {
-  transition: transform var(--ds-duration) var(--ds-ease),
-              background var(--ds-duration) var(--ds-ease);
+  transition: transform var(--ds-duration) var(--ds-ease);
 }
 
 .routine-card-surface:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
-/* Input focus style */
 .routine-title-input:focus {
   outline: none;
   border-color: var(--ds-color-accent) !important;
-  box-shadow: 0 0 0 2px var(--ds-color-accent-soft);
+  box-shadow: 0 0 0 3px var(--ds-color-accent-soft);
 }
