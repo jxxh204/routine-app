@@ -534,83 +534,99 @@ function AppContent() {
     setStatusMsg(enabled ? '알림을 켰어요.' : '알림을 껐어요.');
   };
 
-  const renderWebRoute = (path: '/today' | '/calendar' | '/settings') => {
-    const pageUrl = `${parsedUrl?.origin ?? ''}${path}`;
+  const handleWebMessage = useCallback((event: { nativeEvent: { data: string } }) => {
+    try {
+      const payload = JSON.parse(event.nativeEvent.data ?? '{}') as {
+        source?: string;
+        type?: string;
+        history?: CompletionHistory;
+        path?: string;
+        action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
+        enabled?: boolean;
+      };
 
-    return (
-      <WebView
-        style={styles.webview}
-        source={{ uri: pageUrl }}
-        startInLoadingState
-        originWhitelist={['https://*']}
-        onNavigationStateChange={(navState) => {
-          handleWebviewPathUpdate(navState.url);
-        }}
-        onShouldStartLoadWithRequest={(request) => {
-          if (isAllowedUrl(request.url)) return true;
+      if (payload.source === 'routine-webview' && payload.type === 'route-path' && payload.path) {
+        setCurrentWebPath(payload.path);
+        return;
+      }
 
-          // OAuth 진행 중에는 WebView 내부에서 provider 왕복을 허용해 세션이 앱 WebView에 반영되게 유지
-          if (isAuthScreen && isOAuthNavigationUrl(request.url)) return true;
+      if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
+        setCompletionHistory(payload.history);
+        return;
+      }
 
-          void Linking.openURL(request.url);
-          return false;
-        }}
-        renderLoading={() => (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color="#0EA5E9" />
-          </View>
-        )}
-        injectedJavaScript={getWebviewCompletionSyncScript()}
-        onMessage={(event) => {
-          try {
-            const payload = JSON.parse(event.nativeEvent.data ?? '{}') as {
-              source?: string;
-              type?: string;
-              history?: CompletionHistory;
-              path?: string;
-              action?: 'open-settings' | 'request-notification-permission' | 'toggle-notification';
-              enabled?: boolean;
-            };
+      if (payload.source === 'routine-web' && payload.type === 'native-action') {
+        if (payload.action === 'open-settings') {
+          void Linking.openSettings();
+          return;
+        }
 
-            if (payload.source === 'routine-webview' && payload.type === 'route-path' && payload.path) {
-              setCurrentWebPath(payload.path);
-              return;
-            }
+        if (payload.action === 'request-notification-permission') {
+          void Notifications.requestPermissionsAsync().then((perm) => {
+            setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
+          });
+          return;
+        }
 
-            if (payload.source === 'routine-webview' && payload.type === 'completion-history' && payload.history) {
-              setCompletionHistory(payload.history);
-              return;
-            }
+        if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
+          void toggleNotifications(payload.enabled);
+        }
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
 
-            if (payload.source === 'routine-web' && payload.type === 'native-action') {
-              if (payload.action === 'open-settings') {
-                void Linking.openSettings();
-                return;
-              }
+  const handleShouldStartLoad = useCallback((request: { url: string }) => {
+    if (isAllowedUrl(request.url)) return true;
+    if (isAuthScreen && isOAuthNavigationUrl(request.url)) return true;
+    void Linking.openURL(request.url);
+    return false;
+  }, [isAuthScreen]);
 
-              if (payload.action === 'request-notification-permission') {
-                void Notifications.requestPermissionsAsync().then((perm) => {
-                  setStatusMsg(perm.granted ? '알림 권한이 허용됐어요.' : '알림 권한이 꺼져 있어요.');
-                });
-                return;
-              }
+  const webviewProps = useMemo(() => ({
+    originWhitelist: ['https://*'] as string[],
+    startInLoadingState: true,
+    injectedJavaScript: getWebviewCompletionSyncScript(),
+    onMessage: handleWebMessage,
+    onShouldStartLoadWithRequest: handleShouldStartLoad,
+    renderLoading: () => (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#0EA5E9" />
+      </View>
+    ),
+  }), [handleWebMessage, handleShouldStartLoad]);
 
-              if (payload.action === 'toggle-notification' && typeof payload.enabled === 'boolean') {
-                void toggleNotifications(payload.enabled);
-              }
-            }
-          } catch {
-            // no-op
-          }
-        }}
-      />
-    );
-  };
+  const tabs: Array<{ key: TabKey; path: string }> = [
+    { key: 'today', path: '/today' },
+    { key: 'calendar', path: '/calendar' },
+    { key: 'settings', path: '/settings' },
+  ];
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <View style={[styles.body, !isAuthScreen ? styles.bodyWithTabBarInset : undefined]}>
-        {renderWebRoute(activeTab === 'today' ? '/today' : activeTab === 'calendar' ? '/calendar' : '/settings')}
+        {tabs.map((tab) => (
+          <View
+            key={tab.key}
+            style={[
+              styles.webviewLayer,
+              activeTab === tab.key ? styles.webviewLayerVisible : styles.webviewLayerHidden,
+            ]}
+            pointerEvents={activeTab === tab.key ? 'auto' : 'none'}
+          >
+            <WebView
+              style={styles.webview}
+              source={{ uri: `${parsedUrl?.origin ?? ''}${tab.path}` }}
+              onNavigationStateChange={(navState) => {
+                if (activeTab === tab.key) {
+                  handleWebviewPathUpdate(navState.url);
+                }
+              }}
+              {...webviewProps}
+            />
+          </View>
+        ))}
       </View>
 
       {!isAuthScreen ? <View style={[styles.tabBar, { bottom: 8 + Math.max(insets.bottom, 0) }]}>
@@ -685,6 +701,15 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     paddingBottom: 140,
+  },
+  webviewLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  webviewLayerVisible: {
+    opacity: 1,
+  },
+  webviewLayerHidden: {
+    opacity: 0,
   },
   webview: {
     flex: 1,
