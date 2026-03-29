@@ -760,7 +760,7 @@ export function TodayView() {
 
   return (
     <PageShell>
-      <section className="grid gap-4">
+      <section className="grid gap-ds-section-gap">
         {/* Header */}
         <div className="flex justify-between items-baseline">
           <h1 className="m-0 text-[22px] font-semibold tracking-tight text-ds-text">
@@ -773,11 +773,11 @@ export function TodayView() {
 
         {/* Welcome Feedback */}
         {showWelcomeFeedback ? (
-          <Card variant="borderless" styles={{ body: { padding: '14px', background: 'var(--ds-color-accent-soft)' } }}>
+          <Card variant="borderless" styles={{ body: { padding: 'var(--ds-space-card-y) var(--ds-space-card-x)', background: 'var(--ds-color-accent-soft)' } }}>
             <strong className="block text-ds-accent-strong text-[13px] font-medium">
               로그인 완료! 오늘 해야 할 루틴부터 시작하세요.
             </strong>
-            <p className="mt-[2px] mb-0 text-ds-text-muted text-[12px]">
+            <p className="mt-ds-tight mb-0 text-ds-text-muted text-[12px]">
               지금 가능한 루틴을 상단에서 바로 인증할 수 있어요.
             </p>
           </Card>
@@ -797,8 +797,8 @@ export function TodayView() {
         />
 
         {/* Routine List */}
-        <section className="grid gap-[6px]">
-          <div className="flex flex-col gap-[2px]">
+        <section className="grid gap-ds-inline">
+          <div className="flex flex-col gap-ds-card-gap">
             {orderedRoutines.map((routine) => {
               const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
               const isEditing = editingRoutineId === routine.id;
@@ -807,8 +807,8 @@ export function TodayView() {
               const card = (
                 <article
                   className={`
-                    routine-card-surface relative z-[1] w-full flex flex-col gap-1
-                    border-0 rounded-ds-lg p-[12px_14px] box-border
+                    routine-card-surface relative z-[1] w-full flex flex-col gap-ds-inline
+                    border-0 rounded-ds-lg pad-card box-border
                     transition-all duration-300 ease-[var(--ds-ease)]
                     ${inWindow 
                       ? 'bg-ds-blue-soft border-l-[3px] border-l-ds-blue' 
@@ -853,7 +853,7 @@ export function TodayView() {
                           }}
                         />
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center gap-[6px] min-w-0">
+                          <div className="flex items-center gap-ds-inline min-w-0">
                             <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                               시작
                             </span>
@@ -869,7 +869,7 @@ export function TodayView() {
                               }}
                             />
                           </div>
-                          <div className="flex items-center gap-[6px] min-w-0">
+                          <div className="flex items-center gap-ds-inline min-w-0">
                             <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                               종료
                             </span>
@@ -898,7 +898,7 @@ export function TodayView() {
                       </div>
                     ) : (
                       <>
-                        <p className="mt-[2px] mb-0 text-[12px] text-ds-text-faint">
+                        <p className="mt-ds-tight mb-0 text-[12px] text-ds-text-faint">
                           인증 시간: {routine.timeRangeLabel}
                         </p>
                         {routine.proofImage ? (
@@ -957,7 +957,7 @@ export function TodayView() {
                   onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
                   onTouchEnd={handleRoutineTouchEnd}
                 >
-                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-[6px] bg-ds-surface-strong rounded-ds-lg z-0">
+                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-ds-inline bg-ds-surface-strong rounded-ds-lg z-0">
                     <Button
                       onClick={() => startEditRoutine(routine.id)}
                       className="!border-0 !bg-ds-accent-soft !text-ds-accent !text-[12px] !font-medium"
@@ -981,7 +981,7 @@ export function TodayView() {
         </section>
 
         {/* Add Routine Section */}
-        <Card variant="borderless" styles={{ body: { padding: '14px' } }}>
+        <Card variant="borderless" styles={{ body: { padding: 'var(--ds-space-card-y) var(--ds-space-card-x)' } }}>
           <div className="flex justify-between items-center">
             <div>
               <p className="m-0 text-[11px] text-ds-text-faint font-medium">
@@ -1027,7 +1027,7 @@ export function TodayView() {
                   }}
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-[6px] min-w-0">
+                  <div className="flex items-center gap-ds-inline min-w-0">
                     <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                       시작
                     </span>
@@ -1043,7 +1043,7 @@ export function TodayView() {
                       }}
                     />
                   </div>
-                  <div className="flex items-center gap-[6px] min-w-0">
+                  <div className="flex items-center gap-ds-inline min-w-0">
                     <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                       종료
                     </span>
@@ -1061,7 +1061,7 @@ export function TodayView() {
                 {formError ? (
                   <p className="m-0 text-ds-pink text-[12px]">{formError}</p>
                 ) : null}
-                <div className="flex flex-col gap-[6px]">
+                <div className="flex flex-col gap-ds-inline">
                   <Button
                     type="primary"
                     onClick={submitRoutineForm}

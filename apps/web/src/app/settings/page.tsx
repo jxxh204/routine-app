@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
+import { Button } from 'antd';
 
 import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
@@ -43,61 +44,96 @@ export default function SettingsPage() {
   return (
     <AuthRequired>
       <PageShell>
-        <section style={styles.page}>
+        <section className="grid gap-ds-section-gap">
           {/* Header */}
-          <div style={styles.header}>
+          <div className="flex justify-between items-center">
             <div>
-              <p style={styles.eyebrow}>SYSTEM</p>
-              <h1 style={styles.title}>설정</h1>
+              <p className="m-0 text-[11px] font-semibold tracking-[0.08em] text-ds-text-faint uppercase">
+                SYSTEM
+              </p>
+              <h1 className="mt-ds-tight mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
+                설정
+              </h1>
             </div>
-            <Link href="/today" style={styles.backLink}>
+            <Link href="/today" className="text-ds-accent no-underline text-[13px] font-medium">
               오늘으로
             </Link>
           </div>
 
           {/* Notification */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>알림</p>
-            <div style={styles.statusRow}>
-              <span style={styles.statusLabel}>권한 상태</span>
-              <span style={{
-                ...styles.statusBadge,
-                ...(permission === 'granted' ? styles.badgeGranted : permission === 'denied' ? styles.badgeDenied : styles.badgeDefault),
-              }}>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">알림</p>
+            <div className="flex justify-between items-center">
+              <span className="text-[13px] text-ds-text-muted">권한 상태</span>
+              <span
+                className={`
+                  inline-flex items-center h-[22px] rounded-ds-pill px-2 text-[11px] font-medium
+                  ${permission === 'granted'
+                    ? 'bg-ds-green-soft text-ds-green'
+                    : permission === 'denied'
+                      ? 'bg-ds-pink-soft text-ds-pink'
+                      : 'bg-ds-gray-soft text-ds-gray'
+                  }
+                `}
+              >
                 {permissionLabel(permission)}
               </span>
             </div>
-            <div style={styles.buttonGroup}>
-              <button style={styles.actionButton} onClick={() => void requestPermission()}>권한 요청</button>
-              <button style={styles.actionButton} onClick={() => { void sendNativeAction('toggle-notification', true); }}>켜기</button>
-              <button style={styles.actionButton} onClick={() => { void sendNativeAction('toggle-notification', false); }}>끄기</button>
-              <button style={styles.actionButton} onClick={() => { void sendNativeAction('open-settings'); }}>시스템 설정</button>
+            <div className="flex gap-ds-inline flex-wrap">
+              <Button
+                size="small"
+                onClick={() => void requestPermission()}
+                className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
+              >
+                권한 요청
+              </Button>
+              <Button
+                size="small"
+                onClick={() => { void sendNativeAction('toggle-notification', true); }}
+                className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
+              >
+                켜기
+              </Button>
+              <Button
+                size="small"
+                onClick={() => { void sendNativeAction('toggle-notification', false); }}
+                className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
+              >
+                끄기
+              </Button>
+              <Button
+                size="small"
+                onClick={() => { void sendNativeAction('open-settings'); }}
+                className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
+              >
+                시스템 설정
+              </Button>
             </div>
           </div>
 
           {/* Policy */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>운영 정책</p>
-            <div style={styles.policyList}>
-              <div style={styles.policyItem}>
-                <span style={styles.policyDot} />
-                <span style={styles.policyText}>기본 3루틴 + 커스텀 루틴 유지</span>
-              </div>
-              <div style={styles.policyItem}>
-                <span style={styles.policyDot} />
-                <span style={styles.policyText}>루틴 인증 정책: 시간대 기반</span>
-              </div>
-              <div style={styles.policyItem}>
-                <span style={styles.policyDot} />
-                <span style={styles.policyText}>친구 연동 권한: 방장만 루틴 편집</span>
-              </div>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">운영 정책</p>
+            <div className="grid gap-ds-inline">
+              {[
+                '기본 3루틴 + 커스텀 루틴 유지',
+                '루틴 인증 정책: 시간대 기반',
+                '친구 연동 권한: 방장만 루틴 편집',
+              ].map((text) => (
+                <div key={text} className="flex items-center gap-2">
+                  <span className="w-[5px] h-[5px] rounded-ds-pill bg-ds-accent shrink-0" />
+                  <span className="text-[13px] text-ds-text-muted">{text}</span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Info */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>시스템 안내</p>
-            <p style={styles.infoText}>iOS WebView 환경에서는 시스템 설정에서 알림 권한을 최종 확인해 주세요.</p>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">시스템 안내</p>
+            <p className="m-0 text-[13px] text-ds-text-faint leading-normal">
+              iOS WebView 환경에서는 시스템 설정에서 알림 권한을 최종 확인해 주세요.
+            </p>
           </div>
         </section>
       </PageShell>
@@ -111,121 +147,3 @@ function permissionLabel(state: PermissionState) {
   if (state === 'unsupported') return '미지원';
   return '미결정';
 }
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    display: 'grid',
-    gap: 12,
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    color: 'var(--ds-color-text-faint)',
-    textTransform: 'uppercase' as const,
-  },
-  title: {
-    margin: '2px 0 0',
-    fontSize: 22,
-    fontWeight: 600,
-    letterSpacing: '-0.02em',
-    color: 'var(--ds-color-text)',
-  },
-  backLink: {
-    color: 'var(--ds-color-accent)',
-    textDecoration: 'none',
-    fontSize: 13,
-    fontWeight: 500,
-  },
-  card: {
-    background: 'var(--ds-color-surface)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: '14px 16px',
-    display: 'grid',
-    gap: 10,
-  },
-  cardTitle: {
-    margin: 0,
-    fontSize: 14,
-    fontWeight: 600,
-    color: 'var(--ds-color-text)',
-  },
-  statusRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: 13,
-    color: 'var(--ds-color-text-muted)',
-  },
-  statusBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    height: 22,
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '0 8px',
-    fontSize: 11,
-    fontWeight: 500,
-  },
-  badgeGranted: {
-    background: 'var(--ds-color-green-soft)',
-    color: 'var(--ds-color-green)',
-  },
-  badgeDenied: {
-    background: 'var(--ds-color-pink-soft)',
-    color: 'var(--ds-color-pink)',
-  },
-  badgeDefault: {
-    background: 'var(--ds-color-gray-soft)',
-    color: 'var(--ds-color-gray)',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  actionButton: {
-    border: 'none',
-    background: 'var(--ds-color-surface-strong)',
-    color: 'var(--ds-color-text-muted)',
-    borderRadius: 'var(--ds-radius-sm)',
-    padding: '7px 12px',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 500,
-    transition: 'opacity 0.15s ease',
-  },
-  policyList: {
-    display: 'grid',
-    gap: 6,
-  },
-  policyItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  },
-  policyDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 'var(--ds-radius-pill)',
-    background: 'var(--ds-color-accent)',
-    flexShrink: 0,
-  },
-  policyText: {
-    fontSize: 13,
-    color: 'var(--ds-color-text-muted)',
-  },
-  infoText: {
-    margin: 0,
-    fontSize: 13,
-    color: 'var(--ds-color-text-faint)',
-    lineHeight: 1.5,
-  },
-};

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Input } from 'antd';
 
 import { AuthRequired } from '@/components/auth-required';
-import { GhostButton, PageShell, PrimaryButton } from '@/components/ui';
+import { PageShell } from '@/components/ui';
 import { isValidFriendCode, normalizeFriendCode } from '@/lib/friend-code';
 import { acceptFriendRequest, listMyFriendRequests, sendFriendRequestByCode, splitFriendRequests, type FriendRequestRow } from '@/lib/friends';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
@@ -36,7 +37,6 @@ export default function FriendsPage() {
     setRows(res.data);
   };
 
-  // Fetch on mount — refresh calls setState in a callback (async), lint-safe
   useEffect(() => {
     let cancelled = false;
     const doRefresh = async () => {
@@ -95,54 +95,71 @@ export default function FriendsPage() {
   return (
     <AuthRequired>
       <PageShell>
-        <section style={styles.page}>
+        <section className="grid gap-ds-section-gap">
           {/* Header */}
           <div>
-            <p style={styles.eyebrow}>SOCIAL</p>
-            <h1 style={styles.title}>친구 관리</h1>
-            <p style={styles.desc}>친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요.</p>
+            <p className="m-0 text-[11px] font-semibold tracking-[0.08em] text-ds-text-faint uppercase">
+              SOCIAL
+            </p>
+            <h1 className="mt-ds-tight mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
+              친구 관리
+            </h1>
+            <p className="mt-1 mb-0 text-[13px] text-ds-text-muted">
+              친구 코드를 입력해 요청을 보내고, 받은 요청을 수락하세요.
+            </p>
           </div>
 
           {/* My code */}
-          <div style={styles.card}>
-            <div style={styles.cardHeader}>
-              <p style={styles.cardTitle}>내 친구 코드</p>
-            </div>
-            <span style={styles.codeDisplay}>{myFriendCode || '생성 중...'}</span>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">내 친구 코드</p>
+            <span className="text-[22px] font-bold tracking-[0.12em] text-ds-accent">
+              {myFriendCode || '생성 중...'}
+            </span>
           </div>
 
           {/* Send request */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>친구 코드로 요청 보내기</p>
-            <div style={styles.inputRow}>
-              <input
-                className="routine-title-input"
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">친구 코드로 요청 보내기</p>
+            <div className="flex gap-2">
+              <Input
                 value={friendCode}
                 onChange={(e) => setFriendCode(e.target.value)}
                 placeholder="예: AB12CD"
-                style={styles.input}
+                className="flex-1"
               />
-              <PrimaryButton
+              <Button
+                type="primary"
                 onClick={() => void onSend()}
                 disabled={!canSubmit || loading}
-                style={styles.sendBtn}
+                className="shrink-0"
               >
                 요청
-              </PrimaryButton>
+              </Button>
             </div>
           </div>
 
           {/* Incoming */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>받은 요청</p>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">받은 요청</p>
             {split.incomingPending.length === 0 ? (
-              <p style={styles.emptyText}>받은 요청이 없어요.</p>
+              <p className="m-0 text-ds-text-faint text-[13px]">받은 요청이 없어요.</p>
             ) : (
-              <div style={styles.listWrap}>
+              <div className="grid gap-ds-inline">
                 {split.incomingPending.map((row) => (
-                  <div key={row.id} style={styles.requestItem}>
-                    <span style={styles.requestLabel}>요청자: {row.requester_id.slice(0, 8)}…</span>
-                    <GhostButton onClick={() => void onAccept(row.id)} style={styles.acceptBtn}>수락</GhostButton>
+                  <div
+                    key={row.id}
+                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md pad-item"
+                  >
+                    <span className="text-[13px] text-ds-text-muted">
+                      요청자: {row.requester_id.slice(0, 8)}…
+                    </span>
+                    <Button
+                      size="small"
+                      onClick={() => void onAccept(row.id)}
+                      className="!bg-ds-accent-soft !text-ds-accent !border-0 !text-[12px] !rounded-ds-sm"
+                    >
+                      수락
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -150,16 +167,23 @@ export default function FriendsPage() {
           </div>
 
           {/* Outgoing */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>보낸 요청</p>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">보낸 요청</p>
             {split.outgoingPending.length === 0 ? (
-              <p style={styles.emptyText}>보낸 요청이 없어요.</p>
+              <p className="m-0 text-ds-text-faint text-[13px]">보낸 요청이 없어요.</p>
             ) : (
-              <div style={styles.listWrap}>
+              <div className="grid gap-ds-inline">
                 {split.outgoingPending.map((row) => (
-                  <div key={row.id} style={styles.requestItem}>
-                    <span style={styles.requestLabel}>대상: {row.addressee_id.slice(0, 8)}…</span>
-                    <span style={styles.pendingBadge}>대기</span>
+                  <div
+                    key={row.id}
+                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md pad-item"
+                  >
+                    <span className="text-[13px] text-ds-text-muted">
+                      대상: {row.addressee_id.slice(0, 8)}…
+                    </span>
+                    <span className="inline-flex items-center h-[22px] rounded-ds-pill px-2 text-[11px] font-medium bg-ds-yellow-soft text-ds-yellow">
+                      대기
+                    </span>
                   </div>
                 ))}
               </div>
@@ -167,19 +191,24 @@ export default function FriendsPage() {
           </div>
 
           {/* Friends list */}
-          <div style={styles.card}>
-            <p style={styles.cardTitle}>친구 목록</p>
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
+            <p className="m-0 text-[14px] font-semibold text-ds-text">친구 목록</p>
             {split.accepted.length === 0 ? (
-              <p style={styles.emptyText}>아직 친구가 없어요.</p>
+              <p className="m-0 text-ds-text-faint text-[13px]">아직 친구가 없어요.</p>
             ) : (
-              <div style={styles.listWrap}>
+              <div className="grid gap-ds-inline">
                 {split.accepted.map((row) => (
-                  <div key={row.id} style={styles.friendItem}>
-                    <div style={styles.friendAvatar} />
-                    <span style={styles.friendId}>
+                  <div
+                    key={row.id}
+                    className="flex items-center gap-ds-card-gap bg-ds-surface-strong rounded-ds-md pad-item"
+                  >
+                    <div className="w-7 h-7 rounded-ds-pill bg-ds-accent-soft shrink-0" />
+                    <span className="flex-1 text-[13px] text-ds-text-muted">
                       {(row.requester_id === myUserId ? row.addressee_id : row.requester_id).slice(0, 8)}…
                     </span>
-                    <span style={styles.friendBadge}>연결됨</span>
+                    <span className="inline-flex items-center h-[22px] rounded-ds-pill px-2 text-[11px] font-medium bg-ds-green-soft text-ds-green">
+                      연결됨
+                    </span>
                   </div>
                 ))}
               </div>
@@ -187,156 +216,11 @@ export default function FriendsPage() {
           </div>
 
           {/* Message */}
-          {message ? <p style={styles.messageText}>{message}</p> : null}
+          {message ? (
+            <p className="m-0 text-[13px] text-ds-accent text-center">{message}</p>
+          ) : null}
         </section>
       </PageShell>
     </AuthRequired>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    display: 'grid',
-    gap: 12,
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    color: 'var(--ds-color-text-faint)',
-    textTransform: 'uppercase' as const,
-  },
-  title: {
-    margin: '2px 0 0',
-    fontSize: 22,
-    fontWeight: 600,
-    letterSpacing: '-0.02em',
-    color: 'var(--ds-color-text)',
-  },
-  desc: {
-    margin: '4px 0 0',
-    fontSize: 13,
-    color: 'var(--ds-color-text-muted)',
-  },
-  card: {
-    background: 'var(--ds-color-surface)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: '14px 16px',
-    display: 'grid',
-    gap: 10,
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardTitle: {
-    margin: 0,
-    fontSize: 14,
-    fontWeight: 600,
-    color: 'var(--ds-color-text)',
-  },
-  codeDisplay: {
-    fontSize: 22,
-    fontWeight: 700,
-    letterSpacing: '0.12em',
-    color: 'var(--ds-color-accent)',
-  },
-  inputRow: {
-    display: 'flex',
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderRadius: 'var(--ds-radius-sm)',
-    border: '1px solid var(--ds-color-border-strong)',
-    background: 'var(--ds-color-bg)',
-    color: 'var(--ds-color-text)',
-    padding: '0 12px',
-    fontSize: 14,
-    boxSizing: 'border-box' as const,
-  },
-  sendBtn: {
-    flexShrink: 0,
-    padding: '0 16px',
-    height: 40,
-  },
-  emptyText: {
-    margin: 0,
-    color: 'var(--ds-color-text-faint)',
-    fontSize: 13,
-  },
-  listWrap: {
-    display: 'grid',
-    gap: 6,
-  },
-  requestItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    background: 'var(--ds-color-surface-strong)',
-    borderRadius: 'var(--ds-radius-md)',
-    padding: '10px 12px',
-  },
-  requestLabel: {
-    fontSize: 13,
-    color: 'var(--ds-color-text-muted)',
-  },
-  acceptBtn: {
-    fontSize: 12,
-    padding: '5px 10px',
-    background: 'var(--ds-color-accent-soft)',
-    color: 'var(--ds-color-accent)',
-    borderRadius: 'var(--ds-radius-sm)',
-  },
-  pendingBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    height: 22,
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '0 8px',
-    fontSize: 11,
-    fontWeight: 500,
-    background: 'var(--ds-color-yellow-soft)',
-    color: 'var(--ds-color-yellow)',
-  },
-  friendItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    background: 'var(--ds-color-surface-strong)',
-    borderRadius: 'var(--ds-radius-md)',
-    padding: '10px 12px',
-  },
-  friendAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 'var(--ds-radius-pill)',
-    background: 'var(--ds-color-accent-soft)',
-    flexShrink: 0,
-  },
-  friendId: {
-    flex: 1,
-    fontSize: 13,
-    color: 'var(--ds-color-text-muted)',
-  },
-  friendBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    height: 22,
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '0 8px',
-    fontSize: 11,
-    fontWeight: 500,
-    background: 'var(--ds-color-green-soft)',
-    color: 'var(--ds-color-green)',
-  },
-  messageText: {
-    margin: 0,
-    fontSize: 13,
-    color: 'var(--ds-color-accent)',
-    textAlign: 'center',
-  },
-};

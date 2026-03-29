@@ -57,6 +57,16 @@
   --spacing-ds-5: var(--ds-space-5);
   --spacing-ds-6: var(--ds-space-6);
 
+  /* Semantic spacing */
+  --spacing-ds-section-gap: var(--ds-space-section-gap);
+  --spacing-ds-card-gap: var(--ds-space-card-gap);
+  --spacing-ds-card-x: var(--ds-space-card-x);
+  --spacing-ds-card-y: var(--ds-space-card-y);
+  --spacing-ds-item-x: var(--ds-space-item-x);
+  --spacing-ds-item-y: var(--ds-space-item-y);
+  --spacing-ds-inline: var(--ds-space-inline);
+  --spacing-ds-tight: var(--ds-space-tight);
+
   /* Shadows */
   --shadow-ds-card: var(--ds-shadow-card);
   --shadow-ds-soft: var(--ds-shadow-soft);
@@ -96,10 +106,8 @@ body {
   font-feature-settings: 'ss01', 'ss02';
 }
 
-* {
+*, ::before, ::after {
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
 }
 
 a {
@@ -121,4 +129,17 @@ html {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+
+/*
+ * Spacing utility overrides — use shorthand `padding` to beat
+ * Tailwind v4 preflight's `* { padding: 0 }` shorthand reset.
+ * longhand (padding-block/inline) loses to shorthand in CSS cascade.
+ */
+.pad-card {
+  padding: var(--ds-space-card-y) var(--ds-space-card-x);
+}
+
+.pad-item {
+  padding: var(--ds-space-item-y) var(--ds-space-item-x);
 }

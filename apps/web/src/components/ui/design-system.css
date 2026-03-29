@@ -91,6 +91,19 @@
   --ds-space-5: 24px;
   --ds-space-6: 32px;
 
+  /* Semantic spacing — layout rhythm */
+  --ds-space-page-x: 20px;
+  --ds-space-page-top: 20px;
+  --ds-space-page-bottom: 48px;
+  --ds-space-section-gap: 20px;
+  --ds-space-card-gap: 12px;
+  --ds-space-card-x: 12px;
+  --ds-space-card-y: 12px;
+  --ds-space-item-x: 9px;      /* 내부 아이템 좌우 */
+  --ds-space-item-y: 8px;      /* 내부 아이템 상하 */
+  --ds-space-inline: 8px;
+  --ds-space-tight: 6px;
+
   --ds-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ds-duration: 0.2s;
 }
@@ -100,7 +113,7 @@
   min-height: 100dvh;
   background: var(--ds-color-bg);
   color: var(--ds-color-text);
-  padding: 20px 16px 48px;
+  padding: var(--ds-space-page-top) var(--ds-space-page-x) var(--ds-space-page-bottom);
 }
 
 .ds-page-shell__inner {
