@@ -100,7 +100,7 @@
   /* Semantic spacing — layout rhythm */
   --ds-space-page-x: 20px;
   --ds-space-page-top: 20px;
-  --ds-space-page-bottom: calc(48px + var(--ds-safe-bottom));
+  --ds-space-page-bottom: calc(70px + var(--ds-safe-bottom));
   --ds-space-section-gap: 20px;
   --ds-space-card-gap: 12px;
   --ds-space-card-x: 12px;
