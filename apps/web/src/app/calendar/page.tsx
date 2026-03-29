@@ -127,11 +127,11 @@ export default function CalendarPage() {
 
           {/* Summary stats */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-ds-surface rounded-ds-md py-ds-item-y px-ds-item-x flex flex-col gap-ds-tight">
+            <div className="bg-ds-surface rounded-ds-md pad-item flex flex-col gap-ds-tight">
               <span className="text-[20px] font-bold text-ds-text">{monthDoneCount}</span>
               <span className="text-[11px] text-ds-text-faint font-medium">이번 달 완료</span>
             </div>
-            <div className="bg-ds-surface rounded-ds-md py-ds-item-y px-ds-item-x flex flex-col gap-ds-tight">
+            <div className="bg-ds-surface rounded-ds-md pad-item flex flex-col gap-ds-tight">
               <span className="text-[20px] font-bold text-ds-text">{history.length}</span>
               <span className="text-[11px] text-ds-text-faint font-medium">기록된 날짜</span>
             </div>
@@ -169,7 +169,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Calendar grid */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x">
+          <div className="bg-ds-surface rounded-ds-lg pad-card">
             <div className="grid grid-cols-7 gap-1">
               {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
                 <div key={w} className="text-center text-ds-text-faint text-[11px] font-medium pb-1">
@@ -211,7 +211,7 @@ export default function CalendarPage() {
 
           {/* Detail */}
           {selectedDate ? (
-            <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+            <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
               <div className="flex justify-between items-center">
                 <span className="text-[15px] font-semibold text-ds-text">{selectedDate}</span>
                 <div className="flex gap-ds-inline">
@@ -236,7 +236,7 @@ export default function CalendarPage() {
                     return (
                       <article
                         key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`}
-                        className="bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x grid gap-ds-inline"
+                        className="bg-ds-surface-strong rounded-ds-md pad-item grid gap-ds-inline"
                       >
                         <div className="flex justify-between items-start gap-2">
                           <div>

@@ -808,7 +808,7 @@ export function TodayView() {
                 <article
                   className={`
                     routine-card-surface relative z-[1] w-full flex flex-col gap-ds-inline
-                    border-0 rounded-ds-lg py-ds-card-y px-ds-card-x box-border
+                    border-0 rounded-ds-lg pad-card box-border
                     transition-all duration-300 ease-[var(--ds-ease)]
                     ${inWindow 
                       ? 'bg-ds-blue-soft border-l-[3px] border-l-ds-blue' 

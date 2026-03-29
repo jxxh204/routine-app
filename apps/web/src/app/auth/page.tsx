@@ -237,7 +237,7 @@ function AuthPageContent() {
 
         {/* Error */}
         {errorMessage || queryErrorMessage ? (
-          <div className="grid gap-2 bg-ds-pink-soft rounded-ds-md py-ds-card-y px-ds-card-x">
+          <div className="grid gap-2 bg-ds-pink-soft rounded-ds-md pad-card">
             <p className="m-0 text-ds-pink text-[13px]">
               {errorMessage || queryErrorMessage}
             </p>
@@ -268,7 +268,7 @@ function AuthPageContent() {
           ].map((feature) => (
             <div
               key={feature.num}
-              className="grid grid-cols-[28px_1fr] items-center gap-2 py-ds-item-y px-ds-item-x rounded-ds-sm bg-ds-surface"
+              className="grid grid-cols-[28px_1fr] items-center gap-2 pad-item rounded-ds-sm bg-ds-surface"
             >
               <span className="w-[22px] h-[22px] rounded-ds-pill bg-ds-accent-soft text-ds-accent grid place-items-center text-[11px] font-semibold">
                 {feature.num}

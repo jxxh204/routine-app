@@ -61,7 +61,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Notification */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">알림</p>
             <div className="flex justify-between items-center">
               <span className="text-[13px] text-ds-text-muted">권한 상태</span>
@@ -112,7 +112,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Policy */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">운영 정책</p>
             <div className="grid gap-ds-inline">
               {[
@@ -129,7 +129,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Info */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">시스템 안내</p>
             <p className="m-0 text-[13px] text-ds-text-faint leading-normal">
               iOS WebView 환경에서는 시스템 설정에서 알림 권한을 최종 확인해 주세요.

@@ -110,7 +110,7 @@ export default function FriendsPage() {
           </div>
 
           {/* My code */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">내 친구 코드</p>
             <span className="text-[22px] font-bold tracking-[0.12em] text-ds-accent">
               {myFriendCode || '생성 중...'}
@@ -118,7 +118,7 @@ export default function FriendsPage() {
           </div>
 
           {/* Send request */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">친구 코드로 요청 보내기</p>
             <div className="flex gap-2">
               <Input
@@ -139,7 +139,7 @@ export default function FriendsPage() {
           </div>
 
           {/* Incoming */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">받은 요청</p>
             {split.incomingPending.length === 0 ? (
               <p className="m-0 text-ds-text-faint text-[13px]">받은 요청이 없어요.</p>
@@ -148,7 +148,7 @@ export default function FriendsPage() {
                 {split.incomingPending.map((row) => (
                   <div
                     key={row.id}
-                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x"
+                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md pad-item"
                   >
                     <span className="text-[13px] text-ds-text-muted">
                       요청자: {row.requester_id.slice(0, 8)}…
@@ -167,7 +167,7 @@ export default function FriendsPage() {
           </div>
 
           {/* Outgoing */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">보낸 요청</p>
             {split.outgoingPending.length === 0 ? (
               <p className="m-0 text-ds-text-faint text-[13px]">보낸 요청이 없어요.</p>
@@ -176,7 +176,7 @@ export default function FriendsPage() {
                 {split.outgoingPending.map((row) => (
                   <div
                     key={row.id}
-                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x"
+                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md pad-item"
                   >
                     <span className="text-[13px] text-ds-text-muted">
                       대상: {row.addressee_id.slice(0, 8)}…
@@ -191,7 +191,7 @@ export default function FriendsPage() {
           </div>
 
           {/* Friends list */}
-          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">친구 목록</p>
             {split.accepted.length === 0 ? (
               <p className="m-0 text-ds-text-faint text-[13px]">아직 친구가 없어요.</p>
@@ -200,7 +200,7 @@ export default function FriendsPage() {
                 {split.accepted.map((row) => (
                   <div
                     key={row.id}
-                    className="flex items-center gap-ds-card-gap bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x"
+                    className="flex items-center gap-ds-card-gap bg-ds-surface-strong rounded-ds-md pad-item"
                   >
                     <div className="w-7 h-7 rounded-ds-pill bg-ds-accent-soft shrink-0" />
                     <span className="flex-1 text-[13px] text-ds-text-muted">
