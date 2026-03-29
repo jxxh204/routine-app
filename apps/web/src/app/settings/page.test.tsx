@@ -54,8 +54,7 @@ describe('SettingsPage', () => {
   it('has notification action buttons', () => {
     render(<SettingsPage />);
     expect(screen.getAllByText('권한 요청').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('켜기').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('끄기').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('알림 받기').length).toBeGreaterThanOrEqual(1);
   });
 
   it('has back link to today', () => {
