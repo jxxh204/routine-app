@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Button } from 'antd';
+import { Button, Switch } from 'antd';
 
 import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
@@ -32,6 +32,7 @@ export default function SettingsPage() {
     if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
     return Notification.permission;
   });
+  const [notificationEnabled, setNotificationEnabled] = useState(true);
 
   const requestPermission = async () => {
     if (sendNativeAction('request-notification-permission')) return;
@@ -39,6 +40,11 @@ export default function SettingsPage() {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     const result = await Notification.requestPermission();
     setPermission(result);
+  };
+
+  const handleToggle = (checked: boolean) => {
+    setNotificationEnabled(checked);
+    sendNativeAction('toggle-notification', checked);
   };
 
   return (
@@ -63,6 +69,18 @@ export default function SettingsPage() {
           {/* Notification */}
           <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
             <p className="m-0 text-[14px] font-semibold text-ds-text">알림</p>
+
+            {/* Toggle */}
+            <div className="flex justify-between items-center">
+              <span className="text-[13px] text-ds-text-muted">알림 받기</span>
+              <Switch
+                checked={notificationEnabled}
+                onChange={handleToggle}
+                size="small"
+              />
+            </div>
+
+            {/* Permission status */}
             <div className="flex justify-between items-center">
               <span className="text-[13px] text-ds-text-muted">권한 상태</span>
               <span
@@ -79,6 +97,8 @@ export default function SettingsPage() {
                 {permissionLabel(permission)}
               </span>
             </div>
+
+            {/* Actions */}
             <div className="flex gap-ds-inline flex-wrap">
               <Button
                 size="small"
@@ -86,20 +106,6 @@ export default function SettingsPage() {
                 className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
               >
                 권한 요청
-              </Button>
-              <Button
-                size="small"
-                onClick={() => { void sendNativeAction('toggle-notification', true); }}
-                className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
-              >
-                켜기
-              </Button>
-              <Button
-                size="small"
-                onClick={() => { void sendNativeAction('toggle-notification', false); }}
-                className="!bg-ds-surface-strong !text-ds-text-muted !border-0 !text-[12px] !font-medium"
-              >
-                끄기
               </Button>
               <Button
                 size="small"
