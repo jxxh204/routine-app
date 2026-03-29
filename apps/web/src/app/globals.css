@@ -66,6 +66,10 @@
   --spacing-ds-item-y: var(--ds-space-item-y);
   --spacing-ds-inline: var(--ds-space-inline);
   --spacing-ds-tight: var(--ds-space-tight);
+  --spacing-ds-safe-top: var(--ds-safe-top);
+  --spacing-ds-safe-bottom: var(--ds-safe-bottom);
+  --spacing-ds-safe-left: var(--ds-safe-left);
+  --spacing-ds-safe-right: var(--ds-safe-right);
 
   /* Shadows */
   --shadow-ds-card: var(--ds-shadow-card);
@@ -95,6 +99,7 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  overscroll-behavior: none; /* iOS bounce 방지 */
 }
 
 body {
@@ -104,6 +109,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'ss01', 'ss02';
+  /* iOS safe area padding */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  -webkit-text-size-adjust: 100%;
+  /* iOS pull-to-refresh 방지 (standalone) */
+  -webkit-overflow-scrolling: touch;
 }
 
 *, ::before, ::after {
