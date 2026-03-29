@@ -51,7 +51,7 @@ export default function SettingsPage() {
               <p className="m-0 text-[11px] font-semibold tracking-[0.08em] text-ds-text-faint uppercase">
                 SYSTEM
               </p>
-              <h1 className="mt-[2px] mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
+              <h1 className="mt-ds-tight mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
                 설정
               </h1>
             </div>

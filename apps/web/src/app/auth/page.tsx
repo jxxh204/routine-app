@@ -268,7 +268,7 @@ function AuthPageContent() {
           ].map((feature) => (
             <div
               key={feature.num}
-              className="grid grid-cols-[28px_1fr] items-center gap-2 p-[10px_12px] rounded-ds-sm bg-ds-surface"
+              className="grid grid-cols-[28px_1fr] items-center gap-2 py-ds-item-y px-ds-item-x rounded-ds-sm bg-ds-surface"
             >
               <span className="w-[22px] h-[22px] rounded-ds-pill bg-ds-accent-soft text-ds-accent grid place-items-center text-[11px] font-semibold">
                 {feature.num}

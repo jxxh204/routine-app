@@ -116,7 +116,7 @@ export default function CalendarPage() {
               <p className="m-0 text-[11px] font-semibold tracking-[0.08em] text-ds-text-faint uppercase">
                 HISTORY
               </p>
-              <h1 className="mt-[2px] mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
+              <h1 className="mt-ds-tight mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
                 캘린더
               </h1>
             </div>
@@ -127,11 +127,11 @@ export default function CalendarPage() {
 
           {/* Summary stats */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-ds-surface rounded-ds-md p-[10px_12px] flex flex-col gap-[2px]">
+            <div className="bg-ds-surface rounded-ds-md py-ds-item-y px-ds-item-x flex flex-col gap-ds-tight">
               <span className="text-[20px] font-bold text-ds-text">{monthDoneCount}</span>
               <span className="text-[11px] text-ds-text-faint font-medium">이번 달 완료</span>
             </div>
-            <div className="bg-ds-surface rounded-ds-md p-[10px_12px] flex flex-col gap-[2px]">
+            <div className="bg-ds-surface rounded-ds-md py-ds-item-y px-ds-item-x flex flex-col gap-ds-tight">
               <span className="text-[20px] font-bold text-ds-text">{history.length}</span>
               <span className="text-[11px] text-ds-text-faint font-medium">기록된 날짜</span>
             </div>
@@ -169,7 +169,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Calendar grid */}
-          <div className="bg-ds-surface rounded-ds-lg p-3">
+          <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x">
             <div className="grid grid-cols-7 gap-1">
               {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
                 <div key={w} className="text-center text-ds-text-faint text-[11px] font-medium pb-1">
@@ -236,14 +236,14 @@ export default function CalendarPage() {
                     return (
                       <article
                         key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`}
-                        className="bg-ds-surface-strong rounded-ds-md p-[10px_12px] grid gap-ds-inline"
+                        className="bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x grid gap-ds-inline"
                       >
                         <div className="flex justify-between items-start gap-2">
                           <div>
                             <p className="m-0 text-[14px] font-medium text-ds-text">
                               {item.title ?? item.id}
                             </p>
-                            <p className="mt-[2px] mb-0 text-[12px] text-ds-text-faint">
+                            <p className="mt-ds-tight mb-0 text-[12px] text-ds-text-faint">
                               {item.doneAt ?? '시간 미기록'}
                             </p>
                           </div>

@@ -62,6 +62,8 @@
   --spacing-ds-card-gap: var(--ds-space-card-gap);
   --spacing-ds-card-x: var(--ds-space-card-x);
   --spacing-ds-card-y: var(--ds-space-card-y);
+  --spacing-ds-item-x: var(--ds-space-item-x);
+  --spacing-ds-item-y: var(--ds-space-item-y);
   --spacing-ds-inline: var(--ds-space-inline);
   --spacing-ds-tight: var(--ds-space-tight);
 

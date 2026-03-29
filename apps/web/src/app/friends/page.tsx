@@ -101,7 +101,7 @@ export default function FriendsPage() {
             <p className="m-0 text-[11px] font-semibold tracking-[0.08em] text-ds-text-faint uppercase">
               SOCIAL
             </p>
-            <h1 className="mt-[2px] mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
+            <h1 className="mt-ds-tight mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
               친구 관리
             </h1>
             <p className="mt-1 mb-0 text-[13px] text-ds-text-muted">
@@ -148,7 +148,7 @@ export default function FriendsPage() {
                 {split.incomingPending.map((row) => (
                   <div
                     key={row.id}
-                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md p-[10px_12px]"
+                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x"
                   >
                     <span className="text-[13px] text-ds-text-muted">
                       요청자: {row.requester_id.slice(0, 8)}…
@@ -176,7 +176,7 @@ export default function FriendsPage() {
                 {split.outgoingPending.map((row) => (
                   <div
                     key={row.id}
-                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md p-[10px_12px]"
+                    className="flex justify-between items-center bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x"
                   >
                     <span className="text-[13px] text-ds-text-muted">
                       대상: {row.addressee_id.slice(0, 8)}…
@@ -200,7 +200,7 @@ export default function FriendsPage() {
                 {split.accepted.map((row) => (
                   <div
                     key={row.id}
-                    className="flex items-center gap-ds-card-gap bg-ds-surface-strong rounded-ds-md p-[10px_12px]"
+                    className="flex items-center gap-ds-card-gap bg-ds-surface-strong rounded-ds-md py-ds-item-y px-ds-item-x"
                   >
                     <div className="w-7 h-7 rounded-ds-pill bg-ds-accent-soft shrink-0" />
                     <span className="flex-1 text-[13px] text-ds-text-muted">

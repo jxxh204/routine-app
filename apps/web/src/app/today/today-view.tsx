@@ -773,11 +773,11 @@ export function TodayView() {
 
         {/* Welcome Feedback */}
         {showWelcomeFeedback ? (
-          <Card variant="borderless" styles={{ body: { padding: '14px', background: 'var(--ds-color-accent-soft)' } }}>
+          <Card variant="borderless" styles={{ body: { padding: 'var(--ds-space-card-y) var(--ds-space-card-x)', background: 'var(--ds-color-accent-soft)' } }}>
             <strong className="block text-ds-accent-strong text-[13px] font-medium">
               로그인 완료! 오늘 해야 할 루틴부터 시작하세요.
             </strong>
-            <p className="mt-[2px] mb-0 text-ds-text-muted text-[12px]">
+            <p className="mt-ds-tight mb-0 text-ds-text-muted text-[12px]">
               지금 가능한 루틴을 상단에서 바로 인증할 수 있어요.
             </p>
           </Card>
@@ -898,7 +898,7 @@ export function TodayView() {
                       </div>
                     ) : (
                       <>
-                        <p className="mt-[2px] mb-0 text-[12px] text-ds-text-faint">
+                        <p className="mt-ds-tight mb-0 text-[12px] text-ds-text-faint">
                           인증 시간: {routine.timeRangeLabel}
                         </p>
                         {routine.proofImage ? (
@@ -981,7 +981,7 @@ export function TodayView() {
         </section>
 
         {/* Add Routine Section */}
-        <Card variant="borderless" styles={{ body: { padding: '14px' } }}>
+        <Card variant="borderless" styles={{ body: { padding: 'var(--ds-space-card-y) var(--ds-space-card-x)' } }}>
           <div className="flex justify-between items-center">
             <div>
               <p className="m-0 text-[11px] text-ds-text-faint font-medium">
