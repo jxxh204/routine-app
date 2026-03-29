@@ -100,7 +100,7 @@
   /* Semantic spacing — layout rhythm */
   --ds-space-page-x: 20px;
   --ds-space-page-top: 20px;
-  --ds-space-page-bottom: calc(48px + var(--ds-safe-bottom));
+  --ds-space-page-bottom: 20px;
   --ds-space-section-gap: 20px;
   --ds-space-card-gap: 12px;
   --ds-space-card-x: 12px;
@@ -122,10 +122,11 @@
   padding: var(--ds-space-page-top) var(--ds-space-page-x) var(--ds-space-page-bottom);
 }
 
-/* iOS standalone (홈 화면 추가) — 상단 safe area 보정 */
+/* PWA standalone — safe area 보정 (네이티브 WebView에서는 해당 없음) */
 @media all and (display-mode: standalone) {
   .ds-page-shell {
     padding-top: calc(var(--ds-space-page-top) + var(--ds-safe-top));
+    padding-bottom: calc(var(--ds-space-page-bottom) + var(--ds-safe-bottom));
   }
 }
 
