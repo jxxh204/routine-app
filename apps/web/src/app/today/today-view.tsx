@@ -815,8 +815,11 @@ export function TodayView() {
                       : 'bg-ds-surface'
                     }
                     ${canCertify ? 'cursor-pointer' : ''}
-                    ${swipedRoutineId === routine.id ? '-translate-x-[130px]' : ''}
                   `}
+                  style={{
+                    transform: swipedRoutineId === routine.id ? 'translateX(-130px)' : 'translateX(0)',
+                    transition: 'transform 0.3s var(--ds-ease)',
+                  }}
                   onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
                 >
                   <div className="w-full flex justify-between items-center gap-2">

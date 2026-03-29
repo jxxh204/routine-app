@@ -94,7 +94,7 @@
   /* Semantic spacing — layout rhythm */
   --ds-space-page-x: 20px;
   --ds-space-page-top: 20px;
-  --ds-space-page-bottom: 48px;
+  --ds-space-page-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
   --ds-space-section-gap: 20px;
   --ds-space-card-gap: 12px;
   --ds-space-card-x: 12px;
