@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from 'antd';
 
 import { AuthRequired } from '@/components/auth-required';
-import { GhostButton, PageShell } from '@/components/ui';
+import { PageShell } from '@/components/ui';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
 
@@ -29,7 +30,6 @@ function readHistory() {
 }
 
 export default function CalendarPage() {
-  // ✅ useState initializer runs once — correct for localStorage reads
   const [history] = useState(() => readHistory());
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row.items])), [history]);
 
@@ -109,60 +109,72 @@ export default function CalendarPage() {
   return (
     <AuthRequired>
       <PageShell>
-        <section style={styles.page}>
+        <section className="grid gap-ds-section-gap">
           {/* Header */}
-          <div style={styles.header}>
+          <div className="flex justify-between items-center">
             <div>
-              <p style={styles.eyebrow}>HISTORY</p>
-              <h1 style={styles.title}>캘린더</h1>
+              <p className="m-0 text-[11px] font-semibold tracking-[0.08em] text-ds-text-faint uppercase">
+                HISTORY
+              </p>
+              <h1 className="mt-[2px] mb-0 text-[22px] font-semibold tracking-tight text-ds-text">
+                캘린더
+              </h1>
             </div>
-            <Link href="/today" style={styles.backLink}>오늘으로</Link>
+            <Link href="/today" className="text-ds-accent no-underline text-[13px] font-medium">
+              오늘으로
+            </Link>
           </div>
 
           {/* Summary stats */}
-          <div style={styles.statRow}>
-            <div style={styles.statItem}>
-              <span style={styles.statValue}>{monthDoneCount}</span>
-              <span style={styles.statLabel}>이번 달 완료</span>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-ds-surface rounded-ds-md p-[10px_12px] flex flex-col gap-[2px]">
+              <span className="text-[20px] font-bold text-ds-text">{monthDoneCount}</span>
+              <span className="text-[11px] text-ds-text-faint font-medium">이번 달 완료</span>
             </div>
-            <div style={styles.statItem}>
-              <span style={styles.statValue}>{history.length}</span>
-              <span style={styles.statLabel}>기록된 날짜</span>
+            <div className="bg-ds-surface rounded-ds-md p-[10px_12px] flex flex-col gap-[2px]">
+              <span className="text-[20px] font-bold text-ds-text">{history.length}</span>
+              <span className="text-[11px] text-ds-text-faint font-medium">기록된 날짜</span>
             </div>
           </div>
 
           {/* Month nav */}
-          <div style={styles.monthNav}>
-            <GhostButton
-              style={styles.navBtn}
+          <div className="flex justify-between items-center">
+            <Button
+              type="text"
+              size="small"
               onClick={() => {
                 if (!canGoPrevMonth) return;
                 setSelectedDate(null);
                 setMonth(availableMonths[effectiveMonthIndex - 1]);
               }}
               disabled={!canGoPrevMonth}
+              className="!text-[14px] !px-[10px] !py-[6px]"
             >
               ←
-            </GhostButton>
-            <span style={styles.monthTitle}>{monthTitle}</span>
-            <GhostButton
-              style={styles.navBtn}
+            </Button>
+            <span className="text-[16px] font-semibold text-ds-text">{monthTitle}</span>
+            <Button
+              type="text"
+              size="small"
               onClick={() => {
                 if (!canGoNextMonth) return;
                 setSelectedDate(null);
                 setMonth(availableMonths[effectiveMonthIndex + 1]);
               }}
               disabled={!canGoNextMonth}
+              className="!text-[14px] !px-[10px] !py-[6px]"
             >
               →
-            </GhostButton>
+            </Button>
           </div>
 
           {/* Calendar grid */}
-          <div style={styles.calendarCard}>
-            <div style={styles.grid}>
+          <div className="bg-ds-surface rounded-ds-lg p-3">
+            <div className="grid grid-cols-7 gap-1">
               {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
-                <div key={w} style={styles.weekday}>{w}</div>
+                <div key={w} className="text-center text-ds-text-faint text-[11px] font-medium pb-1">
+                  {w}
+                </div>
               ))}
 
               {days.map((date) => {
@@ -175,18 +187,22 @@ export default function CalendarPage() {
                 return (
                   <button
                     key={key}
-                    style={{
-                      ...styles.dayCell,
-                      ...(!inMonth ? styles.dayCellOut : {}),
-                      ...(isEnabled ? styles.dayCellActive : {}),
-                      ...(isSelected ? styles.dayCellSelected : {}),
-                      ...(!isEnabled ? styles.dayCellDisabled : {}),
-                    }}
+                    className={`
+                      flex flex-col items-center justify-center gap-[3px] min-h-[44px]
+                      border-0 rounded-ds-sm p-1 transition-colors duration-150
+                      ${!inMonth ? 'opacity-20' : ''}
+                      ${isEnabled ? 'bg-ds-surface-strong cursor-pointer' : 'bg-transparent cursor-default opacity-40'}
+                      ${isSelected ? 'bg-ds-accent-soft outline outline-2 -outline-offset-2 outline-ds-accent' : ''}
+                    `}
                     onClick={() => isEnabled && setSelectedDate(key)}
                     disabled={!isEnabled}
                   >
-                    <span style={styles.dayNum}>{inMonth ? date.getDate() : ''}</span>
-                    {count > 0 && inMonth ? <span style={styles.dayDot} /> : null}
+                    <span className="text-[14px] font-medium text-ds-text">
+                      {inMonth ? date.getDate() : ''}
+                    </span>
+                    {count > 0 && inMonth ? (
+                      <span className="w-1 h-1 rounded-ds-pill bg-ds-accent" />
+                    ) : null}
                   </button>
                 );
               })}
@@ -195,34 +211,53 @@ export default function CalendarPage() {
 
           {/* Detail */}
           {selectedDate ? (
-            <div style={styles.detailCard}>
-              <div style={styles.detailHeader}>
-                <span style={styles.detailDate}>{selectedDate}</span>
-                <div style={styles.detailBadges}>
-                  <span style={styles.badge}>{selectedItems.length}개 완료</span>
-                  {selectedProofCount > 0 ? <span style={styles.badgeAccent}>{selectedProofCount}장 인증</span> : null}
+            <div className="bg-ds-surface rounded-ds-lg py-ds-card-y px-ds-card-x grid gap-ds-card-gap">
+              <div className="flex justify-between items-center">
+                <span className="text-[15px] font-semibold text-ds-text">{selectedDate}</span>
+                <div className="flex gap-ds-inline">
+                  <span className="inline-flex items-center h-[22px] rounded-ds-pill px-2 text-[11px] font-medium bg-ds-green-soft text-ds-green">
+                    {selectedItems.length}개 완료
+                  </span>
+                  {selectedProofCount > 0 ? (
+                    <span className="inline-flex items-center h-[22px] rounded-ds-pill px-2 text-[11px] font-medium bg-ds-blue-soft text-ds-blue">
+                      {selectedProofCount}장 인증
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
               {selectedItems.length === 0 ? (
-                <p style={styles.emptyText}>완료 내역이 없습니다.</p>
+                <p className="m-0 text-ds-text-faint text-[13px]">완료 내역이 없습니다.</p>
               ) : (
-                <div style={styles.itemList}>
+                <div className="grid gap-ds-inline">
                   {selectedItems.map((item) => {
                     const image = selectedDate ? proofByItemKey[`${selectedDate}:${item.id}`] ?? item.proofImage : item.proofImage;
 
                     return (
-                      <article key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`} style={styles.itemCard}>
-                        <div style={styles.itemRow}>
+                      <article
+                        key={`${selectedDate}-${item.id}-${item.doneAt ?? ''}`}
+                        className="bg-ds-surface-strong rounded-ds-md p-[10px_12px] grid gap-ds-inline"
+                      >
+                        <div className="flex justify-between items-start gap-2">
                           <div>
-                            <p style={styles.itemTitle}>{item.title ?? item.id}</p>
-                            <p style={styles.itemMeta}>{item.doneAt ?? '시간 미기록'}</p>
+                            <p className="m-0 text-[14px] font-medium text-ds-text">
+                              {item.title ?? item.id}
+                            </p>
+                            <p className="mt-[2px] mb-0 text-[12px] text-ds-text-faint">
+                              {item.doneAt ?? '시간 미기록'}
+                            </p>
                           </div>
-                          <span style={styles.typeChip}>{getRoutineTypeLabel(item.id)}</span>
+                          <span className="inline-flex items-center h-5 rounded-ds-pill px-[7px] text-[10px] font-medium bg-ds-accent-soft text-ds-accent shrink-0">
+                            {getRoutineTypeLabel(item.id)}
+                          </span>
                         </div>
                         {image ? (
                           // eslint-disable-next-line @next/next/no-img-element -- base64 proof image
-                          <img src={image} alt="인증" style={styles.thumb} />
+                          <img
+                            src={image}
+                            alt="인증"
+                            className="w-14 h-14 rounded-ds-sm object-cover"
+                          />
                         ) : null}
                       </article>
                     );
@@ -231,237 +266,12 @@ export default function CalendarPage() {
               )}
             </div>
           ) : (
-            <p style={styles.hintText}>캘린더에서 날짜를 선택하면 완료 루틴을 확인할 수 있어요.</p>
+            <p className="m-0 text-ds-text-faint text-[13px] text-center">
+              캘린더에서 날짜를 선택하면 완료 루틴을 확인할 수 있어요.
+            </p>
           )}
         </section>
       </PageShell>
     </AuthRequired>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    display: 'grid',
-    gap: 16,
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  eyebrow: {
-    margin: 0,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    color: 'var(--ds-color-text-faint)',
-    textTransform: 'uppercase' as const,
-  },
-  title: {
-    margin: '2px 0 0',
-    fontSize: 22,
-    fontWeight: 600,
-    letterSpacing: '-0.02em',
-    color: 'var(--ds-color-text)',
-  },
-  backLink: {
-    color: 'var(--ds-color-accent)',
-    textDecoration: 'none',
-    fontSize: 13,
-    fontWeight: 500,
-  },
-  statRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 8,
-  },
-  statItem: {
-    background: 'var(--ds-color-surface)',
-    borderRadius: 'var(--ds-radius-md)',
-    padding: '10px 12px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: 'var(--ds-color-text)',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: 'var(--ds-color-text-faint)',
-    fontWeight: 500,
-  },
-  monthNav: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  navBtn: {
-    padding: '6px 10px',
-    fontSize: 14,
-  },
-  monthTitle: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: 'var(--ds-color-text)',
-  },
-  calendarCard: {
-    background: 'var(--ds-color-surface)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: 12,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(7, 1fr)',
-    gap: 4,
-  },
-  weekday: {
-    textAlign: 'center',
-    color: 'var(--ds-color-text-faint)',
-    fontSize: 11,
-    fontWeight: 500,
-    paddingBottom: 4,
-  },
-  dayCell: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    minHeight: 44,
-    border: 'none',
-    background: 'transparent',
-    borderRadius: 'var(--ds-radius-sm)',
-    cursor: 'pointer',
-    padding: 4,
-    transition: 'background 0.15s ease',
-  },
-  dayCellOut: {
-    opacity: 0.2,
-  },
-  dayCellActive: {
-    background: 'var(--ds-color-surface-strong)',
-  },
-  dayCellSelected: {
-    background: 'var(--ds-color-accent-soft)',
-    outline: '2px solid var(--ds-color-accent)',
-    outlineOffset: -2,
-  },
-  dayCellDisabled: {
-    cursor: 'default',
-    opacity: 0.4,
-  },
-  dayNum: {
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--ds-color-text)',
-  },
-  dayDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 'var(--ds-radius-pill)',
-    background: 'var(--ds-color-accent)',
-  },
-  detailCard: {
-    background: 'var(--ds-color-surface)',
-    borderRadius: 'var(--ds-radius-lg)',
-    padding: '14px 16px',
-    display: 'grid',
-    gap: 10,
-  },
-  detailHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailDate: {
-    fontSize: 15,
-    fontWeight: 600,
-    color: 'var(--ds-color-text)',
-  },
-  detailBadges: {
-    display: 'flex',
-    gap: 6,
-  },
-  badge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    height: 22,
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '0 8px',
-    fontSize: 11,
-    fontWeight: 500,
-    background: 'var(--ds-color-green-soft)',
-    color: 'var(--ds-color-green)',
-  },
-  badgeAccent: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    height: 22,
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '0 8px',
-    fontSize: 11,
-    fontWeight: 500,
-    background: 'var(--ds-color-blue-soft)',
-    color: 'var(--ds-color-blue)',
-  },
-  emptyText: {
-    margin: 0,
-    color: 'var(--ds-color-text-faint)',
-    fontSize: 13,
-  },
-  hintText: {
-    margin: 0,
-    color: 'var(--ds-color-text-faint)',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  itemList: {
-    display: 'grid',
-    gap: 6,
-  },
-  itemCard: {
-    background: 'var(--ds-color-surface-strong)',
-    borderRadius: 'var(--ds-radius-md)',
-    padding: '10px 12px',
-    display: 'grid',
-    gap: 6,
-  },
-  itemRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  itemTitle: {
-    margin: 0,
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--ds-color-text)',
-  },
-  itemMeta: {
-    margin: '2px 0 0',
-    fontSize: 12,
-    color: 'var(--ds-color-text-faint)',
-  },
-  typeChip: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    height: 20,
-    borderRadius: 'var(--ds-radius-pill)',
-    padding: '0 7px',
-    fontSize: 10,
-    fontWeight: 500,
-    background: 'var(--ds-color-accent-soft)',
-    color: 'var(--ds-color-accent)',
-    flexShrink: 0,
-  },
-  thumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 'var(--ds-radius-sm)',
-    objectFit: 'cover',
-  },
-};

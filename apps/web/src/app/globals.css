@@ -57,6 +57,14 @@
   --spacing-ds-5: var(--ds-space-5);
   --spacing-ds-6: var(--ds-space-6);
 
+  /* Semantic spacing */
+  --spacing-ds-section-gap: var(--ds-space-section-gap);
+  --spacing-ds-card-gap: var(--ds-space-card-gap);
+  --spacing-ds-card-x: var(--ds-space-card-x);
+  --spacing-ds-card-y: var(--ds-space-card-y);
+  --spacing-ds-inline: var(--ds-space-inline);
+  --spacing-ds-tight: var(--ds-space-tight);
+
   /* Shadows */
   --shadow-ds-card: var(--ds-shadow-card);
   --shadow-ds-soft: var(--ds-shadow-soft);

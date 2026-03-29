@@ -760,7 +760,7 @@ export function TodayView() {
 
   return (
     <PageShell>
-      <section className="grid gap-4">
+      <section className="grid gap-ds-section-gap">
         {/* Header */}
         <div className="flex justify-between items-baseline">
           <h1 className="m-0 text-[22px] font-semibold tracking-tight text-ds-text">
@@ -797,8 +797,8 @@ export function TodayView() {
         />
 
         {/* Routine List */}
-        <section className="grid gap-[6px]">
-          <div className="flex flex-col gap-[2px]">
+        <section className="grid gap-ds-inline">
+          <div className="flex flex-col gap-ds-card-gap">
             {orderedRoutines.map((routine) => {
               const inWindow = isInTimeWindow(nowMinute, routine.startMinute, routine.endMinute);
               const isEditing = editingRoutineId === routine.id;
@@ -808,7 +808,7 @@ export function TodayView() {
                 <article
                   className={`
                     routine-card-surface relative z-[1] w-full flex flex-col gap-1
-                    border-0 rounded-ds-lg p-[12px_14px] box-border
+                    border-0 rounded-ds-lg py-ds-card-y px-ds-card-x box-border
                     transition-all duration-300 ease-[var(--ds-ease)]
                     ${inWindow 
                       ? 'bg-ds-blue-soft border-l-[3px] border-l-ds-blue' 
@@ -853,7 +853,7 @@ export function TodayView() {
                           }}
                         />
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center gap-[6px] min-w-0">
+                          <div className="flex items-center gap-ds-inline min-w-0">
                             <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                               시작
                             </span>
@@ -869,7 +869,7 @@ export function TodayView() {
                               }}
                             />
                           </div>
-                          <div className="flex items-center gap-[6px] min-w-0">
+                          <div className="flex items-center gap-ds-inline min-w-0">
                             <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                               종료
                             </span>
@@ -957,7 +957,7 @@ export function TodayView() {
                   onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
                   onTouchEnd={handleRoutineTouchEnd}
                 >
-                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-[6px] bg-ds-surface-strong rounded-ds-lg z-0">
+                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-ds-inline bg-ds-surface-strong rounded-ds-lg z-0">
                     <Button
                       onClick={() => startEditRoutine(routine.id)}
                       className="!border-0 !bg-ds-accent-soft !text-ds-accent !text-[12px] !font-medium"
@@ -1027,7 +1027,7 @@ export function TodayView() {
                   }}
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-[6px] min-w-0">
+                  <div className="flex items-center gap-ds-inline min-w-0">
                     <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                       시작
                     </span>
@@ -1043,7 +1043,7 @@ export function TodayView() {
                       }}
                     />
                   </div>
-                  <div className="flex items-center gap-[6px] min-w-0">
+                  <div className="flex items-center gap-ds-inline min-w-0">
                     <span className={`text-ds-text-faint text-[11px] whitespace-nowrap flex-shrink-0 font-medium ${isCompactLayout ? '!text-[10px]' : ''}`}>
                       종료
                     </span>
@@ -1061,7 +1061,7 @@ export function TodayView() {
                 {formError ? (
                   <p className="m-0 text-ds-pink text-[12px]">{formError}</p>
                 ) : null}
-                <div className="flex flex-col gap-[6px]">
+                <div className="flex flex-col gap-ds-inline">
                   <Button
                     type="primary"
                     onClick={submitRoutineForm}
