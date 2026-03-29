@@ -960,7 +960,10 @@ export function TodayView() {
                   onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
                   onTouchEnd={handleRoutineTouchEnd}
                 >
-                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-ds-inline bg-ds-surface-strong rounded-ds-lg z-0">
+                  <div
+                    className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-ds-inline bg-ds-surface-strong rounded-ds-lg z-0"
+                    style={{ visibility: swipedRoutineId === routine.id ? 'visible' : 'hidden' }}
+                  >
                     <Button
                       onClick={() => startEditRoutine(routine.id)}
                       className="!border-0 !bg-ds-accent-soft !text-ds-accent !text-[12px] !font-medium"
