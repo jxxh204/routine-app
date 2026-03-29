@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AntdProvider } from "@/components/antd-provider";
-import { BottomNav } from "@/components/bottom-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -51,10 +50,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AntdProvider>
-          {children}
-          <BottomNav />
-        </AntdProvider>
+        <AntdProvider>{children}</AntdProvider>
       </body>
     </html>
   );
