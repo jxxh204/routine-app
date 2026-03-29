@@ -44,7 +44,7 @@ export default function SettingsPage() {
 
   const handleToggle = (checked: boolean) => {
     setNotificationEnabled(checked);
-    sendNativeAction('toggle-notification', checked);
+    void sendNativeAction('toggle-notification', checked);
   };
 
   return (
