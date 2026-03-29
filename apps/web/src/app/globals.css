@@ -106,8 +106,11 @@ body {
   font-feature-settings: 'ss01', 'ss02';
 }
 
-* {
+*, ::before, ::after {
   box-sizing: border-box;
+}
+
+:where(*, ::before, ::after) {
   padding: 0;
   margin: 0;
 }

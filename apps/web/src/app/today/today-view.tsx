@@ -807,7 +807,7 @@ export function TodayView() {
               const card = (
                 <article
                   className={`
-                    routine-card-surface relative z-[1] w-full flex flex-col gap-1
+                    routine-card-surface relative z-[1] w-full flex flex-col gap-ds-inline
                     border-0 rounded-ds-lg py-ds-card-y px-ds-card-x box-border
                     transition-all duration-300 ease-[var(--ds-ease)]
                     ${inWindow 
