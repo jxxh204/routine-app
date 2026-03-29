@@ -97,10 +97,10 @@
   --ds-space-page-bottom: 48px;
   --ds-space-section-gap: 20px;
   --ds-space-card-gap: 12px;
-  --ds-space-card-x: 24px;
-  --ds-space-card-y: 24px;
-  --ds-space-item-x: 18px;     /* 내부 아이템 좌우 */
-  --ds-space-item-y: 16px;     /* 내부 아이템 상하 */
+  --ds-space-card-x: 12px;
+  --ds-space-card-y: 12px;
+  --ds-space-item-x: 9px;      /* 내부 아이템 좌우 */
+  --ds-space-item-y: 8px;      /* 내부 아이템 상하 */
   --ds-space-inline: 8px;
   --ds-space-tight: 6px;
 
