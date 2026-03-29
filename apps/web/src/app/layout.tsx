@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AntdProvider } from "@/components/antd-provider";
+import { BottomNav } from "@/components/bottom-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,7 +34,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AntdProvider>{children}</AntdProvider>
+        <AntdProvider>
+          {children}
+          <BottomNav />
+        </AntdProvider>
       </body>
     </html>
   );
