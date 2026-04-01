@@ -8,6 +8,7 @@ import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
+import { FriendCalendarDetail } from '@/components/friend-calendar-detail';
 
 const STORAGE_PREFIX = 'routine-challenge-v1:';
 
@@ -264,6 +265,9 @@ export default function CalendarPage() {
                   })}
                 </div>
               )}
+
+              {/* 친구 인증 내역 */}
+              <FriendCalendarDetail dateKey={selectedDate} />
             </div>
           ) : (
             <p className="m-0 text-ds-text-faint text-[13px] text-center">

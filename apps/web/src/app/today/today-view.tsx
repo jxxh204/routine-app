@@ -25,6 +25,7 @@ import { uploadProofImage, getProofImageUrl } from '@/lib/proof-image-upload';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 import { PageShell } from '@/components/ui';
+import { FriendStatusSection } from '@/components/friend-status-section';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -1156,6 +1157,9 @@ export function TodayView() {
           -webkit-touch-callout: none;
         }
       `}</style>
+
+      {/* 친구 현황 섹션 */}
+      <FriendStatusSection routineKeys={routines.filter((r) => r.isDefault).map((r) => r.id)} />
       </section>
     </PageShell>
   );
