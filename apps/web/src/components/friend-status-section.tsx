@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { Button, Card } from 'antd';
 import { getFriendChallengeStatuses, type FriendChallengeStatus } from '@/lib/friend-challenge';
+import { sendNudge } from '@/lib/nudge-api';
 import { supabase } from '@/lib/supabase';
 
 const ROUTINE_LABELS: Record<string, string> = {
@@ -23,14 +24,17 @@ function getTodayDateKey() {
 }
 
 type Props = {
-  /** 조회할 루틴 키 목록 (기본 루틴) */
   routineKeys?: string[];
+  /** 내가 완료한 루틴 키 목록 (독려 버튼 활성화 조건) */
+  myDoneRoutineKeys?: string[];
 };
 
-export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'] }: Props) {
+export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'], myDoneRoutineKeys = [] }: Props) {
   const [friends, setFriends] = useState<FriendChallengeStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const [sentNudges, setSentNudges] = useState<Set<string>>(new Set());
+  const [sendingNudge, setSendingNudge] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,9 +65,22 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'] }
     return () => { cancelled = true; };
   }, []);
 
-  // 비로그인 또는 로딩 중이면 표시 안 함
+  const handleNudge = useCallback(async (targetId: string, routineKey: string) => {
+    const key = `${targetId}:${routineKey}`;
+    setSendingNudge(key);
+
+    const result = await sendNudge(targetId, routineKey);
+    if (result.ok) {
+      setSentNudges((prev) => new Set(prev).add(key));
+    }
+
+    setSendingNudge(null);
+  }, []);
+
   if (loggedIn === false || loading) return null;
   if (friends.length === 0) return null;
+
+  const myDoneSet = new Set(myDoneRoutineKeys);
 
   return (
     <div style={{ marginTop: 20 }}>
@@ -109,7 +126,7 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'] }
                   )}
                 </div>
 
-                {/* 닉네임 + 진행률 */}
+                {/* 닉네임 + 루틴 상태 + 독려 */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>
                     {friend.nickname}
@@ -117,12 +134,16 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'] }
                       {doneCount}/{routineKeys.length}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                     {routineKeys.map((key) => {
                       const routine = friend.routines.find((r) => r.routineKey === key);
                       const done = Boolean(routine);
                       const label = ROUTINE_LABELS[key] ?? key;
                       const time = routine ? formatDoneTime(routine.doneAt) : '';
+                      const nudgeKey = `${friend.userId}:${key}`;
+                      const canNudge = !done && myDoneSet.has(key) && !sentNudges.has(nudgeKey);
+                      const isSending = sendingNudge === nudgeKey;
+                      const alreadySent = sentNudges.has(nudgeKey);
 
                       return (
                         <span
@@ -133,10 +154,36 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'] }
                             borderRadius: 6,
                             background: done ? '#e6f7e6' : '#f5f5f5',
                             color: done ? '#389e0d' : '#bbb',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
                           }}
                         >
                           {done ? '✓' : '○'} {label}
-                          {time && <span style={{ marginLeft: 2, fontSize: 10, color: '#999' }}>{time}</span>}
+                          {time && <span style={{ fontSize: 10, color: '#999' }}>{time}</span>}
+                          {!done && canNudge && (
+                            <button
+                              type="button"
+                              onClick={() => handleNudge(friend.userId, key)}
+                              disabled={isSending}
+                              style={{
+                                fontSize: 9,
+                                padding: '0 4px',
+                                marginLeft: 2,
+                                border: '1px solid #faad14',
+                                borderRadius: 4,
+                                background: '#fffbe6',
+                                color: '#d48806',
+                                cursor: 'pointer',
+                                lineHeight: '16px',
+                              }}
+                            >
+                              {isSending ? '...' : '👋'}
+                            </button>
+                          )}
+                          {!done && alreadySent && (
+                            <span style={{ fontSize: 9, color: '#999', marginLeft: 2 }}>전송됨</span>
+                          )}
                         </span>
                       );
                     })}
