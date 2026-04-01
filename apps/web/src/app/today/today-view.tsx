@@ -1159,7 +1159,10 @@ export function TodayView() {
       `}</style>
 
       {/* 친구 현황 섹션 */}
-      <FriendStatusSection routineKeys={routines.filter((r) => r.isDefault).map((r) => r.id)} />
+      <FriendStatusSection
+        routineKeys={routines.filter((r) => r.isDefault).map((r) => r.id)}
+        myDoneRoutineKeys={routines.filter((r) => r.isDefault && r.doneByMe).map((r) => r.id)}
+      />
       </section>
     </PageShell>
   );
