@@ -50,9 +50,9 @@ describe('sendNudge (integration)', () => {
       if (table === 'challenge_logs') {
         // First call = sender (has log), second call = target (no log)
         const chain = chainBuilder(null);
-        let callCount = 0;
+        let _callCount = 0;
         chain.eq = vi.fn().mockImplementation(() => {
-          callCount++;
+          _callCount++;
           return chain;
         });
         // We need to differentiate sender vs target

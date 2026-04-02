@@ -2,7 +2,7 @@
  * 친구 연동 통합 회귀 테스트
  * 설계서 §8-6: 전체 플로우 검증
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // --- friends.ts 단위 ---
 import { splitFriendRequests, type FriendRequestRow } from './friends';
