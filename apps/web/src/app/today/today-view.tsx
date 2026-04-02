@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type CSSProperties,
   type ChangeEvent,
   type TouchEvent,
   useCallback,

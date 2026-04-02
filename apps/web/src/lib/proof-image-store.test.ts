@@ -13,7 +13,7 @@ function createFakeIndexedDB() {
       stores.set(name, new Map());
       return {} as IDBObjectStore;
     },
-    transaction: (storeNames: string | string[], mode?: IDBTransactionMode) => {
+    transaction: (storeNames: string | string[], _mode?: IDBTransactionMode) => {
       const storeName = Array.isArray(storeNames) ? storeNames[0] : storeNames;
       const store = stores.get(storeName) ?? new Map();
       if (!stores.has(storeName)) stores.set(storeName, store);

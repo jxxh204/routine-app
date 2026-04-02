@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card } from 'antd';
+import { Card } from 'antd';
 import { getFriendChallengeStatuses, type FriendChallengeStatus } from '@/lib/friend-challenge';
 import { sendNudge } from '@/lib/nudge-api';
 import { supabase } from '@/lib/supabase';
@@ -120,6 +120,7 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'], 
                   }}
                 >
                   {friend.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={friend.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     '👤'
