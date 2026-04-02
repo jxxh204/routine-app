@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const runtime = 'edge';
+
 /**
  * OAuth PKCE 콜백 라우트
  * Supabase가 redirect하면 여기서 code → session 교환 후 /auth?next=... 로 리다이렉트
