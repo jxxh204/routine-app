@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 
@@ -121,9 +120,7 @@ export default function CalendarPage() {
                 캘린더
               </h1>
             </div>
-            <Link href="/today" className="text-ds-accent no-underline text-[13px] font-medium">
-              오늘으로
-            </Link>
+{/* '오늘으로' 버튼 삭제: 하단 네비로 이동 가능 + 라우팅 복귀 시 상태 초기화 버그 유발 */}
           </div>
 
           {/* Summary stats */}
