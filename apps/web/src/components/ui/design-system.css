@@ -120,6 +120,8 @@
   background: var(--ds-color-bg);
   color: var(--ds-color-text);
   padding: var(--ds-space-page-top) var(--ds-space-page-x) var(--ds-space-page-bottom);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* PWA standalone — safe area 보정 (네이티브 WebView에서는 해당 없음) */
