@@ -91,10 +91,16 @@
   --ds-space-5: 24px;
   --ds-space-6: 32px;
 
+  /* Safe area insets */
+  --ds-safe-top: env(safe-area-inset-top, 0px);
+  --ds-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ds-safe-left: env(safe-area-inset-left, 0px);
+  --ds-safe-right: env(safe-area-inset-right, 0px);
+
   /* Semantic spacing — layout rhythm */
   --ds-space-page-x: 20px;
   --ds-space-page-top: 20px;
-  --ds-space-page-bottom: 48px;
+  --ds-space-page-bottom: 20px;
   --ds-space-section-gap: 20px;
   --ds-space-card-gap: 12px;
   --ds-space-card-x: 12px;
@@ -114,6 +120,16 @@
   background: var(--ds-color-bg);
   color: var(--ds-color-text);
   padding: var(--ds-space-page-top) var(--ds-space-page-x) var(--ds-space-page-bottom);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PWA standalone — safe area 보정 (네이티브 WebView에서는 해당 없음) */
+@media all and (display-mode: standalone) {
+  .ds-page-shell {
+    padding-top: calc(var(--ds-space-page-top) + var(--ds-safe-top));
+    padding-bottom: calc(var(--ds-space-page-bottom) + var(--ds-safe-bottom));
+  }
 }
 
 .ds-page-shell__inner {

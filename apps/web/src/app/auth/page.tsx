@@ -32,7 +32,7 @@ function AuthPageContent() {
     apple: false,
     google: false,
   });
-  const providers = useMemo(() => getEnabledProviders('p0').filter((provider) => provider === 'kakao'), []);
+  const providers = useMemo(() => getEnabledProviders('p0'), []);
   const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID);
   const queryErrorMessage = useMemo(
     () => resolveAuthFailureMessage(searchParams.get('error'), searchParams.get('error_description')),
@@ -117,7 +117,7 @@ function AuthPageContent() {
       window.sessionStorage.setItem(AUTH_NEXT_STORAGE_KEY, nextPath);
     }
 
-    const callbackPath = `/auth?next=${encodeURIComponent(nextPath)}`;
+    const callbackPath = `/auth/callback?next=${encodeURIComponent(nextPath)}`;
     const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}${callbackPath}` : undefined;
     const result = await startSocialLogin(provider, redirectTo);
 

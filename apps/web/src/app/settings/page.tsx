@@ -44,7 +44,7 @@ export default function SettingsPage() {
 
   const handleToggle = (checked: boolean) => {
     setNotificationEnabled(checked);
-    sendNativeAction('toggle-notification', checked);
+    void sendNativeAction('toggle-notification', checked);
   };
 
   return (
@@ -115,31 +115,6 @@ export default function SettingsPage() {
                 시스템 설정
               </Button>
             </div>
-          </div>
-
-          {/* Policy */}
-          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
-            <p className="m-0 text-[14px] font-semibold text-ds-text">운영 정책</p>
-            <div className="grid gap-ds-inline">
-              {[
-                '기본 3루틴 + 커스텀 루틴 유지',
-                '루틴 인증 정책: 시간대 기반',
-                '친구 연동 권한: 방장만 루틴 편집',
-              ].map((text) => (
-                <div key={text} className="flex items-center gap-2">
-                  <span className="w-[5px] h-[5px] rounded-ds-pill bg-ds-accent shrink-0" />
-                  <span className="text-[13px] text-ds-text-muted">{text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="bg-ds-surface rounded-ds-lg pad-card grid gap-ds-card-gap">
-            <p className="m-0 text-[14px] font-semibold text-ds-text">시스템 안내</p>
-            <p className="m-0 text-[13px] text-ds-text-faint leading-normal">
-              iOS WebView 환경에서는 시스템 설정에서 알림 권한을 최종 확인해 주세요.
-            </p>
           </div>
         </section>
       </PageShell>

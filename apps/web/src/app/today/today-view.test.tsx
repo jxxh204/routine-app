@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
 const fakeStorage = () => {
   let store: Record<string, string> = {};
@@ -24,6 +24,10 @@ import { TodayView } from './today-view';
 beforeEach(() => {
   vi.stubGlobal('localStorage', fakeStorage());
   vi.stubGlobal('sessionStorage', fakeStorage());
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe('TodayView', () => {

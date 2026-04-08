@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type CSSProperties,
   type ChangeEvent,
   type TouchEvent,
   useCallback,
@@ -21,9 +20,11 @@ import {
   minuteToHHMM,
 } from '@/lib/routine-time';
 import { readProofImage, saveProofImage } from '@/lib/proof-image-store';
+import { uploadProofImage, getProofImageUrl } from '@/lib/proof-image-upload';
 import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 import { PageShell } from '@/components/ui';
+import { FriendStatusSection } from '@/components/friend-status-section';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -40,6 +41,7 @@ type Routine = {
   doneByBuddy: boolean;
   doneAt?: string;
   proofImage?: string;
+  proofImagePath?: string;
   isDefault: boolean;
 };
 
@@ -209,7 +211,7 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const today = getTodayDateKey();
 
   const myResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?user_id=eq.${auth.userId}&challenge_date=eq.${today}`,
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?select=routine_key,done_at,proof_image_path&user_id=eq.${auth.userId}&challenge_date=eq.${today}`,
     { headers: auth.headers },
   );
 
@@ -218,6 +220,7 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const myRows = (await myResponse.json()) as Array<{
     routine_key: string;
     done_at: string | null;
+    proof_image_path: string | null;
   }>;
 
   let buddyRows: Array<{ routine_key: string }> = [];
@@ -246,6 +249,7 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
       doneByMe: Boolean(myRow),
       doneByBuddy: buddyDone,
       doneAt: myRow?.done_at ? formatKoreanTime(new Date(myRow.done_at)) : routine.doneAt,
+      proofImagePath: myRow?.proof_image_path ?? undefined,
     };
   });
 }
@@ -475,10 +479,19 @@ export function TodayView() {
       const imagePairs = await Promise.all(
         routines
           .filter((routine) => routine.doneByMe)
-          .map(async (routine) => ({
-            id: routine.id,
-            image: await readProofImage(dateKey, routine.id).catch(() => null),
-          })),
+          .map(async (routine) => {
+            // Try local IndexedDB first
+            const local = await readProofImage(dateKey, routine.id).catch(() => null);
+            if (local) return { id: routine.id, image: local };
+
+            // Fall back to server signed URL if we have a storage path
+            if (routine.proofImagePath) {
+              const serverUrl = await getProofImageUrl(routine.proofImagePath).catch(() => null);
+              if (serverUrl) return { id: routine.id, image: serverUrl };
+            }
+
+            return { id: routine.id, image: null };
+          }),
       );
 
       const imageMap = new Map(imagePairs.filter((item) => item.image).map((item) => [item.id, item.image as string]));
@@ -553,12 +566,20 @@ export function TodayView() {
     }
 
     if (!target.isDefault) {
+      // Upload to storage even for custom routines (best-effort)
+      void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
       setSyncMessage('사진 인증 저장 완료');
       return;
     }
 
     try {
       const ok = await saveCertificationToSupabase(target.id, now.toISOString());
+
+      // Upload proof image to Supabase Storage (after challenge_log exists)
+      if (ok) {
+        void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
+      }
+
       setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
 
       if (ok) {
@@ -815,8 +836,11 @@ export function TodayView() {
                       : 'bg-ds-surface'
                     }
                     ${canCertify ? 'cursor-pointer' : ''}
-                    ${swipedRoutineId === routine.id ? '-translate-x-[130px]' : ''}
                   `}
+                  style={{
+                    transform: swipedRoutineId === routine.id ? 'translateX(-130px)' : 'translateX(0)',
+                    transition: 'transform 0.3s var(--ds-ease)',
+                  }}
                   onClick={canCertify ? () => void openCameraForRoutine(routine.id) : undefined}
                 >
                   <div className="w-full flex justify-between items-center gap-2">
@@ -957,7 +981,10 @@ export function TodayView() {
                   onTouchStart={(event) => handleRoutineTouchStart(routine.id, event)}
                   onTouchEnd={handleRoutineTouchEnd}
                 >
-                  <div className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-ds-inline bg-ds-surface-strong rounded-ds-lg z-0">
+                  <div
+                    className="routine-card-surface absolute right-0 top-0 bottom-0 w-[130px] flex items-center justify-center gap-ds-inline bg-ds-surface-strong rounded-ds-lg z-0"
+                    style={{ visibility: swipedRoutineId === routine.id ? 'visible' : 'hidden' }}
+                  >
                     <Button
                       onClick={() => startEditRoutine(routine.id)}
                       className="!border-0 !bg-ds-accent-soft !text-ds-accent !text-[12px] !font-medium"
@@ -1129,6 +1156,12 @@ export function TodayView() {
           -webkit-touch-callout: none;
         }
       `}</style>
+
+      {/* 친구 현황 섹션 */}
+      <FriendStatusSection
+        routineKeys={routines.filter((r) => r.isDefault).map((r) => r.id)}
+        myDoneRoutineKeys={routines.filter((r) => r.isDefault && r.doneByMe).map((r) => r.id)}
+      />
       </section>
     </PageShell>
   );
