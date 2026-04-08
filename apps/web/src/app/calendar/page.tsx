@@ -7,6 +7,8 @@ import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
+import { getProofImageUrl } from '@/lib/proof-image-upload';
+import { supabase } from '@/lib/supabase';
 import { FriendCalendarDetail } from '@/components/friend-calendar-detail';
 
 const STORAGE_PREFIX = 'routine-challenge-v1:';
@@ -36,6 +38,14 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      setMyUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   const availableMonths = useMemo(() => {
     const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
@@ -82,8 +92,16 @@ export default function CalendarPage() {
       const nextEntries = await Promise.all(
         selectedItems.map(async (item) => {
           const itemKey = `${selectedDate}:${item.id}`;
-          const image = item.proofImage ?? (await readProofImage(selectedDate, item.id).catch(() => null));
-          return image ? ([itemKey, image] as const) : null;
+          // 1. 로컬(IndexedDB) 우선
+          const localImage = item.proofImage ?? (await readProofImage(selectedDate, item.id).catch(() => null));
+          if (localImage) return [itemKey, localImage] as const;
+          // 2. 서버(Supabase Storage) fallback — proofImagePath가 있으면 사용, 없으면 규칙 기반 경로
+          const storagePath = item.proofImagePath ?? (myUserId ? `${myUserId}/${selectedDate}/${item.id}.jpg` : null);
+          if (storagePath) {
+            const serverUrl = await getProofImageUrl(storagePath).catch(() => null);
+            if (serverUrl) return [itemKey, serverUrl] as const;
+          }
+          return null;
         }),
       );
 
