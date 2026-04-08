@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 
@@ -8,6 +7,9 @@ import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
 import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
+import { getProofImageUrl } from '@/lib/proof-image-upload';
+import { supabase } from '@/lib/supabase';
+import { FriendCalendarDetail } from '@/components/friend-calendar-detail';
 
 const STORAGE_PREFIX = 'routine-challenge-v1:';
 
@@ -36,6 +38,14 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      setMyUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   const availableMonths = useMemo(() => {
     const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
@@ -82,8 +92,16 @@ export default function CalendarPage() {
       const nextEntries = await Promise.all(
         selectedItems.map(async (item) => {
           const itemKey = `${selectedDate}:${item.id}`;
-          const image = item.proofImage ?? (await readProofImage(selectedDate, item.id).catch(() => null));
-          return image ? ([itemKey, image] as const) : null;
+          // 1. 로컬(IndexedDB) 우선
+          const localImage = item.proofImage ?? (await readProofImage(selectedDate, item.id).catch(() => null));
+          if (localImage) return [itemKey, localImage] as const;
+          // 2. 서버(Supabase Storage) fallback — proofImagePath가 있으면 사용, 없으면 규칙 기반 경로
+          const storagePath = item.proofImagePath ?? (myUserId ? `${myUserId}/${selectedDate}/${item.id}.jpg` : null);
+          if (storagePath) {
+            const serverUrl = await getProofImageUrl(storagePath).catch(() => null);
+            if (serverUrl) return [itemKey, serverUrl] as const;
+          }
+          return null;
         }),
       );
 
@@ -120,9 +138,7 @@ export default function CalendarPage() {
                 캘린더
               </h1>
             </div>
-            <Link href="/today" className="text-ds-accent no-underline text-[13px] font-medium">
-              오늘으로
-            </Link>
+{/* '오늘으로' 버튼 삭제: 하단 네비로 이동 가능 + 라우팅 복귀 시 상태 초기화 버그 유발 */}
           </div>
 
           {/* Summary stats */}
@@ -264,6 +280,9 @@ export default function CalendarPage() {
                   })}
                 </div>
               )}
+
+              {/* 친구 인증 내역 */}
+              <FriendCalendarDetail dateKey={selectedDate} />
             </div>
           ) : (
             <p className="m-0 text-ds-text-faint text-[13px] text-center">

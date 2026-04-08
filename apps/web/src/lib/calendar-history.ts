@@ -4,6 +4,7 @@ export type DoneItem = {
   doneByMe?: boolean;
   doneAt?: string;
   proofImage?: string;
+  proofImagePath?: string;
 };
 
 export type DayHistory = {
