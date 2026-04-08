@@ -99,7 +99,9 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  overscroll-behavior: none; /* iOS bounce 방지 */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
 }
 
 body {
