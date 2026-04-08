@@ -25,21 +25,24 @@ export function FriendCalendarDetail({ dateKey }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!dateKey || !supabase) {
-      setFriends([]);
-      return;
-    }
-
     let cancelled = false;
-    setLoading(true);
 
-    getFriendChallengeHistory(dateKey).then((result) => {
+    async function load() {
+      if (!dateKey || !supabase) {
+        setFriends([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const result = await getFriendChallengeHistory(dateKey);
       if (!cancelled) {
         if (result.ok) setFriends(result.data);
         setLoading(false);
       }
-    });
+    }
 
+    load();
     return () => { cancelled = true; };
   }, [dateKey]);
 

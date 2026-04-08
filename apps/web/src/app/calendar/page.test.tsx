@@ -73,10 +73,9 @@ describe('CalendarPage', () => {
     expect(screen.getAllByText(/캘린더에서 날짜를 선택하면/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('has back link to today', () => {
+  it('does not show redundant today link (uses bottom nav instead)', () => {
     render(<CalendarPage />);
-    const links = screen.getAllByText('오늘으로');
-    const link = links.find((el) => el.closest('a'));
-    expect(link?.closest('a')).toHaveAttribute('href', '/today');
+    const links = screen.queryAllByText('오늘으로');
+    expect(links).toHaveLength(0);
   });
 });

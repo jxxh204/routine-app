@@ -15,7 +15,7 @@ import { getFriendChallengeStatuses } from './friend-challenge';
 
 function chainBuilder(data: unknown, error: unknown = null) {
   const chain: Record<string, unknown> = {};
-  const self = () => chain;
+  const _self = () => chain;
   chain.select = vi.fn().mockReturnValue(chain);
   chain.eq = vi.fn().mockReturnValue(chain);
   chain.or = vi.fn().mockReturnValue(chain);
