@@ -13,6 +13,8 @@ import { buildNudgePayload, sendPush, type PushTarget } from '@/lib/push-sender'
  * 2. push_events 기록
  * 3. push_tokens 조회 → 발송
  */
+export const runtime = 'edge';
+
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
