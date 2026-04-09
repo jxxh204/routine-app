@@ -122,7 +122,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedDate, selectedItems]);
+  }, [selectedDate, selectedItems, myUserId]);
 
   return (
     <AuthRequired>
