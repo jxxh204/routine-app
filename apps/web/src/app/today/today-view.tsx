@@ -474,25 +474,29 @@ export function TodayView() {
 
   useEffect(() => {
     const dateKey = getTodayDateKey();
+    const targets = routines.filter((routine) => routine.doneByMe && !routine.proofImage);
+    if (targets.length === 0) return;
+
+    let cancelled = false;
 
     const hydrateProofImages = async () => {
       const imagePairs = await Promise.all(
-        routines
-          .filter((routine) => routine.doneByMe)
-          .map(async (routine) => {
-            // Try local IndexedDB first
-            const local = await readProofImage(dateKey, routine.id).catch(() => null);
-            if (local) return { id: routine.id, image: local };
+        targets.map(async (routine) => {
+          // Try local IndexedDB first
+          const local = await readProofImage(dateKey, routine.id).catch(() => null);
+          if (local) return { id: routine.id, image: local };
 
-            // Fall back to server signed URL if we have a storage path
-            if (routine.proofImagePath) {
-              const serverUrl = await getProofImageUrl(routine.proofImagePath).catch(() => null);
-              if (serverUrl) return { id: routine.id, image: serverUrl };
-            }
+          // Fall back to server signed URL if we have a storage path
+          if (routine.proofImagePath) {
+            const serverUrl = await getProofImageUrl(routine.proofImagePath).catch(() => null);
+            if (serverUrl) return { id: routine.id, image: serverUrl };
+          }
 
-            return { id: routine.id, image: null };
-          }),
+          return { id: routine.id, image: null };
+        }),
       );
+
+      if (cancelled) return;
 
       const imageMap = new Map(imagePairs.filter((item) => item.image).map((item) => [item.id, item.image as string]));
       if (imageMap.size === 0) return;
@@ -507,8 +511,11 @@ export function TodayView() {
     };
 
     void hydrateProofImages();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; routines read via closure at mount time
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [routines]);
 
   // ✅ Cleanup on unmount — combined into single ref cleanup
   // thumbLongPressTimerRef is cleaned up by cancelThumbLongPress handlers;
