@@ -477,6 +477,31 @@ export function TodayView() {
       const ok = await saveCertificationToSupabase(target.id, now.toISOString());
 
       if (ok) {
+        queryClient.setQueryData<Array<{ date: string; items: Array<{ id: string; doneByMe: boolean; doneAt?: string; title?: string; proofImage?: string }> }>>(
+          ['calendar-history'],
+          (prev = []) => {
+            const next = [...prev];
+            const idx = next.findIndex((entry) => entry.date === dateKey);
+            const nextItem = {
+              id: target.id,
+              title: target.title,
+              doneByMe: true,
+              doneAt: doneAtText,
+              proofImage: imageDataUrl,
+            };
+
+            if (idx < 0) {
+              next.unshift({ date: dateKey, items: [nextItem] });
+              return next;
+            }
+
+            const row = next[idx];
+            const filtered = row.items.filter((item) => item.id !== target.id);
+            next[idx] = { ...row, items: [nextItem, ...filtered] };
+            return next;
+          },
+        );
+
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] }),
           queryClient.invalidateQueries({ queryKey: ['calendar-history'] }),
