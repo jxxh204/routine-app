@@ -215,7 +215,8 @@ function CalendarContent() {
             const count = byDate.get(key)?.length ?? 0;
             const inMonth = date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear();
             const isSelected = selectedDate === key;
-            const isEnabled = inMonth && count > 0;
+            const todayKey = toDateKey(new Date());
+            const isEnabled = inMonth && (count > 0 || key === todayKey);
 
             return (
               <button
