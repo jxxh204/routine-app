@@ -220,12 +220,10 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const buddyRows = payload.data?.buddyRows ?? [];
 
   return baseRoutines.map((routine) => {
-    if (!routine.isDefault) {
-      return { ...routine, doneByBuddy: false };
-    }
-
     const myRow = myRows.find((item) => item.routine_key === routine.id);
-    const buddyDone = buddyRows.some((item) => item.routine_key === routine.id);
+    const buddyDone = routine.isDefault
+      ? buddyRows.some((item) => item.routine_key === routine.id)
+      : false;
 
     return {
       ...routine,
@@ -471,22 +469,43 @@ export function TodayView() {
       return;
     }
 
-    if (!target.isDefault) {
-      // Upload to storage even for custom routines (best-effort)
-      void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
-      return;
-    }
+    // Upload proof image best-effort and persist completion to server
+    // for both default/custom routines.
+    void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
 
     try {
       const ok = await saveCertificationToSupabase(target.id, now.toISOString());
 
-      // Upload proof image to Supabase Storage (after challenge_log exists)
       if (ok) {
-        void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
-      }
+        queryClient.setQueryData<Array<{ date: string; items: Array<{ id: string; doneByMe: boolean; doneAt?: string; title?: string; proofImage?: string }> }>>(
+          ['calendar-history'],
+          (prev = []) => {
+            const next = [...prev];
+            const idx = next.findIndex((entry) => entry.date === dateKey);
+            const nextItem = {
+              id: target.id,
+              title: target.title,
+              doneByMe: true,
+              doneAt: doneAtText,
+              proofImage: imageDataUrl,
+            };
 
-      if (ok) {
-        void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
+            if (idx < 0) {
+              next.unshift({ date: dateKey, items: [nextItem] });
+              return next;
+            }
+
+            const row = next[idx];
+            const filtered = row.items.filter((item) => item.id !== target.id);
+            next[idx] = { ...row, items: [nextItem, ...filtered] };
+            return next;
+          },
+        );
+
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] }),
+          queryClient.invalidateQueries({ queryKey: ['calendar-history'] }),
+        ]);
       }
     } catch {
       // noop: local capture state is already updated

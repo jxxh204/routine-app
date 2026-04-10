@@ -13,7 +13,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: [] }),
+  useSuspenseQuery: () => ({ data: [] }),
 }));
 
 vi.mock('@/lib/supabase', () => ({ supabase: null }));
