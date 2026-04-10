@@ -2,41 +2,72 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
+import { useQuery } from '@tanstack/react-query';
 
 import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
-import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
+import { getMonthMatrix, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
 import { getProofImageUrl } from '@/lib/proof-image-upload';
 import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/client-auth';
 import { FriendCalendarDetail } from '@/components/friend-calendar-detail';
-
-const STORAGE_PREFIX = 'routine-challenge-v1:';
 
 function getRoutineTypeLabel(id: string) {
   if (id === 'wake' || id === 'lunch' || id === 'sleep') return '기본';
   return '커스텀';
 }
 
-function readHistory() {
-  if (typeof window === 'undefined') return [] as Array<{ date: string; items: DoneItem[] }>;
+async function fetchMyChallengeHistory(): Promise<Array<{ date: string; items: DoneItem[] }>> {
+  const token = await getAccessToken();
+  if (!token) return [];
 
-  const entries: Array<{ key: string; value: string | null }> = [];
-  for (let i = 0; i < window.localStorage.length; i += 1) {
-    const key = window.localStorage.key(i);
-    if (!key) continue;
-    entries.push({ key, value: window.localStorage.getItem(key) });
+  const response = await fetch('/api/challenge/history', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) return [];
+
+  const payload = (await response.json()) as {
+    ok: boolean;
+    data?: Array<{
+      challenge_date: string;
+      routine_key: string;
+      done_at: string | null;
+      proof_image_path: string | null;
+    }>;
+  };
+
+  const rows = payload.data ?? [];
+  const byDate = new Map<string, DoneItem[]>();
+
+  for (const row of rows) {
+    const date = row.challenge_date;
+    const arr = byDate.get(date) ?? [];
+    arr.push({
+      id: row.routine_key,
+      doneByMe: true,
+      doneAt: row.done_at ? new Date(row.done_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined,
+      proofImagePath: row.proof_image_path ?? undefined,
+    });
+    byDate.set(date, arr);
   }
 
-  return parseHistoryEntries(entries, STORAGE_PREFIX);
+  return Array.from(byDate.entries())
+    .map(([date, items]) => ({ date, items }))
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export default function CalendarPage() {
-  const [history] = useState(() => readHistory());
+  const { data: history = [] } = useQuery({
+    queryKey: ['calendar-history'],
+    queryFn: fetchMyChallengeHistory,
+  });
+
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row.items])), [history]);
 
-  const [month, setMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [month, setMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(() => toDateKey(new Date()));
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
   const [myUserId, setMyUserId] = useState<string | null>(null);
 
@@ -47,23 +78,8 @@ export default function CalendarPage() {
     });
   }, []);
 
-  const availableMonths = useMemo(() => {
-    const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
-    return keys.map((key) => {
-      const [year, monthText] = key.split('-').map(Number);
-      return new Date(year, (monthText ?? 1) - 1, 1);
-    });
-  }, [history]);
-
-  const monthIndex = availableMonths.findIndex(
-    (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
-  );
-  const effectiveMonth = monthIndex === -1 && availableMonths.length > 0 ? availableMonths[availableMonths.length - 1] : month;
-  const effectiveMonthIndex = monthIndex === -1 ? availableMonths.length - 1 : monthIndex;
-  const days = useMemo(() => getMonthMatrix(effectiveMonth), [effectiveMonth]);
-  const monthTitle = `${effectiveMonth.getFullYear()}년 ${effectiveMonth.getMonth() + 1}월`;
-  const canGoPrevMonth = effectiveMonthIndex > 0;
-  const canGoNextMonth = effectiveMonthIndex >= 0 && effectiveMonthIndex < availableMonths.length - 1;
+  const days = useMemo(() => getMonthMatrix(month), [month]);
+  const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
   const selectedItems = useMemo(
     () => (selectedDate ? byDate.get(selectedDate) ?? [] : []),
     [selectedDate, byDate],
@@ -77,11 +93,11 @@ export default function CalendarPage() {
     [selectedDate, selectedItems, proofByItemKey],
   );
   const monthDoneCount = useMemo(() => {
-    const prefix = `${effectiveMonth.getFullYear()}-${String(effectiveMonth.getMonth() + 1).padStart(2, '0')}-`;
+    const prefix = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-`;
     return history
       .filter((entry) => entry.date.startsWith(prefix))
       .reduce((acc, entry) => acc + entry.items.length, 0);
-  }, [history, effectiveMonth]);
+  }, [history, month]);
 
   useEffect(() => {
     if (!selectedDate || selectedItems.length === 0) return;
@@ -159,11 +175,9 @@ export default function CalendarPage() {
               type="text"
               size="small"
               onClick={() => {
-                if (!canGoPrevMonth) return;
                 setSelectedDate(null);
-                setMonth(availableMonths[effectiveMonthIndex - 1]);
+                setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
               }}
-              disabled={!canGoPrevMonth}
               className="!text-[14px] !px-[10px] !py-[6px]"
             >
               ←
@@ -173,11 +187,9 @@ export default function CalendarPage() {
               type="text"
               size="small"
               onClick={() => {
-                if (!canGoNextMonth) return;
                 setSelectedDate(null);
-                setMonth(availableMonths[effectiveMonthIndex + 1]);
+                setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
               }}
-              disabled={!canGoNextMonth}
               className="!text-[14px] !px-[10px] !py-[6px]"
             >
               →
@@ -196,7 +208,7 @@ export default function CalendarPage() {
               {days.map((date) => {
                 const key = toDateKey(date);
                 const count = byDate.get(key)?.length ?? 0;
-                const inMonth = date.getMonth() === effectiveMonth.getMonth();
+                const inMonth = date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear();
                 const isSelected = selectedDate === key;
                 const isEnabled = inMonth && count > 0;
 

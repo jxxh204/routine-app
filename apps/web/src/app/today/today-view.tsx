@@ -3,13 +3,13 @@
 import {
   type ChangeEvent,
   type TouchEvent,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { Button, Card, Progress } from 'antd';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addOneHourHHMM,
@@ -25,6 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 import { PageShell } from '@/components/ui';
 import { FriendStatusSection } from '@/components/friend-status-section';
+import { getAccessToken } from '@/lib/client-auth';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -183,21 +184,11 @@ function saveDefaultRoutines(routines: Routine[]) {
 }
 
 async function getAuthHeaders() {
-  if (!supabase) return null;
-
-  const [{ data: userRes }, { data: sessionRes }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-  ]);
-
-  const userId = userRes.user?.id;
-  const accessToken = sessionRes.session?.access_token;
-  if (!userId || !accessToken) return null;
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
 
   return {
-    userId,
     headers: {
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
@@ -208,33 +199,25 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const auth = await getAuthHeaders();
   if (!auth) return null;
 
-  const today = getTodayDateKey();
+  const response = await fetch('/api/challenge/today', {
+    headers: {
+      ...auth.headers,
+      ...(buddyUserId ? { 'x-buddy-user-id': buddyUserId } : {}),
+    },
+  });
 
-  const myResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?select=routine_key,done_at,proof_image_path&user_id=eq.${auth.userId}&challenge_date=eq.${today}`,
-    { headers: auth.headers },
-  );
+  if (!response.ok) return null;
 
-  if (!myResponse.ok) return null;
+  const payload = (await response.json()) as {
+    ok: boolean;
+    data?: {
+      myRows: Array<{ routine_key: string; done_at: string | null; proof_image_path: string | null }>;
+      buddyRows: Array<{ routine_key: string }>;
+    };
+  };
 
-  const myRows = (await myResponse.json()) as Array<{
-    routine_key: string;
-    done_at: string | null;
-    proof_image_path: string | null;
-  }>;
-
-  let buddyRows: Array<{ routine_key: string }> = [];
-
-  if (buddyUserId) {
-    const buddyResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?select=routine_key&user_id=eq.${buddyUserId}&challenge_date=eq.${today}`,
-      { headers: auth.headers },
-    );
-
-    if (buddyResponse.ok) {
-      buddyRows = (await buddyResponse.json()) as Array<{ routine_key: string }>;
-    }
-  }
+  const myRows = payload.data?.myRows ?? [];
+  const buddyRows = payload.data?.buddyRows ?? [];
 
   return baseRoutines.map((routine) => {
     if (!routine.isDefault) {
@@ -258,57 +241,22 @@ async function saveCertificationToSupabase(routineKey: string, doneAtIso: string
   const auth = await getAuthHeaders();
   if (!auth) return false;
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs`,
-    {
-      method: 'POST',
-      headers: {
-        ...auth.headers,
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify({
-        user_id: auth.userId,
-        challenge_date: getTodayDateKey(),
-        routine_key: routineKey,
-        done_at: doneAtIso,
-      }),
-    },
-  );
+  const response = await fetch('/api/challenge/complete', {
+    method: 'POST',
+    headers: auth.headers,
+    body: JSON.stringify({ routineKey, doneAtIso }),
+  });
 
   return response.ok;
 }
 
 function getInitialRoutines() {
-  const base = [...readDefaultRoutines(), ...readCustomRoutines()];
-
-  if (typeof window === 'undefined') {
-    return base;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(getTodayStorageKey());
-    if (!raw) return base;
-
-    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt'> & { proofImage?: string }>;
-    return base.map((routine) => {
-      const match = saved.find((item) => item.id === routine.id);
-      if (!match) return routine;
-      return {
-        ...routine,
-        doneByMe: Boolean(match.doneByMe),
-        doneAt: match.doneAt,
-        proofImage: match.proofImage,
-      };
-    });
-  } catch {
-    return base;
-  }
+  return [...readDefaultRoutines(), ...readCustomRoutines()];
 }
 
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
-  const [, setSyncMessage] = useState('로컬 저장 모드');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -328,79 +276,30 @@ export function TodayView() {
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const todayKey = getTodayStorageKey();
-
-    const snapshot = routines.map(({ id, title, doneByMe, doneAt, proofImage }) => ({
-      id,
-      title,
-      doneByMe,
-      doneAt,
-      proofImage,
-    }));
-
-    let preservedDeletedDone: Array<{
-      id: string;
-      title?: string;
-      doneByMe: boolean;
-      doneAt?: string;
-      proofImage?: string;
-    }> = [];
-
-    try {
-      const raw = window.localStorage.getItem(todayKey);
-      if (raw) {
-        const prev = JSON.parse(raw) as Array<{
-          id: string;
-          title?: string;
-          doneByMe: boolean;
-          doneAt?: string;
-          proofImage?: string;
-        }>;
-
-        const liveIds = new Set(snapshot.map((item) => item.id));
-        preservedDeletedDone = prev.filter((item) => item.doneByMe && !liveIds.has(item.id));
-      }
-    } catch {
-      preservedDeletedDone = [];
-    }
-
-    const merged = [...snapshot, ...preservedDeletedDone];
-
-    try {
-      window.localStorage.setItem(todayKey, JSON.stringify(merged));
-    } catch {
-      // ignore localStorage quota overflow
-    }
-
     saveCustomRoutines(routines);
     saveDefaultRoutines(routines);
   }, [routines]);
 
-  // ✅ Use ref to access latest routines without re-creating callback
+  // ✅ Use ref to access latest routines without re-creating query fn
   const routinesRef = useRef(routines);
   useEffect(() => { routinesRef.current = routines; }, [routines]);
 
-  const refreshFromSupabase = useCallback(async () => {
-    const synced = await syncTodayFromSupabase(routinesRef.current);
+  const queryClient = useQueryClient();
 
-    if (!synced) {
-      setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
-      return;
-    }
-
-    setRoutines(synced);
-    setSyncMessage('Supabase 동기화됨');
-  }, []);
+  const { data: syncedRoutines } = useQuery({
+    queryKey: ['today-routines-sync', buddyUserId],
+    queryFn: () => syncTodayFromSupabase(routinesRef.current),
+    refetchInterval: 60_000,
+  });
 
   useEffect(() => {
-    const kickoff = setTimeout(() => {
-      void refreshFromSupabase();
-    }, 0);
+    if (syncedRoutines) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRoutines(syncedRoutines);
+    }
+  }, [syncedRoutines]);
 
-    const fallbackPolling = setInterval(() => {
-      void refreshFromSupabase();
-    }, 60_000);
-
+  useEffect(() => {
     let cleanupRealtime: (() => void) | null = null;
 
     const setupRealtime = async () => {
@@ -410,8 +309,11 @@ export function TodayView() {
       const auth = await getAuthHeaders();
       if (!auth) return;
 
+      const { data: userData } = await client.auth.getUser();
+      const userId = userData.user?.id ?? 'unknown';
+
       const channel = client
-        .channel(`challenge-logs-${auth.userId}-${getTodayDateKey()}`)
+        .channel(`challenge-logs-${userId}-${getTodayDateKey()}`)
         .on(
           'postgres_changes',
           {
@@ -421,7 +323,7 @@ export function TodayView() {
             filter: `challenge_date=eq.${getTodayDateKey()}`,
           },
           () => {
-            void refreshFromSupabase();
+            void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
           },
         )
         .subscribe();
@@ -434,11 +336,9 @@ export function TodayView() {
     void setupRealtime();
 
     return () => {
-      clearTimeout(kickoff);
-      clearInterval(fallbackPolling);
       cleanupRealtime?.();
     };
-  }, [refreshFromSupabase]);
+  }, [queryClient]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -568,14 +468,12 @@ export function TodayView() {
     setPendingCaptureRoutineId(null);
 
     if (!target) {
-      setSyncMessage('로컬 저장 완료');
       return;
     }
 
     if (!target.isDefault) {
       // Upload to storage even for custom routines (best-effort)
       void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
-      setSyncMessage('사진 인증 저장 완료');
       return;
     }
 
@@ -587,13 +485,11 @@ export function TodayView() {
         void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
       }
 
-      setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
-
       if (ok) {
-        void refreshFromSupabase();
+        void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
       }
     } catch {
-      setSyncMessage('사진 인증 로컬 저장 완료 (Supabase 저장 중 오류)');
+      // noop: local capture state is already updated
     }
   };
 

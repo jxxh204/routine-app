@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/client-auth';
 
 export type FriendChallengeStatus = {
   userId: string;
@@ -18,71 +18,23 @@ export type FriendChallengeStatus = {
 export async function getFriendChallengeStatuses(
   dateKey: string,
 ): Promise<{ ok: true; data: FriendChallengeStatus[] } | { ok: false; error: string }> {
-  if (!supabase) return { ok: false, error: 'supabase-client-unavailable' };
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: 'unauthorized' };
 
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) return { ok: false, error: 'unauthorized' };
-
-  // 1. accepted 친구 목록 조회
-  const { data: friendships, error: friendError } = await supabase
-    .from('friendships')
-    .select('requester_id, addressee_id')
-    .eq('status', 'accepted')
-    .or(`requester_id.eq.${uid},addressee_id.eq.${uid}`);
-
-  if (friendError) return { ok: false, error: friendError.message };
-  if (!friendships || friendships.length === 0) return { ok: true, data: [] };
-
-  const friendIds = friendships.map((f) =>
-    f.requester_id === uid ? f.addressee_id : f.requester_id,
-  );
-
-  // 2. 친구 프로필 조회
-  const { data: profiles, error: profileError } = await supabase
-    .from('profiles')
-    .select('user_id, nickname, avatar_url')
-    .in('user_id', friendIds);
-
-  if (profileError) return { ok: false, error: profileError.message };
-
-  // 3. 친구들의 오늘 challenge_logs 조회
-  const { data: logs, error: logError } = await supabase
-    .from('challenge_logs')
-    .select('user_id, routine_key, done_at, proof_image_path')
-    .in('user_id', friendIds)
-    .eq('challenge_date', dateKey);
-
-  if (logError) return { ok: false, error: logError.message };
-
-  // 4. 조합
-  const profileMap = new Map(
-    (profiles ?? []).map((p) => [p.user_id, p]),
-  );
-
-  const logsByUser = new Map<string, typeof logs>();
-  for (const log of logs ?? []) {
-    const arr = logsByUser.get(log.user_id) ?? [];
-    arr.push(log);
-    logsByUser.set(log.user_id, arr);
-  }
-
-  const result: FriendChallengeStatus[] = friendIds.map((fid) => {
-    const profile = profileMap.get(fid);
-    const userLogs = logsByUser.get(fid) ?? [];
-    return {
-      userId: fid,
-      nickname: profile?.nickname ?? '알 수 없음',
-      avatarUrl: profile?.avatar_url ?? null,
-      routines: userLogs.map((l) => ({
-        routineKey: l.routine_key,
-        doneAt: l.done_at,
-        proofImagePath: l.proof_image_path,
-      })),
-    };
+  const response = await fetch(`/api/challenge/friends?dateKey=${dateKey}`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  return { ok: true, data: result };
+  if (!response.ok) return { ok: false, error: `http-${response.status}` };
+
+  const payload = (await response.json()) as {
+    ok: boolean;
+    data?: FriendChallengeStatus[];
+    error?: string;
+  };
+
+  if (!payload.ok) return { ok: false, error: payload.error ?? 'unknown' };
+  return { ok: true, data: payload.data ?? [] };
 }
 
 /**

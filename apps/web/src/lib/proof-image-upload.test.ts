@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('@/lib/client-auth', () => ({
+  getAccessToken: vi.fn().mockResolvedValue('token'),
+}));
+
 // Mock supabase before importing module
 const mockUpload = vi.fn();
 const mockUpdate = vi.fn();
@@ -30,6 +34,7 @@ vi.mock('@/lib/supabase', () => ({
 describe('proof-image-upload', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true } as Response));
   });
 
   it('uploadProofImage uploads blob and updates challenge_logs', async () => {

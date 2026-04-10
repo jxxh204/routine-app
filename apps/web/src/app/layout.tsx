@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AntdProvider } from "@/components/antd-provider";
 import { BottomNav } from "@/components/bottom-nav";
+import { QueryProvider } from "@/components/query-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,8 +53,10 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AntdProvider>
-          {children}
-          <BottomNav />
+          <QueryProvider>
+            {children}
+            <BottomNav />
+          </QueryProvider>
         </AntdProvider>
       </body>
     </html>
