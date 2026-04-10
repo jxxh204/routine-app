@@ -1,10 +1,8 @@
+export const runtime = 'edge';
+
 import { NextResponse } from 'next/server';
 import { createAuthedSupabaseFromBearer, getBearerToken } from '@/app/api/_utils/supabase-auth';
-
-function getTodayDateKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
+import { getDateKeyInKST } from '@/app/api/_utils/date-key';
 
 export async function GET(request: Request) {
   const token = getBearerToken(request.headers.get('authorization'));
@@ -15,7 +13,7 @@ export async function GET(request: Request) {
   const authed = await createAuthedSupabaseFromBearer(token);
   if (!authed.ok) return NextResponse.json({ ok: false, error: authed.error }, { status: 401 });
 
-  const dateKey = getTodayDateKey();
+  const dateKey = getDateKeyInKST();
 
   const { data: myRows, error: myError } = await authed.client
     .from('challenge_logs')
