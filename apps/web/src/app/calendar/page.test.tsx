@@ -12,6 +12,10 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => ({ data: [] }),
+}));
+
 vi.mock('@/lib/supabase', () => ({ supabase: null }));
 vi.mock('@/lib/session-recovery', () => ({
   getSessionWithRecovery: vi.fn().mockResolvedValue(null),
@@ -68,9 +72,9 @@ describe('CalendarPage', () => {
     expect(screen.getAllByText('기록된 날짜').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows hint text when no date selected', () => {
+  it('selects today by default', () => {
     render(<CalendarPage />);
-    expect(screen.getAllByText(/캘린더에서 날짜를 선택하면/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/완료 내역이 없습니다\./).length).toBeGreaterThanOrEqual(1);
   });
 
   it('does not show redundant today link (uses bottom nav instead)', () => {

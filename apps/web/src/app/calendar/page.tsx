@@ -2,37 +2,62 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
+import { useQuery } from '@tanstack/react-query';
 
 import { AuthRequired } from '@/components/auth-required';
 import { PageShell } from '@/components/ui';
-import { getMonthMatrix, parseHistoryEntries, toDateKey, type DoneItem } from '@/lib/calendar-history';
+import { getMonthMatrix, toDateKey, type DoneItem } from '@/lib/calendar-history';
 import { readProofImage } from '@/lib/proof-image-store';
 import { getProofImageUrl } from '@/lib/proof-image-upload';
 import { supabase } from '@/lib/supabase';
 import { FriendCalendarDetail } from '@/components/friend-calendar-detail';
-
-const STORAGE_PREFIX = 'routine-challenge-v1:';
 
 function getRoutineTypeLabel(id: string) {
   if (id === 'wake' || id === 'lunch' || id === 'sleep') return '기본';
   return '커스텀';
 }
 
-function readHistory() {
-  if (typeof window === 'undefined') return [] as Array<{ date: string; items: DoneItem[] }>;
+async function fetchMyChallengeHistory(): Promise<Array<{ date: string; items: DoneItem[] }>> {
+  if (!supabase) return [];
 
-  const entries: Array<{ key: string; value: string | null }> = [];
-  for (let i = 0; i < window.localStorage.length; i += 1) {
-    const key = window.localStorage.key(i);
-    if (!key) continue;
-    entries.push({ key, value: window.localStorage.getItem(key) });
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id;
+  if (!uid) return [];
+
+  const { data, error } = await supabase
+    .from('challenge_logs')
+    .select('challenge_date, routine_key, done_at, proof_image_path')
+    .eq('user_id', uid)
+    .order('challenge_date', { ascending: false })
+    .order('done_at', { ascending: false });
+
+  if (error || !data) return [];
+
+  const byDate = new Map<string, DoneItem[]>();
+
+  for (const row of data) {
+    const date = row.challenge_date;
+    const arr = byDate.get(date) ?? [];
+    arr.push({
+      id: row.routine_key,
+      doneByMe: true,
+      doneAt: row.done_at ? new Date(row.done_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined,
+      proofImagePath: row.proof_image_path ?? undefined,
+    });
+    byDate.set(date, arr);
   }
 
-  return parseHistoryEntries(entries, STORAGE_PREFIX);
+  return Array.from(byDate.entries())
+    .map(([date, items]) => ({ date, items }))
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export default function CalendarPage() {
-  const [history] = useState(() => readHistory());
+  const { data: history = [] } = useQuery({
+    queryKey: ['calendar-history'],
+    queryFn: fetchMyChallengeHistory,
+  });
+
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row.items])), [history]);
 
   const [month, setMonth] = useState(() => new Date());
