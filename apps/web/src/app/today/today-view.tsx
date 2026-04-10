@@ -3,13 +3,13 @@
 import {
   type ChangeEvent,
   type TouchEvent,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { Button, Card, Progress } from 'antd';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addOneHourHHMM,
@@ -279,30 +279,7 @@ async function saveCertificationToSupabase(routineKey: string, doneAtIso: string
 }
 
 function getInitialRoutines() {
-  const base = [...readDefaultRoutines(), ...readCustomRoutines()];
-
-  if (typeof window === 'undefined') {
-    return base;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(getTodayStorageKey());
-    if (!raw) return base;
-
-    const saved = JSON.parse(raw) as Array<Pick<Routine, 'id' | 'doneByMe' | 'doneAt'> & { proofImage?: string }>;
-    return base.map((routine) => {
-      const match = saved.find((item) => item.id === routine.id);
-      if (!match) return routine;
-      return {
-        ...routine,
-        doneByMe: Boolean(match.doneByMe),
-        doneAt: match.doneAt,
-        proofImage: match.proofImage,
-      };
-    });
-  } catch {
-    return base;
-  }
+  return [...readDefaultRoutines(), ...readCustomRoutines()];
 }
 
 export function TodayView() {
@@ -328,79 +305,33 @@ export function TodayView() {
   const thumbLongPressTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const todayKey = getTodayStorageKey();
-
-    const snapshot = routines.map(({ id, title, doneByMe, doneAt, proofImage }) => ({
-      id,
-      title,
-      doneByMe,
-      doneAt,
-      proofImage,
-    }));
-
-    let preservedDeletedDone: Array<{
-      id: string;
-      title?: string;
-      doneByMe: boolean;
-      doneAt?: string;
-      proofImage?: string;
-    }> = [];
-
-    try {
-      const raw = window.localStorage.getItem(todayKey);
-      if (raw) {
-        const prev = JSON.parse(raw) as Array<{
-          id: string;
-          title?: string;
-          doneByMe: boolean;
-          doneAt?: string;
-          proofImage?: string;
-        }>;
-
-        const liveIds = new Set(snapshot.map((item) => item.id));
-        preservedDeletedDone = prev.filter((item) => item.doneByMe && !liveIds.has(item.id));
-      }
-    } catch {
-      preservedDeletedDone = [];
-    }
-
-    const merged = [...snapshot, ...preservedDeletedDone];
-
-    try {
-      window.localStorage.setItem(todayKey, JSON.stringify(merged));
-    } catch {
-      // ignore localStorage quota overflow
-    }
-
     saveCustomRoutines(routines);
     saveDefaultRoutines(routines);
   }, [routines]);
 
-  // ✅ Use ref to access latest routines without re-creating callback
+  // ✅ Use ref to access latest routines without re-creating query fn
   const routinesRef = useRef(routines);
   useEffect(() => { routinesRef.current = routines; }, [routines]);
 
-  const refreshFromSupabase = useCallback(async () => {
-    const synced = await syncTodayFromSupabase(routinesRef.current);
+  const queryClient = useQueryClient();
 
-    if (!synced) {
+  const { data: syncedRoutines } = useQuery({
+    queryKey: ['today-routines-sync', buddyUserId],
+    queryFn: () => syncTodayFromSupabase(routinesRef.current),
+    refetchInterval: 60_000,
+  });
+
+  useEffect(() => {
+    if (!syncedRoutines) {
       setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
       return;
     }
 
-    setRoutines(synced);
+    setRoutines(syncedRoutines);
     setSyncMessage('Supabase 동기화됨');
-  }, []);
+  }, [syncedRoutines]);
 
   useEffect(() => {
-    const kickoff = setTimeout(() => {
-      void refreshFromSupabase();
-    }, 0);
-
-    const fallbackPolling = setInterval(() => {
-      void refreshFromSupabase();
-    }, 60_000);
-
     let cleanupRealtime: (() => void) | null = null;
 
     const setupRealtime = async () => {
@@ -421,7 +352,7 @@ export function TodayView() {
             filter: `challenge_date=eq.${getTodayDateKey()}`,
           },
           () => {
-            void refreshFromSupabase();
+            void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
           },
         )
         .subscribe();
@@ -434,11 +365,9 @@ export function TodayView() {
     void setupRealtime();
 
     return () => {
-      clearTimeout(kickoff);
-      clearInterval(fallbackPolling);
       cleanupRealtime?.();
     };
-  }, [refreshFromSupabase]);
+  }, [queryClient]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -590,7 +519,7 @@ export function TodayView() {
       setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
 
       if (ok) {
-        void refreshFromSupabase();
+        void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
       }
     } catch {
       setSyncMessage('사진 인증 로컬 저장 완료 (Supabase 저장 중 오류)');

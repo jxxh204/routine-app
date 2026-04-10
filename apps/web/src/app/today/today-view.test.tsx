@@ -13,6 +13,11 @@ const fakeStorage = () => {
   };
 };
 
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => ({ data: null }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}));
+
 vi.mock('@/lib/supabase', () => ({ supabase: null }));
 vi.mock('@/lib/proof-image-store', () => ({
   readProofImage: vi.fn().mockResolvedValue(null),
