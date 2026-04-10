@@ -257,7 +257,6 @@ function getInitialRoutines() {
 export function TodayView() {
   const [routines, setRoutines] = useState(getInitialRoutines);
   const [nowMinute, setNowMinute] = useState(getNowMinute());
-  const [, setSyncMessage] = useState('로컬 저장 모드');
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('09:00');
   const [newEnd, setNewEnd] = useState('10:00');
@@ -294,13 +293,10 @@ export function TodayView() {
   });
 
   useEffect(() => {
-    if (!syncedRoutines) {
-      setSyncMessage('로컬 저장 모드 (로그인 시 Supabase 동기화)');
-      return;
+    if (syncedRoutines) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRoutines(syncedRoutines);
     }
-
-    setRoutines(syncedRoutines);
-    setSyncMessage('Supabase 동기화됨');
   }, [syncedRoutines]);
 
   useEffect(() => {
@@ -313,8 +309,11 @@ export function TodayView() {
       const auth = await getAuthHeaders();
       if (!auth) return;
 
+      const { data: userData } = await client.auth.getUser();
+      const userId = userData.user?.id ?? 'unknown';
+
       const channel = client
-        .channel(`challenge-logs-${auth.userId}-${getTodayDateKey()}`)
+        .channel(`challenge-logs-${userId}-${getTodayDateKey()}`)
         .on(
           'postgres_changes',
           {
