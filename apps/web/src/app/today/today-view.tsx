@@ -468,14 +468,12 @@ export function TodayView() {
     setPendingCaptureRoutineId(null);
 
     if (!target) {
-      setSyncMessage('로컬 저장 완료');
       return;
     }
 
     if (!target.isDefault) {
       // Upload to storage even for custom routines (best-effort)
       void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
-      setSyncMessage('사진 인증 저장 완료');
       return;
     }
 
@@ -487,13 +485,11 @@ export function TodayView() {
         void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
       }
 
-      setSyncMessage(ok ? '사진 인증 + Supabase 저장 완료' : '사진 인증 로컬 저장 완료 (Supabase 미연동)');
-
       if (ok) {
         void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
       }
     } catch {
-      setSyncMessage('사진 인증 로컬 저장 완료 (Supabase 저장 중 오류)');
+      // noop: local capture state is already updated
     }
   };
 
