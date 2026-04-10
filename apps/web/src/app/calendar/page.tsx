@@ -48,7 +48,14 @@ export default function CalendarPage() {
   }, []);
 
   const availableMonths = useMemo(() => {
-    const keys = Array.from(new Set(history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)))).sort();
+    const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const keys = Array.from(
+      new Set([
+        ...history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)),
+        currentMonthKey,
+      ]),
+    ).sort();
+
     return keys.map((key) => {
       const [year, monthText] = key.split('-').map(Number);
       return new Date(year, (monthText ?? 1) - 1, 1);
