@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/client-auth';
 
 const BUCKET = 'proof-images';
 
@@ -45,16 +46,25 @@ export async function uploadProofImage(
     return null;
   }
 
-  // Update challenge_logs with the image path
-  const { error: updateError } = await client
-    .from('challenge_logs')
-    .update({ proof_image_path: path })
-    .eq('user_id', userId)
-    .eq('challenge_date', dateKey)
-    .eq('routine_key', routineKey);
+  // Update challenge_logs with the image path via internal API
+  try {
+    const token = await getAccessToken();
+    if (token) {
+      const response = await fetch('/api/challenge/proof-path', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ dateKey, routineKey, proofImagePath: path }),
+      });
 
-  if (updateError) {
-    console.error('[proof-image-upload] challenge_logs update failed:', updateError.message);
+      if (!response.ok) {
+        console.error('[proof-image-upload] challenge_logs update failed:', response.status);
+      }
+    }
+  } catch (error) {
+    console.error('[proof-image-upload] challenge_logs update failed:', error);
     // Image is uploaded, path just not saved in DB — still return path
   }
 

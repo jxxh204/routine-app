@@ -25,6 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
 import { PageShell } from '@/components/ui';
 import { FriendStatusSection } from '@/components/friend-status-section';
+import { getAccessToken } from '@/lib/client-auth';
 
 const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
@@ -183,21 +184,11 @@ function saveDefaultRoutines(routines: Routine[]) {
 }
 
 async function getAuthHeaders() {
-  if (!supabase) return null;
-
-  const [{ data: userRes }, { data: sessionRes }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-  ]);
-
-  const userId = userRes.user?.id;
-  const accessToken = sessionRes.session?.access_token;
-  if (!userId || !accessToken) return null;
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
 
   return {
-    userId,
     headers: {
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
@@ -208,33 +199,25 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const auth = await getAuthHeaders();
   if (!auth) return null;
 
-  const today = getTodayDateKey();
+  const response = await fetch('/api/challenge/today', {
+    headers: {
+      ...auth.headers,
+      ...(buddyUserId ? { 'x-buddy-user-id': buddyUserId } : {}),
+    },
+  });
 
-  const myResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?select=routine_key,done_at,proof_image_path&user_id=eq.${auth.userId}&challenge_date=eq.${today}`,
-    { headers: auth.headers },
-  );
+  if (!response.ok) return null;
 
-  if (!myResponse.ok) return null;
+  const payload = (await response.json()) as {
+    ok: boolean;
+    data?: {
+      myRows: Array<{ routine_key: string; done_at: string | null; proof_image_path: string | null }>;
+      buddyRows: Array<{ routine_key: string }>;
+    };
+  };
 
-  const myRows = (await myResponse.json()) as Array<{
-    routine_key: string;
-    done_at: string | null;
-    proof_image_path: string | null;
-  }>;
-
-  let buddyRows: Array<{ routine_key: string }> = [];
-
-  if (buddyUserId) {
-    const buddyResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs?select=routine_key&user_id=eq.${buddyUserId}&challenge_date=eq.${today}`,
-      { headers: auth.headers },
-    );
-
-    if (buddyResponse.ok) {
-      buddyRows = (await buddyResponse.json()) as Array<{ routine_key: string }>;
-    }
-  }
+  const myRows = payload.data?.myRows ?? [];
+  const buddyRows = payload.data?.buddyRows ?? [];
 
   return baseRoutines.map((routine) => {
     if (!routine.isDefault) {
@@ -258,22 +241,11 @@ async function saveCertificationToSupabase(routineKey: string, doneAtIso: string
   const auth = await getAuthHeaders();
   if (!auth) return false;
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/challenge_logs`,
-    {
-      method: 'POST',
-      headers: {
-        ...auth.headers,
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify({
-        user_id: auth.userId,
-        challenge_date: getTodayDateKey(),
-        routine_key: routineKey,
-        done_at: doneAtIso,
-      }),
-    },
-  );
+  const response = await fetch('/api/challenge/complete', {
+    method: 'POST',
+    headers: auth.headers,
+    body: JSON.stringify({ routineKey, doneAtIso }),
+  });
 
   return response.ok;
 }

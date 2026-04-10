@@ -10,6 +10,7 @@ import { getMonthMatrix, toDateKey, type DoneItem } from '@/lib/calendar-history
 import { readProofImage } from '@/lib/proof-image-store';
 import { getProofImageUrl } from '@/lib/proof-image-upload';
 import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/client-auth';
 import { FriendCalendarDetail } from '@/components/friend-calendar-detail';
 
 function getRoutineTypeLabel(id: string) {
@@ -18,24 +19,29 @@ function getRoutineTypeLabel(id: string) {
 }
 
 async function fetchMyChallengeHistory(): Promise<Array<{ date: string; items: DoneItem[] }>> {
-  if (!supabase) return [];
+  const token = await getAccessToken();
+  if (!token) return [];
 
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) return [];
+  const response = await fetch('/api/challenge/history', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-  const { data, error } = await supabase
-    .from('challenge_logs')
-    .select('challenge_date, routine_key, done_at, proof_image_path')
-    .eq('user_id', uid)
-    .order('challenge_date', { ascending: false })
-    .order('done_at', { ascending: false });
+  if (!response.ok) return [];
 
-  if (error || !data) return [];
+  const payload = (await response.json()) as {
+    ok: boolean;
+    data?: Array<{
+      challenge_date: string;
+      routine_key: string;
+      done_at: string | null;
+      proof_image_path: string | null;
+    }>;
+  };
 
+  const rows = payload.data ?? [];
   const byDate = new Map<string, DoneItem[]>();
 
-  for (const row of data) {
+  for (const row of rows) {
     const date = row.challenge_date;
     const arr = byDate.get(date) ?? [];
     arr.push({
