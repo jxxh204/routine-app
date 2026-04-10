@@ -35,8 +35,8 @@ export default function CalendarPage() {
   const [history] = useState(() => readHistory());
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row.items])), [history]);
 
-  const [month, setMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [month, setMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(() => toDateKey(new Date()));
   const [proofByItemKey, setProofByItemKey] = useState<Record<string, string>>({});
   const [myUserId, setMyUserId] = useState<string | null>(null);
 
@@ -47,30 +47,8 @@ export default function CalendarPage() {
     });
   }, []);
 
-  const availableMonths = useMemo(() => {
-    const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-    const keys = Array.from(
-      new Set([
-        ...history.filter((entry) => entry.items.length > 0).map((entry) => entry.date.slice(0, 7)),
-        currentMonthKey,
-      ]),
-    ).sort();
-
-    return keys.map((key) => {
-      const [year, monthText] = key.split('-').map(Number);
-      return new Date(year, (monthText ?? 1) - 1, 1);
-    });
-  }, [history]);
-
-  const monthIndex = availableMonths.findIndex(
-    (item) => item.getFullYear() === month.getFullYear() && item.getMonth() === month.getMonth(),
-  );
-  const effectiveMonth = monthIndex === -1 && availableMonths.length > 0 ? availableMonths[availableMonths.length - 1] : month;
-  const effectiveMonthIndex = monthIndex === -1 ? availableMonths.length - 1 : monthIndex;
-  const days = useMemo(() => getMonthMatrix(effectiveMonth), [effectiveMonth]);
-  const monthTitle = `${effectiveMonth.getFullYear()}년 ${effectiveMonth.getMonth() + 1}월`;
-  const canGoPrevMonth = effectiveMonthIndex > 0;
-  const canGoNextMonth = effectiveMonthIndex >= 0 && effectiveMonthIndex < availableMonths.length - 1;
+  const days = useMemo(() => getMonthMatrix(month), [month]);
+  const monthTitle = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
   const selectedItems = useMemo(
     () => (selectedDate ? byDate.get(selectedDate) ?? [] : []),
     [selectedDate, byDate],
@@ -84,11 +62,11 @@ export default function CalendarPage() {
     [selectedDate, selectedItems, proofByItemKey],
   );
   const monthDoneCount = useMemo(() => {
-    const prefix = `${effectiveMonth.getFullYear()}-${String(effectiveMonth.getMonth() + 1).padStart(2, '0')}-`;
+    const prefix = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-`;
     return history
       .filter((entry) => entry.date.startsWith(prefix))
       .reduce((acc, entry) => acc + entry.items.length, 0);
-  }, [history, effectiveMonth]);
+  }, [history, month]);
 
   useEffect(() => {
     if (!selectedDate || selectedItems.length === 0) return;
@@ -166,11 +144,9 @@ export default function CalendarPage() {
               type="text"
               size="small"
               onClick={() => {
-                if (!canGoPrevMonth) return;
                 setSelectedDate(null);
-                setMonth(availableMonths[effectiveMonthIndex - 1]);
+                setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
               }}
-              disabled={!canGoPrevMonth}
               className="!text-[14px] !px-[10px] !py-[6px]"
             >
               ←
@@ -180,11 +156,9 @@ export default function CalendarPage() {
               type="text"
               size="small"
               onClick={() => {
-                if (!canGoNextMonth) return;
                 setSelectedDate(null);
-                setMonth(availableMonths[effectiveMonthIndex + 1]);
+                setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
               }}
-              disabled={!canGoNextMonth}
               className="!text-[14px] !px-[10px] !py-[6px]"
             >
               →
@@ -203,7 +177,7 @@ export default function CalendarPage() {
               {days.map((date) => {
                 const key = toDateKey(date);
                 const count = byDate.get(key)?.length ?? 0;
-                const inMonth = date.getMonth() === effectiveMonth.getMonth();
+                const inMonth = date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear();
                 const isSelected = selectedDate === key;
                 const isEnabled = inMonth && count > 0;
 
