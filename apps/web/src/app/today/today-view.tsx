@@ -220,12 +220,10 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   const buddyRows = payload.data?.buddyRows ?? [];
 
   return baseRoutines.map((routine) => {
-    if (!routine.isDefault) {
-      return { ...routine, doneByBuddy: false };
-    }
-
     const myRow = myRows.find((item) => item.routine_key === routine.id);
-    const buddyDone = buddyRows.some((item) => item.routine_key === routine.id);
+    const buddyDone = routine.isDefault
+      ? buddyRows.some((item) => item.routine_key === routine.id)
+      : false;
 
     return {
       ...routine,
@@ -471,22 +469,18 @@ export function TodayView() {
       return;
     }
 
-    if (!target.isDefault) {
-      // Upload to storage even for custom routines (best-effort)
-      void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
-      return;
-    }
+    // Upload proof image best-effort and persist completion to server
+    // for both default/custom routines.
+    void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
 
     try {
       const ok = await saveCertificationToSupabase(target.id, now.toISOString());
 
-      // Upload proof image to Supabase Storage (after challenge_log exists)
       if (ok) {
-        void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
-      }
-
-      if (ok) {
-        void queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] }),
+          queryClient.invalidateQueries({ queryKey: ['calendar-history'] }),
+        ]);
       }
     } catch {
       // noop: local capture state is already updated
