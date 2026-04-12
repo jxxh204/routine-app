@@ -8,3 +8,8 @@ export function getDateKeyInKST(date: Date = new Date()) {
 
   return formatter.format(date); // YYYY-MM-DD
 }
+
+export function parseIsoDate(value: string): Date | null {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
