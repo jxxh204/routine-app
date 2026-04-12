@@ -31,6 +31,7 @@ const STORAGE_PREFIX = 'routine-challenge-v1';
 const buddyUserId = process.env.NEXT_PUBLIC_BUDDY_USER_ID;
 const CUSTOM_ROUTINES_KEY = `${STORAGE_PREFIX}:custom-routines`;
 const DEFAULT_ROUTINES_KEY = `${STORAGE_PREFIX}:default-routines`;
+const MIGRATION_DONE_KEY = `${STORAGE_PREFIX}:history-migrated-v1`;
 
 type Routine = {
   id: string;
@@ -96,6 +97,68 @@ function getTodayDateKey() {
 
 function getTodayStorageKey() {
   return `${STORAGE_PREFIX}:${getTodayDateKey()}`;
+}
+
+function parseLocalHistoryDoneAt(dateKey: string, doneAt?: string) {
+  const safe = doneAt?.match(/^(\d{2}):(\d{2})$/);
+  if (!safe) return `${dateKey}T12:00:00+09:00`;
+  return `${dateKey}T${safe[1]}:${safe[2]}:00+09:00`;
+}
+
+type LegacyHistoryItem = {
+  id?: string;
+  doneByMe?: boolean;
+  doneAt?: string;
+};
+
+async function migrateLegacyLocalHistoryToApi() {
+  if (typeof window === 'undefined') return;
+  if (window.localStorage.getItem(MIGRATION_DONE_KEY) === '1') return;
+
+  const auth = await getAuthHeaders();
+  if (!auth) return;
+
+  const keyPattern = new RegExp(`^${STORAGE_PREFIX}:(\\d{4}-\\d{2}-\\d{2})$`);
+  const tasks: Array<{ routineKey: string; doneAtIso: string }> = [];
+
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const key = window.localStorage.key(i);
+    if (!key) continue;
+    const match = key.match(keyPattern);
+    if (!match) continue;
+
+    const dateKey = match[1];
+    const raw = window.localStorage.getItem(key);
+    if (!raw) continue;
+
+    try {
+      const parsed = JSON.parse(raw) as LegacyHistoryItem[];
+      for (const item of parsed) {
+        if (!item?.id || !item.doneByMe) continue;
+        tasks.push({
+          routineKey: item.id,
+          doneAtIso: parseLocalHistoryDoneAt(dateKey, item.doneAt),
+        });
+      }
+    } catch {
+      // ignore malformed rows
+    }
+  }
+
+  if (tasks.length === 0) {
+    window.localStorage.setItem(MIGRATION_DONE_KEY, '1');
+    return;
+  }
+
+  for (const task of tasks) {
+    await fetch('/api/challenge/complete', {
+      method: 'POST',
+      headers: auth.headers,
+      body: JSON.stringify(task),
+    }).catch(() => null);
+  }
+
+  window.localStorage.setItem(MIGRATION_DONE_KEY, '1');
 }
 
 function readDefaultRoutines(): Routine[] {
@@ -283,6 +346,13 @@ export function TodayView() {
   useEffect(() => { routinesRef.current = routines; }, [routines]);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    void migrateLegacyLocalHistoryToApi().then(async () => {
+      await queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
+      await queryClient.invalidateQueries({ queryKey: ['calendar-history'] });
+    });
+  }, [queryClient]);
 
   const { data: syncedRoutines } = useQuery({
     queryKey: ['today-routines-sync', buddyUserId],
