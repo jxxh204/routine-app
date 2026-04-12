@@ -473,6 +473,8 @@ export function TodayView() {
     // for both default/custom routines.
     void uploadProofImage(dateKey, target.id, imageDataUrl).catch(() => {});
 
+    await queryClient.cancelQueries({ queryKey: ['calendar-history'] });
+
     queryClient.setQueryData<Array<{ date: string; items: Array<{ id: string; doneByMe: boolean; doneAt?: string; title?: string; proofImage?: string }> }>>(
       ['calendar-history'],
       (prev = []) => {
@@ -501,12 +503,13 @@ export function TodayView() {
     try {
       const ok = await saveCertificationToSupabase(target.id, now.toISOString());
       if (ok) {
-        await queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['today-routines-sync', buddyUserId] }),
+          queryClient.invalidateQueries({ queryKey: ['calendar-history'] }),
+        ]);
       }
     } catch {
       // noop: local capture state is already updated
-    } finally {
-      await queryClient.invalidateQueries({ queryKey: ['calendar-history'] });
     }
   };
 

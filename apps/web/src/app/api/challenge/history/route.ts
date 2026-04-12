@@ -1,4 +1,5 @@
 export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { createAuthedSupabaseFromBearer, getBearerToken } from '@/app/api/_utils/supabase-auth';
@@ -19,5 +20,8 @@ export async function GET(request: Request) {
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, data: data ?? [] });
+  return NextResponse.json(
+    { ok: true, data: data ?? [] },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }
