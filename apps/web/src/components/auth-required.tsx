@@ -19,9 +19,12 @@ export function AuthRequired({ children }: { children: ReactNode }) {
     let mounted = true;
 
     const check = async () => {
-      if (typeof window !== 'undefined' && window.localStorage.getItem(AUTH_MOCK_LOGIN_KEY) === '1') {
-        if (mounted) setChecking(false);
-        return;
+      if (typeof window !== 'undefined') {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost && window.localStorage.getItem(AUTH_MOCK_LOGIN_KEY) === '1') {
+          if (mounted) setChecking(false);
+          return;
+        }
       }
 
       if (!supabase) {
