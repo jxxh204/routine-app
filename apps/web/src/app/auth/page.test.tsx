@@ -31,10 +31,7 @@ vi.mock('@/lib/social-official-button-assets', () => ({
     height: 45,
   }),
 }));
-vi.mock('@/lib/auth-entry-mode', () => ({
-  resolveAuthEntryMode: () => 'social',
-  applyMockLogin: vi.fn(),
-}));
+// social auth only: no auth-entry-mode mock
 vi.mock('@/lib/auth-error', () => ({
   resolveAuthFailureMessage: () => null,
 }));
@@ -76,9 +73,9 @@ describe('AuthPage', () => {
     expect(screen.getAllByText(/카카오로 3초 만에 로그인/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders guest login button', () => {
+  it('does not render guest login bypass', () => {
     render(<AuthPage />);
-    expect(screen.getAllByText('로그인 없이 계속하기').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('로그인 없이 계속하기')).toBeNull();
   });
 
   it('renders feature list', () => {

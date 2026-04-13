@@ -4,7 +4,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { buildAuthRedirectTarget } from '@/lib/auth-redirect';
-import { AUTH_MOCK_LOGIN_KEY } from '@/lib/auth-entry-feedback';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
 import { supabase } from '@/lib/supabase';
 
@@ -19,13 +18,7 @@ export function AuthRequired({ children }: { children: ReactNode }) {
     let mounted = true;
 
     const check = async () => {
-      if (typeof window !== 'undefined') {
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocalhost && window.localStorage.getItem(AUTH_MOCK_LOGIN_KEY) === '1') {
-          if (mounted) setChecking(false);
-          return;
-        }
-      }
+      // social login required in all environments
 
       if (!supabase) {
         router.replace(buildAuthRedirectTarget(pathname));
