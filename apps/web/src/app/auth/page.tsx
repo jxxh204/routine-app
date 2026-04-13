@@ -9,7 +9,6 @@ import { AppleOfficialButton } from '@/app/auth/apple-official-button';
 import { PageShell } from '@/components/ui';
 import { resolvePostLoginPath } from '@/lib/auth-redirect';
 import { AUTH_ENTRY_FEEDBACK_KEY } from '@/lib/auth-entry-feedback';
-import { applyMockLogin, resolveAuthEntryMode } from '@/lib/auth-entry-mode';
 import { resolveAuthFailureMessage } from '@/lib/auth-error';
 import { ensureMyProfile } from '@/lib/profile-bootstrap';
 import { getSessionWithRecovery } from '@/lib/session-recovery';
@@ -96,22 +95,12 @@ function AuthPageContent() {
     };
   }, [queryErrorMessage, router, searchParams]);
 
-  const continueWithMockLogin = () => {
-    const nextPath = resolvePostLoginPath(searchParams.get('next'));
-    applyMockLogin(nextPath, router.replace);
-  };
-
   const onClickProvider = async (provider: SocialProvider) => {
     setPending(provider);
     setErrorMessage('');
     setIsRedirecting(false);
 
     const nextPath = resolvePostLoginPath(searchParams.get('next'));
-
-    if (resolveAuthEntryMode(provider) === 'mock') {
-      continueWithMockLogin();
-      return;
-    }
 
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(AUTH_NEXT_STORAGE_KEY, nextPath);
@@ -225,14 +214,7 @@ function AuthPageContent() {
             );
           })}
 
-          <Button
-            type="text"
-            onClick={continueWithMockLogin}
-            disabled={isBusy}
-            className="!w-full !max-w-[300px] !mx-auto !text-[13px] !text-ds-text-muted"
-          >
-            로그인 없이 계속하기
-          </Button>
+          {/* 로그인 없이 계속하기 제거: 소셜 로그인 필수 */}
         </div>
 
         {/* Error */}

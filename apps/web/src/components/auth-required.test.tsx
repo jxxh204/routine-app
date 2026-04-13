@@ -56,10 +56,12 @@ describe('AuthRequired', () => {
     expect(screen.getByTestId('auth-status')).toHaveTextContent('로그인 상태 확인 중...');
   });
 
-  it('renders children when mock login is active', async () => {
-    window.localStorage.setItem('routine-auth-mock-login', '1');
+  it('requires valid session (no mock bypass)', async () => {
+    vi.mocked(getSessionWithRecovery).mockResolvedValue(null);
     render(<AuthRequired><div>Protected Content</div></AuthRequired>);
-    expect(await screen.findByText('Protected Content')).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/auth?next=/today');
+    });
   });
 
   it('renders children when session exists', async () => {
