@@ -70,7 +70,7 @@ describe('AuthPage', () => {
 
   it('renders login description', () => {
     render(<AuthPage />);
-    expect(screen.getAllByText(/카카오로 3초 만에 로그인/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/소셜 로그인으로 빠르게 시작/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('does not render guest login bypass', () => {

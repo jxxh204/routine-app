@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+import { resolvePostLoginPath } from '@/lib/auth-redirect';
+
 export const runtime = 'edge';
 
 /**
@@ -10,7 +12,7 @@ export const runtime = 'edge';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/today';
+  const next = resolvePostLoginPath(searchParams.get('next'));
 
   if (!code) {
     return NextResponse.redirect(new URL(`/auth?error=missing_code&next=${encodeURIComponent(next)}`, origin));

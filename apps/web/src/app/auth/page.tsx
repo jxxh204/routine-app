@@ -19,6 +19,12 @@ import { supabase } from '@/lib/supabase';
 
 const AUTH_NEXT_STORAGE_KEY = 'routine-auth-next';
 
+const providerLabel: Record<SocialProvider, string> = {
+  kakao: '카카오',
+  apple: 'Apple',
+  google: 'Google',
+};
+
 function AuthPageContent() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [isResolvingSession, setIsResolvingSession] = useState(false);
@@ -133,7 +139,7 @@ function AuthPageContent() {
           <p className="mt-1 mb-0 text-[14px] text-ds-text-muted leading-normal">
             {isRedirecting
               ? '잠시만 기다리면 루틴 화면으로 이동해요.'
-              : '카카오로 3초 만에 로그인하고 오늘 인증부터 시작하세요.'}
+              : '소셜 로그인으로 빠르게 시작하고 오늘 인증부터 진행하세요.'}
           </p>
         </div>
 
@@ -149,7 +155,7 @@ function AuthPageContent() {
                   key={provider}
                   className="w-[300px] h-[45px] rounded-ds-sm border border-ds-border grid place-items-center text-ds-text-muted bg-ds-surface font-medium text-[13px] mx-auto"
                 >
-                  카카오 로그인 처리 중...
+                  {providerLabel[provider]} 로그인 처리 중...
                 </div>
               );
             }
@@ -184,7 +190,7 @@ function AuthPageContent() {
                   key={provider}
                   className="w-[300px] h-[45px] mx-auto rounded-ds-sm border border-dashed border-ds-border text-ds-text-faint grid place-items-center text-[12px]"
                 >
-                  카카오 버튼 로드 실패
+                  {providerLabel[provider]} 버튼 로드 실패
                 </div>
               );
             }
