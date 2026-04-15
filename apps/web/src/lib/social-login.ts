@@ -12,9 +12,14 @@ export async function startSocialLogin(provider: SocialProvider, redirectTo?: st
   }
 
   const mapped = providerMap[provider];
+  const options = {
+    ...(redirectTo ? { redirectTo } : {}),
+    ...(mapped === 'kakao' ? { scopes: 'profile_nickname profile_image' } : {}),
+  };
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: mapped,
-    options: redirectTo ? { redirectTo } : undefined,
+    options: Object.keys(options).length > 0 ? options : undefined,
   });
 
   if (error) {
