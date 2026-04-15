@@ -18,6 +18,11 @@ jobs:
   web-ci:
     name: web test/lint/build
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_APPLE_SERVICE_ID: ${{ vars.NEXT_PUBLIC_APPLE_SERVICE_ID }}
+      NEXT_PUBLIC_APPLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_APPLE_CLIENT_ID }}
     defaults:
       run:
         working-directory: apps/web
@@ -49,6 +54,11 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: web-ci
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_APPLE_SERVICE_ID: ${{ vars.NEXT_PUBLIC_APPLE_SERVICE_ID }}
+      NEXT_PUBLIC_APPLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_APPLE_CLIENT_ID }}
     permissions:
       contents: read
       pull-requests: write
@@ -105,6 +115,11 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: web-ci
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_APPLE_SERVICE_ID: ${{ vars.NEXT_PUBLIC_APPLE_SERVICE_ID }}
+      NEXT_PUBLIC_APPLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_APPLE_CLIENT_ID }}
     environment: production
     defaults:
       run:
