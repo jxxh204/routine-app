@@ -123,6 +123,25 @@ function AuthPageContent() {
 
   const isBusy = Boolean(pending) || isResolvingSession || isRedirecting;
 
+  const renderAppleFallbackButton = () => (
+    <button
+      type="button"
+      onClick={() => void onClickProvider('apple')}
+      disabled={isBusy}
+      aria-label="Apple로 로그인"
+      className="w-[300px] h-[45px] mx-auto rounded-ds-sm border border-[#000000] bg-[#000000] text-[#ffffff] grid grid-cols-[24px_1fr] items-center px-[12px]"
+      style={{
+        opacity: isBusy ? 0.6 : 1,
+        cursor: isBusy ? 'default' : 'pointer',
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M16.365 12.927c-.02-2.234 1.824-3.305 1.907-3.356-1.043-1.522-2.662-1.732-3.24-1.755-1.379-.14-2.691.812-3.391.812-.701 0-1.786-.792-2.938-.771-1.511.022-2.907.88-3.683 2.229-1.575 2.729-.402 6.777 1.131 8.993.749 1.081 1.642 2.297 2.813 2.255 1.127-.045 1.551-.729 2.912-.729 1.361 0 1.742.729 2.934.706 1.215-.02 1.983-1.102 2.727-2.187.858-1.252 1.21-2.463 1.23-2.526-.026-.012-2.361-.907-2.382-3.671zM14.232 6.425c.62-.752 1.039-1.799.924-2.842-.893.036-1.973.595-2.613 1.347-.574.663-1.076 1.727-.94 2.748.994.077 2.01-.508 2.629-1.253z" />
+      </svg>
+      <span className="text-[17px] font-medium tracking-tight text-center pr-[20px]">Apple로 로그인</span>
+    </button>
+  );
+
   return (
     <PageShell narrow>
       <section className="grid gap-ds-section-gap pt-[60px] pb-10">
@@ -159,18 +178,8 @@ function AuthPageContent() {
             }
 
             if (asset.kind === 'apple-js') {
-              if (!appleConfigured) {
-                return (
-                  <Button
-                    key={provider}
-                    type="default"
-                    onClick={() => void onClickProvider(provider)}
-                    disabled={isBusy}
-                    className="!w-[300px] !h-[45px] !mx-auto !rounded-ds-sm !border-ds-border-strong !bg-ds-surface-strong !text-ds-text"
-                  >
-                    Apple로 로그인
-                  </Button>
-                );
+              if (!appleConfigured || assetUnavailable.apple) {
+                return <div key={provider}>{renderAppleFallbackButton()}</div>;
               }
 
               return (
