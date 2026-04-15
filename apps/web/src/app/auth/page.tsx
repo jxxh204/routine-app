@@ -115,8 +115,16 @@ function AuthPageContent() {
     const result = await startSocialLogin(provider, redirectTo);
 
     if (!result.ok) {
-      const isCancel = result.error.toLowerCase().includes('cancel') || result.error.toLowerCase().includes('closed');
-      setErrorMessage(isCancel ? '로그인이 취소되었어요. 원하시면 다시 시도해 주세요.' : '로그인에 실패했어요. 다시 시도해 주세요.');
+      const lower = result.error.toLowerCase();
+      const isCancel = lower.includes('cancel') || lower.includes('closed');
+      const isConfigMissing = lower.includes('supabase-client-unavailable');
+      setErrorMessage(
+        isCancel
+          ? '로그인이 취소되었어요. 원하시면 다시 시도해 주세요.'
+          : isConfigMissing
+            ? '로그인 설정이 배포 환경에 반영되지 않았어요. 관리자에게 환경변수 설정을 요청해 주세요.'
+            : '로그인에 실패했어요. 다시 시도해 주세요.',
+      );
       setPending(null);
     }
   };
