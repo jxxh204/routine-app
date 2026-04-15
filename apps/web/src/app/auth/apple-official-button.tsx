@@ -53,7 +53,16 @@ export function AppleOfficialButton({ width, height, onPress, onUnavailable }: P
     script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
     script.async = true;
     script.onload = init;
+    script.onerror = () => onUnavailable?.();
     document.head.appendChild(script);
+
+    const timer = window.setTimeout(() => {
+      if (!window.AppleID?.auth?.init) onUnavailable?.();
+    }, 2500);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [onUnavailable]);
 
   return (
