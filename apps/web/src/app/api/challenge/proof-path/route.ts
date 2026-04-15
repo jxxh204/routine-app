@@ -2,6 +2,7 @@ export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import { createAuthedSupabaseFromBearer, getBearerToken } from '@/app/api/_utils/supabase-auth';
+import { proofPathBodySchema } from '@/lib/validation';
 
 export async function POST(request: Request) {
   const token = getBearerToken(request.headers.get('authorization'));
@@ -10,17 +11,26 @@ export async function POST(request: Request) {
   const authed = await createAuthedSupabaseFromBearer(token);
   if (!authed.ok) return NextResponse.json({ ok: false, error: authed.error }, { status: 401 });
 
-  const body = (await request.json()) as { dateKey?: string; routineKey?: string; proofImagePath?: string };
-  if (!body.dateKey || !body.routineKey || !body.proofImagePath) {
-    return NextResponse.json({ ok: false, error: 'bad-request' }, { status: 400 });
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'invalid-json' }, { status: 400 });
   }
+
+  const parsed = proofPathBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json({ ok: false, error: 'bad-request', details: parsed.error.issues }, { status: 400 });
+  }
+
+  const { dateKey, routineKey, proofImagePath } = parsed.data;
 
   const { error } = await authed.client
     .from('challenge_logs')
-    .update({ proof_image_path: body.proofImagePath })
+    .update({ proof_image_path: proofImagePath })
     .eq('user_id', authed.userId)
-    .eq('challenge_date', body.dateKey)
-    .eq('routine_key', body.routineKey);
+    .eq('challenge_date', dateKey)
+    .eq('routine_key', routineKey);
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 

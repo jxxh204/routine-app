@@ -5,8 +5,10 @@ import { createAuthedSupabaseFromBearer, getBearerToken } from '@/app/api/_utils
 
 function makeFriendCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const randomBytes = new Uint8Array(6);
+  crypto.getRandomValues(randomBytes);
   let out = '';
-  for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 6; i += 1) out += chars[randomBytes[i] % chars.length];
   return out;
 }
 

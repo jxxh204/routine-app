@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getAccessToken } from '@/lib/client-auth';
+import { sanitizeStoragePath } from '@/lib/validation';
 
 const BUCKET = 'proof-images';
 
@@ -15,7 +16,9 @@ function dataUrlToBlob(dataUrl: string): Blob {
 }
 
 function buildPath(userId: string, dateKey: string, routineKey: string): string {
-  return `${userId}/${dateKey}/${routineKey}.jpg`;
+  const safeDateKey = sanitizeStoragePath(dateKey);
+  const safeRoutineKey = sanitizeStoragePath(routineKey);
+  return `${userId}/${safeDateKey}/${safeRoutineKey}.jpg`;
 }
 
 /**

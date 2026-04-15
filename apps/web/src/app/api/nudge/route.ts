@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { canSendNudge, buildDedupeKey, type NudgeContext } from '@/lib/nudge-engine';
 import { buildNudgePayload, sendPush, type PushTarget } from '@/lib/push-sender';
+import { nudgeBodySchema } from '@/lib/validation';
+import { getServerEnv } from '@/lib/env';
 
 /**
  * POST /api/nudge
@@ -17,9 +19,15 @@ export const runtime = 'edge';
 
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  let supabaseServiceKey: string;
+  try {
+    supabaseServiceKey = getServerEnv().SUPABASE_SERVICE_ROLE_KEY;
+  } catch {
+    return NextResponse.json({ ok: false, error: 'server-config-missing' }, { status: 500 });
+  }
+
+  if (!supabaseUrl) {
     return NextResponse.json({ ok: false, error: 'server-config-missing' }, { status: 500 });
   }
 
@@ -41,18 +49,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  // Body
-  let body: { targetId?: string; routineKey?: string };
+  // Body validation with Zod
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'invalid-body' }, { status: 400 });
   }
 
-  const { targetId, routineKey } = body;
-  if (!targetId || !routineKey) {
-    return NextResponse.json({ ok: false, error: 'missing-fields' }, { status: 400 });
+  const parsed = nudgeBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json({ ok: false, error: 'bad-request', details: parsed.error.issues }, { status: 400 });
   }
+
+  const { targetId, routineKey } = parsed.data;
 
   // Service client for privileged queries
   const admin = createClient(supabaseUrl, supabaseServiceKey, {
@@ -125,15 +135,16 @@ export async function POST(request: NextRequest) {
   const pushResults: Array<{ token: string; result: Awaited<ReturnType<typeof sendPush>> }> = [];
 
   if (tokens && tokens.length > 0) {
-    for (const token of tokens) {
+    const pushPromises = tokens.map(async (token) => {
       const target: PushTarget = {
         provider: token.provider as 'apns' | 'fcm',
         deviceToken: token.device_token,
         platform: token.platform as 'ios' | 'android',
       };
       const pushResult = await sendPush(target, pushPayload);
-      pushResults.push({ token: token.device_token.slice(0, 8) + '...', result: pushResult });
-    }
+      return { token: token.device_token.slice(0, 8) + '...', result: pushResult };
+    });
+    pushResults.push(...await Promise.all(pushPromises));
   }
 
   return NextResponse.json({
