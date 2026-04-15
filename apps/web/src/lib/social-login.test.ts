@@ -24,7 +24,7 @@ describe('startSocialLogin', () => {
     expect(result.ok).toBe(true);
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: 'kakao',
-      options: { redirectTo: 'https://example.com/callback', scopes: 'profile_nickname profile_image' },
+      options: { redirectTo: 'https://example.com/callback' },
     });
   });
 

@@ -150,6 +150,18 @@ function AuthPageContent() {
     }
   };
 
+  useEffect(() => {
+    if (!pending) return;
+
+    const timer = window.setTimeout(() => {
+      setPending(null);
+      setIsRedirecting(false);
+      setErrorMessage('로그인 응답이 지연되고 있어요. 다시 시도해 주세요.');
+    }, 12000);
+
+    return () => window.clearTimeout(timer);
+  }, [pending]);
+
   const isBusy = Boolean(pending) || isResolvingSession || isRedirecting;
 
   const renderAppleFallbackButton = () => (
