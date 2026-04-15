@@ -161,12 +161,15 @@ function AuthPageContent() {
             if (asset.kind === 'apple-js') {
               if (!appleConfigured) {
                 return (
-                  <div
+                  <Button
                     key={provider}
-                    className="w-[300px] h-[45px] mx-auto rounded-ds-sm border border-dashed border-ds-border text-ds-text-faint grid place-items-center text-[12px]"
+                    type="default"
+                    onClick={() => void onClickProvider(provider)}
+                    disabled={isBusy}
+                    className="!w-[300px] !h-[45px] !mx-auto !rounded-ds-sm !border-ds-border-strong !bg-ds-surface-strong !text-ds-text"
                   >
-                    Apple 로그인 설정 필요
-                  </div>
+                    Apple로 로그인
+                  </Button>
                 );
               }
 

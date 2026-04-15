@@ -20,16 +20,27 @@ vi.mock('@/lib/social-login', () => ({
   startSocialLogin: vi.fn(),
 }));
 vi.mock('@/lib/social-auth-policy', () => ({
-  getEnabledProviders: () => ['kakao'],
+  getEnabledProviders: () => ['kakao', 'apple'],
 }));
 vi.mock('@/lib/social-official-button-assets', () => ({
-  getOfficialButtonAsset: () => ({
-    kind: 'image',
-    src: '/kakao.png',
-    alt: '카카오 로그인',
-    width: 300,
-    height: 45,
-  }),
+  getOfficialButtonAsset: (provider: 'kakao' | 'apple') => {
+    if (provider === 'apple') {
+      return {
+        kind: 'apple-js',
+        alt: 'Sign in with Apple',
+        width: 300,
+        height: 45,
+      };
+    }
+
+    return {
+      kind: 'image',
+      src: '/kakao.png',
+      alt: '카카오 로그인',
+      width: 300,
+      height: 45,
+    };
+  },
 }));
 // social auth only: no auth-entry-mode mock
 vi.mock('@/lib/auth-error', () => ({
@@ -85,9 +96,12 @@ describe('AuthPage', () => {
     expect(screen.getAllByText('친구 진행 상태와 함께 확인').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders kakao login button', () => {
+  it('renders kakao and apple login buttons', () => {
     render(<AuthPage />);
-    const buttons = screen.getAllByRole('button', { name: '카카오 로그인' });
-    expect(buttons.length).toBeGreaterThanOrEqual(1);
+    const kakaoButtons = screen.getAllByRole('button', { name: '카카오 로그인' });
+    expect(kakaoButtons.length).toBeGreaterThanOrEqual(1);
+
+    const appleButtons = screen.getAllByRole('button', { name: /Apple로 로그인|Sign in with Apple/ });
+    expect(appleButtons.length).toBeGreaterThanOrEqual(1);
   });
 });
