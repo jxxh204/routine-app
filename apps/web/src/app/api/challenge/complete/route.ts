@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { createAuthedSupabaseFromBearer, getBearerToken } from '@/app/api/_utils/supabase-auth';
 import { getDateKeyInKST, parseIsoDate } from '@/app/api/_utils/date-key';
+import { challengeCompleteBodySchema } from '@/lib/validation';
 
 export async function POST(request: Request) {
   const token = getBearerToken(request.headers.get('authorization'));
@@ -11,12 +12,21 @@ export async function POST(request: Request) {
   const authed = await createAuthedSupabaseFromBearer(token);
   if (!authed.ok) return NextResponse.json({ ok: false, error: authed.error }, { status: 401 });
 
-  const body = (await request.json()) as { routineKey?: string; doneAtIso?: string };
-  if (!body.routineKey || !body.doneAtIso) {
-    return NextResponse.json({ ok: false, error: 'bad-request' }, { status: 400 });
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'invalid-json' }, { status: 400 });
   }
 
-  const doneAt = parseIsoDate(body.doneAtIso);
+  const parsed = challengeCompleteBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json({ ok: false, error: 'bad-request', details: parsed.error.issues }, { status: 400 });
+  }
+
+  const { routineKey, doneAtIso } = parsed.data;
+
+  const doneAt = parseIsoDate(doneAtIso);
   if (!doneAt) {
     return NextResponse.json({ ok: false, error: 'invalid-doneAtIso' }, { status: 400 });
   }
@@ -29,7 +39,7 @@ export async function POST(request: Request) {
       {
         user_id: authed.userId,
         challenge_date: challengeDate,
-        routine_key: body.routineKey,
+        routine_key: routineKey,
         done_at: doneAt.toISOString(),
       },
       {

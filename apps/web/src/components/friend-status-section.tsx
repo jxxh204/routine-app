@@ -121,9 +121,9 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'], 
                 >
                   {friend.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={friend.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={friend.avatarUrl} alt={`${friend.nickname}님의 프로필`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    '👤'
+                    <span role="img" aria-label={`${friend.nickname}님의 기본 아바타`}>👤</span>
                   )}
                 </div>
 
@@ -160,13 +160,16 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'], 
                             gap: 3,
                           }}
                         >
-                          {done ? '✓' : '○'} {label}
+                          <span aria-hidden="true">{done ? '✓' : '○'}</span>
+                          <span className="sr-only">{done ? '완료' : '미완료'}</span>
+                          {' '}{label}
                           {time && <span style={{ fontSize: 10, color: '#999' }}>{time}</span>}
                           {!done && canNudge && (
                             <button
                               type="button"
                               onClick={() => handleNudge(friend.userId, key)}
                               disabled={isSending}
+                              aria-label={`${friend.nickname}님에게 ${label} 독려 보내기`}
                               style={{
                                 fontSize: 9,
                                 padding: '0 4px',
@@ -179,11 +182,11 @@ export function FriendStatusSection({ routineKeys = ['wake', 'lunch', 'sleep'], 
                                 lineHeight: '16px',
                               }}
                             >
-                              {isSending ? '...' : '👋'}
+                              {isSending ? '...' : '👋 독려'}
                             </button>
                           )}
                           {!done && alreadySent && (
-                            <span style={{ fontSize: 9, color: '#999', marginLeft: 2 }}>전송됨</span>
+                            <span style={{ fontSize: 9, color: '#999', marginLeft: 2 }} aria-live="polite">전송됨</span>
                           )}
                         </span>
                       );

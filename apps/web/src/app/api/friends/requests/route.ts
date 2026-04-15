@@ -2,6 +2,7 @@ export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import { createAuthedSupabaseFromBearer, getBearerToken } from '@/app/api/_utils/supabase-auth';
+import { friendRequestBodySchema } from '@/lib/validation';
 
 export async function GET(request: Request) {
   const token = getBearerToken(request.headers.get('authorization'));
@@ -27,9 +28,19 @@ export async function POST(request: Request) {
   const authed = await createAuthedSupabaseFromBearer(token);
   if (!authed.ok) return NextResponse.json({ ok: false, error: authed.error }, { status: 401 });
 
-  const body = (await request.json()) as { friendCode?: string };
-  const friendCode = body.friendCode?.trim();
-  if (!friendCode) return NextResponse.json({ ok: false, error: 'bad-request' }, { status: 400 });
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'invalid-json' }, { status: 400 });
+  }
+
+  const parsed = friendRequestBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json({ ok: false, error: 'bad-request', details: parsed.error.issues }, { status: 400 });
+  }
+
+  const { friendCode } = parsed.data;
 
   const { data: target, error: profileError } = await authed.client
     .from('profiles')

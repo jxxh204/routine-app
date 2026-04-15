@@ -150,14 +150,25 @@ async function migrateLegacyLocalHistoryToApi() {
     return;
   }
 
+  let failCount = 0;
   for (const task of tasks) {
-    await fetch('/api/challenge/complete', {
-      method: 'POST',
-      headers: auth.headers,
-      body: JSON.stringify(task),
-    }).catch(() => null);
+    try {
+      const res = await fetch('/api/challenge/complete', {
+        method: 'POST',
+        headers: auth.headers,
+        body: JSON.stringify(task),
+      });
+      if (!res.ok) failCount += 1;
+    } catch {
+      failCount += 1;
+    }
   }
 
+  if (failCount > 0) {
+    console.warn(`[migration] ${failCount}/${tasks.length} tasks failed to migrate`);
+  }
+
+  // 부분 실패여도 플래그 설정 (재시도 시 중복 upsert이므로 안전)
   window.localStorage.setItem(MIGRATION_DONE_KEY, '1');
 }
 
@@ -258,7 +269,7 @@ async function getAuthHeaders() {
   };
 }
 
-async function syncTodayFromSupabase(baseRoutines: Routine[]) {
+async function syncTodayFromSupabase(baseRoutines: Routine[], signal?: AbortSignal) {
   const auth = await getAuthHeaders();
   if (!auth) return null;
 
@@ -267,6 +278,7 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
       ...auth.headers,
       ...(buddyUserId ? { 'x-buddy-user-id': buddyUserId } : {}),
     },
+    signal,
   });
 
   if (!response.ok) return null;
@@ -298,7 +310,7 @@ async function syncTodayFromSupabase(baseRoutines: Routine[]) {
   });
 }
 
-async function saveCertificationToSupabase(routineKey: string, doneAtIso: string) {
+async function saveCertificationToSupabase(routineKey: string, doneAtIso: string, signal?: AbortSignal) {
   const auth = await getAuthHeaders();
   if (!auth) return false;
 
@@ -306,6 +318,7 @@ async function saveCertificationToSupabase(routineKey: string, doneAtIso: string
     method: 'POST',
     headers: auth.headers,
     body: JSON.stringify({ routineKey, doneAtIso }),
+    signal,
   });
 
   return response.ok;
@@ -356,7 +369,7 @@ export function TodayView() {
 
   const { data: syncedRoutines } = useQuery({
     queryKey: ['today-routines-sync', buddyUserId],
-    queryFn: () => syncTodayFromSupabase(routinesRef.current),
+    queryFn: ({ signal }) => syncTodayFromSupabase(routinesRef.current, signal),
     refetchInterval: 60_000,
   });
 
