@@ -24,6 +24,12 @@ const providerLabel: Record<SocialProvider, string> = {
   apple: 'Apple',
 };
 
+function resolveProfileEnsureErrorMessage(error: string) {
+  if (error === 'unauthorized') return '가입 처리를 완료하지 못했어요. 다시 로그인해 주세요.';
+  if (error === 'missing-friend-code') return '가입은 되었지만 친구코드 생성에 실패했어요. 잠시 후 다시 시도해 주세요.';
+  return '가입 처리 중 문제가 발생했어요. 다시 시도해 주세요.';
+}
+
 function AuthPageContent() {
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [isResolvingSession, setIsResolvingSession] = useState(false);
@@ -62,7 +68,15 @@ function AuthPageContent() {
       const session = await getSessionWithRecovery(client);
       if (session) {
         setIsRedirecting(true);
-        await ensureMyProfile();
+        const ensured = await ensureMyProfile();
+        if (!ensured.ok) {
+          setErrorMessage(resolveProfileEnsureErrorMessage(ensured.error));
+          setIsRedirecting(false);
+          setPending(null);
+          setIsResolvingSession(false);
+          return;
+        }
+
         if (typeof window !== 'undefined') {
           window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
           window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
@@ -84,7 +98,14 @@ function AuthPageContent() {
     const { data: listener } = client.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         setIsRedirecting(true);
-        void ensureMyProfile().then(() => {
+        void ensureMyProfile().then((ensured) => {
+          if (!ensured.ok) {
+            setErrorMessage(resolveProfileEnsureErrorMessage(ensured.error));
+            setIsRedirecting(false);
+            setPending(null);
+            return;
+          }
+
           if (typeof window !== 'undefined') {
             window.sessionStorage.setItem(AUTH_ENTRY_FEEDBACK_KEY, '1');
             window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
