@@ -22,7 +22,6 @@ const AUTH_NEXT_STORAGE_KEY = 'routine-auth-next';
 const providerLabel: Record<SocialProvider, string> = {
   kakao: '카카오',
   apple: 'Apple',
-  google: 'Google',
 };
 
 function AuthPageContent() {
@@ -35,10 +34,9 @@ function AuthPageContent() {
   const [assetUnavailable, setAssetUnavailable] = useState<Record<SocialProvider, boolean>>({
     kakao: false,
     apple: false,
-    google: false,
   });
   const providers = useMemo(() => getEnabledProviders('p0'), []);
-  const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID);
+  const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_SERVICE_ID ?? process.env.NEXT_PUBLIC_APPLE_CLIENT_ID);
   const queryErrorMessage = useMemo(
     () => resolveAuthFailureMessage(searchParams.get('error'), searchParams.get('error_description')),
     [searchParams],

@@ -27,7 +27,7 @@ export function AppleOfficialButton({ width, height, onPress, onUnavailable }: P
     const scriptId = 'appleid-signin-sdk';
 
     const init = () => {
-      const clientId = process.env.NEXT_PUBLIC_APPLE_SERVICE_ID;
+      const clientId = process.env.NEXT_PUBLIC_APPLE_SERVICE_ID ?? process.env.NEXT_PUBLIC_APPLE_CLIENT_ID;
       const redirectURI = typeof window !== 'undefined' ? `${window.location.origin}/today` : undefined;
 
       if (!clientId || !redirectURI || !window.AppleID?.auth?.init) {

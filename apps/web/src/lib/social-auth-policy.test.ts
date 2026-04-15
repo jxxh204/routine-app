@@ -7,13 +7,12 @@ describe('social-auth-policy', () => {
     expect(getEnabledProviders('p0')).toEqual(['kakao', 'apple']);
   });
 
-  it('P1 단계에서 구글이 추가된다', () => {
-    expect(getEnabledProviders('p1')).toEqual(['kakao', 'apple', 'google']);
+  it('P1 단계에서도 현재는 카카오/애플만 유지한다', () => {
+    expect(getEnabledProviders('p1')).toEqual(['kakao', 'apple']);
   });
 
   it('P0 포함 여부 판정을 제공한다', () => {
     expect(isP0Provider('kakao')).toBe(true);
     expect(isP0Provider('apple')).toBe(true);
-    expect(isP0Provider('google')).toBe(false);
   });
 });

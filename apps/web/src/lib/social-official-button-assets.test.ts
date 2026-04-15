@@ -14,10 +14,4 @@ describe('social-official-button-assets', () => {
     expect(asset.kind).toBe('apple-js');
     expect(asset.alt).toBe('Sign in with Apple');
   });
-
-  it('google 공식 버튼 에셋 URL을 제공한다', () => {
-    const asset = getOfficialButtonAsset('google');
-    expect(asset.src).toContain('developers.google.com');
-    expect(asset.alt).toBe('Sign in with Google');
-  });
 });

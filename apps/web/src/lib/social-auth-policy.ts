@@ -1,4 +1,4 @@
-export type SocialProvider = 'kakao' | 'apple' | 'google';
+export type SocialProvider = 'kakao' | 'apple';
 
 export type SocialAuthPolicy = {
   p0: SocialProvider[];
@@ -7,7 +7,7 @@ export type SocialAuthPolicy = {
 
 export const SOCIAL_AUTH_POLICY: SocialAuthPolicy = {
   p0: ['kakao', 'apple'],
-  p1: ['google'],
+  p1: [],
 };
 
 export function isP0Provider(provider: SocialProvider) {

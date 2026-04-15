@@ -25,14 +25,6 @@ const ASSETS: Record<SocialProvider, SocialOfficialButtonAsset> = {
     width: 300,
     height: 45,
   },
-  google: {
-    provider: 'google',
-    alt: 'Sign in with Google',
-    kind: 'image',
-    src: 'https://developers.google.com/identity/images/btn_google_signin_dark_normal_web.png',
-    width: 191,
-    height: 46,
-  },
 };
 
 export function getOfficialButtonAsset(provider: SocialProvider): SocialOfficialButtonAsset {

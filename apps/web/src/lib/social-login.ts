@@ -1,10 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import type { SocialProvider } from '@/lib/social-auth-policy';
 
-const providerMap: Record<SocialProvider, 'kakao' | 'apple' | 'google'> = {
+const providerMap: Record<SocialProvider, 'kakao' | 'apple'> = {
   kakao: 'kakao',
   apple: 'apple',
-  google: 'google',
 };
 
 export async function startSocialLogin(provider: SocialProvider, redirectTo?: string) {
