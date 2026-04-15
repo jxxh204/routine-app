@@ -13,7 +13,8 @@ function createFakeIndexedDB() {
       stores.set(name, new Map());
       return {} as IDBObjectStore;
     },
-    transaction: (storeNames: string | string[], _mode?: IDBTransactionMode) => {
+    transaction: (storeNames: string | string[], mode?: IDBTransactionMode) => {
+      const _mode = mode;
       const storeName = Array.isArray(storeNames) ? storeNames[0] : storeNames;
       const store = stores.get(storeName) ?? new Map();
       if (!stores.has(storeName)) stores.set(storeName, store);
@@ -21,20 +22,20 @@ function createFakeIndexedDB() {
       let oncomplete: (() => void) | null = null;
       let onerror: (() => void) | null = null;
 
-      const txObj: Record<string, unknown> = {
+      const txObj: Partial<IDBTransaction> = {
         objectStore: () => ({
           put: (row: { key: string }) => {
             store.set(row.key, row);
             queueMicrotask(() => oncomplete?.());
-            return { onsuccess: null, onerror: null };
+            return { onsuccess: null, onerror: null } as unknown as IDBRequest<IDBValidKey>;
           },
           get: (key: string) => {
             const result = store.get(key);
             const req: Record<string, unknown> = { result };
             queueMicrotask(() => (req.onsuccess as (() => void) | null)?.());
-            return req;
+            return req as unknown as IDBRequest;
           },
-        }),
+        }) as unknown as IDBObjectStore,
         get oncomplete() { return oncomplete; },
         set oncomplete(fn: (() => void) | null) { oncomplete = fn; },
         get onerror() { return onerror; },
@@ -43,7 +44,8 @@ function createFakeIndexedDB() {
         error: null,
       };
 
-      return txObj;
+      void _mode;
+      return txObj as IDBTransaction;
     },
     close: vi.fn(),
   };
